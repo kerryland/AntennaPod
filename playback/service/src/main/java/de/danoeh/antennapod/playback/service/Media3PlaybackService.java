@@ -5,6 +5,13 @@ import android.content.Intent;
 import android.media.AudioDeviceCallback;
 import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.media.AudioDeviceCallback;
+import android.media.AudioDeviceInfo;
+import android.media.AudioManager;
 import android.media.audiofx.LoudnessEnhancer;
 import android.os.Bundle;
 import android.util.Log;
@@ -180,6 +187,60 @@ public class Media3PlaybackService extends MediaLibraryService {
         mediaSession = new MediaLibraryService.MediaLibrarySession.Builder(this, player, sessionCallback)
                 .setSessionActivity(new MainActivityStarter(this).withOpenPlayer().getPendingIntent())
                 .build();
+
+        registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.d(TAG, "Pausing playback because audio is becoming noisy");
+                if (UserPreferences.isPauseOnHeadsetDisconnect()) {
+                    player.pause();
+                }
+            }
+        }, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));
+        //setupBluetoothDisconnections();
+    }
+
+    private void setupBluetoothDisconnections() {
+        AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        AudioDeviceCallback deviceCallback = new AudioDeviceCallback() {
+            @Override
+            public void onAudioDevicesRemoved(AudioDeviceInfo[] removedDevices) {
+                for (AudioDeviceInfo device : removedDevices) {
+                    if (device.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP) {
+                        Log.d(TAG, "Bluetooth disconnected");
+                        if (player != null) {
+                            if (UserPreferences.isPauseOnHeadsetDisconnect()) {
+                                player.pause();
+                            }
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onAudioDevicesAdded(AudioDeviceInfo[] addedDevices) {
+                for (AudioDeviceInfo device : addedDevices) {
+                    if (device.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP) {
+                        Log.d(TAG, "Bluetooth reconnected");
+                        if (player != null) {
+                            //if (UserPreferences.isUnpauseOnBluetoothReconnect()) {
+                                player.play();
+                            //}
+                        }
+                    }
+                }
+            }
+        };
+        audioManager.registerAudioDeviceCallback(deviceCallback, null);
+
+        player.addListener(new Player.Listener() {
+            @Override
+            public void onPlaybackStateChanged(int state) {
+                if (state == Player.STATE_IDLE || state == Player.STATE_ENDED) {
+                    audioManager.unregisterAudioDeviceCallback(deviceCallback);
+                }
+            }
+        });
 
         setupBluetoothDisconnections();
     }

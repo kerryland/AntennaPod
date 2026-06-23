@@ -92,6 +92,8 @@ public class ExoPlayerWrapper {
                         bufferingUpdateListener.accept(exoPlayer.getBufferedPercentage());
                     }
                 });
+
+        Log.d(TAG, "KJS ExoPlaywer wrapper created");
     }
 
     private void createPlayer() {

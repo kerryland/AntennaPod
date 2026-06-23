@@ -526,7 +526,7 @@ public abstract class PlaybackController {
                 consumer.accept(controller);
                 controller.release();
             } catch (ExecutionException | InterruptedException e) {
-                e.printStackTrace();
+                Log.e(TAG, "KJS Failed to bindToMedia3Service: " + e.getMessage(), e);
             }
         }, MoreExecutors.directExecutor());
 

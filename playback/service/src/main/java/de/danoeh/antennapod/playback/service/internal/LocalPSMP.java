@@ -126,7 +126,7 @@ public class LocalPSMP extends PlaybackServiceMediaPlayer {
         try {
             playMediaObject(playable, false, stream, startWhenPrepared, prepareImmediately);
         } catch (RuntimeException e) {
-            e.printStackTrace();
+            Log.e(TAG, "KJS Failed to playMediaObject 2: " + e.getMessage(), e);
             throw e;
         }
     }
@@ -206,7 +206,7 @@ public class LocalPSMP extends PlaybackServiceMediaPlayer {
             }
 
         } catch (IOException | IllegalStateException e) {
-            e.printStackTrace();
+            Log.e(TAG, "KJS Failed to playMediaObject: " + e.getMessage(), e);
             setPlayerStatus(PlayerStatus.ERROR, null);
             EventBus.getDefault().postSticky(new PlayerErrorEvent(e.getLocalizedMessage()));
         }
@@ -524,6 +524,7 @@ public class LocalPSMP extends PlaybackServiceMediaPlayer {
      */
     @Override
     public void shutdown() {
+        Log.w(TAG, "KJS Shutting down media player");
         if (mediaPlayer != null) {
             try {
                 clearMediaPlayerListeners();
@@ -531,7 +532,8 @@ public class LocalPSMP extends PlaybackServiceMediaPlayer {
                     mediaPlayer.stop();
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.w(TAG, "KJS Failed to shutdown media player: " + e.getMessage(), e);
+
             }
             mediaPlayer.release();
             mediaPlayer = null;
@@ -611,6 +613,7 @@ public class LocalPSMP extends PlaybackServiceMediaPlayer {
     }
 
     private void createMediaPlayer() {
+        Log.w(TAG, "KJS Creating media player");
         if (mediaPlayer != null) {
             mediaPlayer.release();
         }

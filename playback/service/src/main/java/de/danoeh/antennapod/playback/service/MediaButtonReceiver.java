@@ -25,6 +25,7 @@ public class MediaButtonReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         Log.d(TAG, "Received intent");
         if (intent == null || intent.getExtras() == null || BuildConfig.USE_MEDIA3_PLAYBACK_SERVICE) {
+            Log.d(TAG, "KJS Received intent - ignored");
             return;
         }
         KeyEvent event = intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
@@ -37,7 +38,7 @@ public class MediaButtonReceiver extends BroadcastReceiver {
             try {
                 ContextCompat.startForegroundService(context, serviceIntent);
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e(TAG, "KJS Unable to startForegroundService: " + e.getMessage(), e);
             }
         }
     }

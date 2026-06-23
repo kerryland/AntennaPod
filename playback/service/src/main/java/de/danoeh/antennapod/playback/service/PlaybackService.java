@@ -441,7 +441,7 @@ public class PlaybackService extends MediaBrowserServiceCompat {
                 .subscribe(
                     () -> {
                     }, e -> {
-                        e.printStackTrace();
+                        Log.w(TAG, "KJS Failed to onLoadChildren: " + e.getMessage(), e);
                         result.sendResult(null);
                     });
         singleShotDisposables.add(d);

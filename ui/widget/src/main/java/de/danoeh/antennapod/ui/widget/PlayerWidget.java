@@ -1,12 +1,16 @@
 package de.danoeh.antennapod.ui.widget;
 
+import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.RemoteViews;
+
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
@@ -39,7 +43,7 @@ public class PlayerWidget extends AppWidgetProvider {
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
-        Log.d(TAG, "onUpdate() called with: " + "context = [" + context + "], appWidgetManager = ["
+        Log.i(TAG, "KJS onUpdate() called with: " + "context = [" + context + "], appWidgetManager = ["
                 + appWidgetManager + "], appWidgetIds = [" + Arrays.toString(appWidgetIds) + "]");
         WidgetUpdaterWorker.enqueueWork(context);
 
@@ -47,6 +51,28 @@ public class PlayerWidget extends AppWidgetProvider {
         if (!prefs.getBoolean(KEY_WORKAROUND_ENABLED, false)) {
             scheduleWorkaround(context);
             prefs.edit().putBoolean(KEY_WORKAROUND_ENABLED, true).apply();
+        }
+    }
+
+//    @Override
+    public void onUpdateFromDeepSeek(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
+        for (int appWidgetId : appWidgetIds) {
+            RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.player_widget);
+
+            // TARGET YOUR MEDIALIBRARYSERVICE
+            Intent intent = new Intent(context, PlayerWidget.class);
+            intent.setAction("ACTION_PLAY_PAUSE"); // Your custom action
+
+            // Use getService() - NOT getBroadcast()
+            PendingIntent pendingIntent = PendingIntent.getService(
+                    context,
+                    100, // requestCode
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE // Must use this
+            );
+
+            views.setOnClickPendingIntent(R.id.butPlay, pendingIntent);
+            appWidgetManager.updateAppWidget(appWidgetId, views);
         }
     }
 
@@ -102,6 +128,7 @@ public class PlayerWidget extends AppWidgetProvider {
     }
 
     private void setEnabled(Context context, boolean enabled) {
+        Log.d(TAG, "KJS Widget " + (enabled ? "enabled" : "disabled"));
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         prefs.edit().putBoolean(KEY_ENABLED, enabled).apply();
     }

@@ -1,5 +1,10 @@
 package de.danoeh.antennapod.playback.service;
 
+import android.content.Context;
+import android.content.Intent;
+import android.media.AudioDeviceCallback;
+import android.media.AudioDeviceInfo;
+import android.media.AudioManager;
 import android.media.audiofx.LoudnessEnhancer;
 import android.os.Bundle;
 import android.util.Log;
@@ -92,9 +97,16 @@ public class Media3PlaybackService extends MediaLibraryService {
     private LoudnessEnhancer loudnessEnhancer = null;
     private float volumeAdaptionFactor = 1.0f;
 
+    @Override
+    public int onStartCommand(@Nullable Intent intent, int flags, int startId) {
+        Log.d(TAG, "KJS Media3PlaybackService.onStartCommand started");
+        return super.onStartCommand(intent, flags, startId);
+    }
+
     @UnstableApi
     @Override
     public void onCreate() {
+        Log.d(TAG, "KJS Media3PlaybackService.onCreate ");
         super.onCreate();
         EventBus.getDefault().register(this);
         DefaultMediaNotificationProvider notificationProvider = new DefaultMediaNotificationProvider(this,
@@ -125,10 +137,13 @@ public class Media3PlaybackService extends MediaLibraryService {
 
             @Override
             public void play() {
+                Log.d(TAG, "KJS Media3PlaybackService.play maybe");
                 if (handleStreamingConfirmation()) {
+                    Log.d(TAG, "KJS Media3PlaybackService.play bail 1");
                     return;
                 } else if (shouldBlockForStreamingConfirmation()) {
                     showStreamingConfirmation(currentPlayable);
+                    Log.d(TAG, "KJS Media3PlaybackService.play bail 2");
                     return;
                 }
 
@@ -140,6 +155,7 @@ public class Media3PlaybackService extends MediaLibraryService {
                         seekTo(startPosition);
                     }
                 }
+                Log.d(TAG, "KJS Media3PlaybackService.play actually");
                 super.play();
             }
 
@@ -164,6 +180,37 @@ public class Media3PlaybackService extends MediaLibraryService {
         mediaSession = new MediaLibraryService.MediaLibrarySession.Builder(this, player, sessionCallback)
                 .setSessionActivity(new MainActivityStarter(this).withOpenPlayer().getPendingIntent())
                 .build();
+
+        setupBluetoothDisconnections();
+    }
+
+    private void setupBluetoothDisconnections() {
+        AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        AudioDeviceCallback deviceCallback = new AudioDeviceCallback() {
+            @Override
+            public void onAudioDevicesRemoved(AudioDeviceInfo[] removedDevices) {
+                for (AudioDeviceInfo device : removedDevices) {
+                    if (device.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP) {
+                        Log.d(TAG, "Bluetooth disconnected");
+                        if (player != null) {
+                            if (UserPreferences.isPauseOnHeadsetDisconnect()) {
+                                player.pause();
+                            }
+                        }
+                    }
+                }
+            }
+        };
+        audioManager.registerAudioDeviceCallback(deviceCallback, null);
+
+        player.addListener(new Player.Listener() {
+            @Override
+            public void onPlaybackStateChanged(int state) {
+                if (state == Player.STATE_IDLE || state == Player.STATE_ENDED) {
+                    audioManager.unregisterAudioDeviceCallback(deviceCallback);
+                }
+            }
+        });
     }
 
     MediaLibrarySessionCallback sessionCallback = new MediaLibrarySessionCallback(this) {
@@ -203,6 +250,9 @@ public class Media3PlaybackService extends MediaLibraryService {
             return super.onCustomCommand(session, controller, customCommand, args);
         }
     };
+
+    // In your playback service or activity
+
 
     @UnstableApi
     private final Player.Listener playerListener = new Player.Listener() {
@@ -316,6 +366,7 @@ public class Media3PlaybackService extends MediaLibraryService {
     @UnstableApi
     @Override
     public void onDestroy() {
+        Log.w(TAG, "KJS Media3PlaybackService destructor");
         PlaybackService.isRunning = false;
         cancelPositionObserver();
         if (sleepTimer != null) {

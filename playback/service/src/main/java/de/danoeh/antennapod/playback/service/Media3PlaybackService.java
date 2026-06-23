@@ -191,13 +191,14 @@ public class Media3PlaybackService extends MediaLibraryService {
         registerReceiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
+                // sound is about to change, eg. bluetooth -> speaker
                 Log.d(TAG, "Pausing playback because audio is becoming noisy");
                 if (UserPreferences.isPauseOnHeadsetDisconnect()) {
                     player.pause();
                 }
             }
         }, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));
-        //setupBluetoothDisconnections();
+        //setupBluetoothDisconnections(); // alternative to "audio becoming noisy"?
     }
 
     private void setupBluetoothDisconnections() {
@@ -223,39 +224,8 @@ public class Media3PlaybackService extends MediaLibraryService {
                     if (device.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP) {
                         Log.d(TAG, "Bluetooth reconnected");
                         if (player != null) {
-                            //if (UserPreferences.isUnpauseOnBluetoothReconnect()) {
+                            if (UserPreferences.isUnpauseOnBluetoothReconnect()) {
                                 player.play();
-                            //}
-                        }
-                    }
-                }
-            }
-        };
-        audioManager.registerAudioDeviceCallback(deviceCallback, null);
-
-        player.addListener(new Player.Listener() {
-            @Override
-            public void onPlaybackStateChanged(int state) {
-                if (state == Player.STATE_IDLE || state == Player.STATE_ENDED) {
-                    audioManager.unregisterAudioDeviceCallback(deviceCallback);
-                }
-            }
-        });
-
-        setupBluetoothDisconnections();
-    }
-
-    private void setupBluetoothDisconnections() {
-        AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        AudioDeviceCallback deviceCallback = new AudioDeviceCallback() {
-            @Override
-            public void onAudioDevicesRemoved(AudioDeviceInfo[] removedDevices) {
-                for (AudioDeviceInfo device : removedDevices) {
-                    if (device.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP) {
-                        Log.d(TAG, "Bluetooth disconnected");
-                        if (player != null) {
-                            if (UserPreferences.isPauseOnHeadsetDisconnect()) {
-                                player.pause();
                             }
                         }
                     }

@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.Looper;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -20,6 +21,8 @@ import de.danoeh.antennapod.ui.appstartintent.MediaButtonStarter;
 import de.danoeh.antennapod.ui.common.Converter;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import de.danoeh.antennapod.model.playback.MediaType;
@@ -61,10 +64,23 @@ public abstract class WidgetUpdater {
     /**
      * Update the widgets with the given parameters. Must be called in a background thread.
      */
+    private static final ExecutorService widgetExecutor = Executors.newSingleThreadExecutor();
     public static void updateWidget(Context context, WidgetState widgetState) {
         if (!PlayerWidget.isEnabled(context) || widgetState == null) {
             return;
         }
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            widgetExecutor.execute(() ->
+                    {
+                        doUpdateWidget(context, widgetState);
+                    }
+            );
+        } else {
+                doUpdateWidget(context, widgetState);
+        }
+    }
+
+    private static void doUpdateWidget(Context context, WidgetState widgetState) {
 
         PendingIntent startMediaPlayer;
         if (widgetState.media != null && widgetState.media.getMediaType() == MediaType.VIDEO) {

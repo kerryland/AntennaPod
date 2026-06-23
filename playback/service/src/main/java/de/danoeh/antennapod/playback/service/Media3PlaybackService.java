@@ -359,6 +359,7 @@ public class Media3PlaybackService extends MediaLibraryService {
                     (int) player.getContentPosition(), (int) player.getDuration(),
                     player.getPlaybackParameters().speed);
             WidgetUpdater.updateWidget(Media3PlaybackService.this, widgetState);
+
             updatePlaybackPreferences();
             EventBus.getDefault().post(new PlayerStatusEvent());
 

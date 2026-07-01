@@ -290,7 +290,8 @@ public class Media3PlaybackService extends MediaLibraryService {
                     PlaybackService.isRunning ? PlayerStatus.PLAYING : PlayerStatus.PAUSED,
                     (int) player.getContentPosition(), (int) player.getDuration(),
                     player.getPlaybackParameters().speed);
-            WidgetUpdater.updateWidget(Media3PlaybackService.this, widgetState);
+            Schedulers.io().scheduleDirect(() ->
+                    WidgetUpdater.updateWidget(Media3PlaybackService.this, widgetState));
             updatePlaybackPreferences();
 
             // Auto-enable sleep timer when playback starts
@@ -310,10 +311,10 @@ public class Media3PlaybackService extends MediaLibraryService {
             if (mediaItem == null) {
                 currentPlayable = null;
                 PlaybackPreferences.writeNoMediaPlaying();
+                EventBus.getDefault().post(new PlayerStatusEvent());
             } else {
                 ensureCurrentMediaLoaded();
             }
-            EventBus.getDefault().post(new PlayerStatusEvent());
         }
 
         @Override
@@ -321,6 +322,7 @@ public class Media3PlaybackService extends MediaLibraryService {
             PlaybackService.isRunning = false;
             EventBus.getDefault().post(new PlayerErrorEvent(
                     ExoPlayerUtils.translateErrorReason(error, Media3PlaybackService.this)));
+            EventBus.getDefault().post(new PlayerStatusEvent());
         }
     };
 
@@ -357,6 +359,7 @@ public class Media3PlaybackService extends MediaLibraryService {
             player.removeListener(playerListener);
             player.release();
         }
+        ExoPlayerUtils.releaseCache();
         if (mediaSession != null) {
             mediaSession.release();
         }
@@ -384,7 +387,8 @@ public class Media3PlaybackService extends MediaLibraryService {
                                 WidgetUpdater.WidgetState widgetState = new WidgetUpdater.WidgetState(currentPlayable,
                                         Util.shouldShowPlayButton(player) ? PlayerStatus.PAUSED : PlayerStatus.PLAYING,
                                         (int) position, (int) duration, speed);
-                                WidgetUpdater.updateWidget(this, widgetState);
+                                Schedulers.io().scheduleDirect(() ->
+                                        WidgetUpdater.updateWidget(this, widgetState));
                                 long currentTime = System.currentTimeMillis();
                                 if (currentTime - lastPositionSaveTime >= POSITION_SAVE_INTERVAL_MS) {
                                     saveCurrentPosition();
@@ -468,14 +472,15 @@ public class Media3PlaybackService extends MediaLibraryService {
     }
 
     private void updatePlaybackPreferences() {
+        int statusBefore = PlaybackPreferences.getCurrentPlayerStatus();
+        long mediaBefore = PlaybackPreferences.getCurrentlyPlayingFeedMediaId();
         if (currentPlayable != null) {
             PlaybackPreferences.writeMediaPlaying(currentPlayable);
         }
         int status = PlaybackService.isRunning ? PlaybackPreferences.PLAYER_STATUS_PLAYING
                 : PlaybackPreferences.PLAYER_STATUS_PAUSED;
-        int statusBefore = PlaybackPreferences.getCurrentPlayerStatus();
         PlaybackPreferences.setCurrentPlayerStatus(status);
-        if (status != statusBefore) {
+        if (status != statusBefore || (currentPlayable != null && currentPlayable.getId() != mediaBefore)) {
             EventBus.getDefault().post(new PlayerStatusEvent());
         }
     }
@@ -668,6 +673,7 @@ public class Media3PlaybackService extends MediaLibraryService {
                             player.stop();
                             player.clearMediaItems();
                             PlaybackPreferences.writeNoMediaPlaying();
+                            EventBus.getDefault().post(new PlayerStatusEvent());
                             EventBus.getDefault().post(
                                     new PlaybackServiceEvent(PlaybackServiceEvent.Action.SERVICE_SHUT_DOWN));
                         });

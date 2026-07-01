@@ -51,5 +51,11 @@
                 android:key="prefProxy"
                 android:summary="@string/pref_proxy_sum"
                 android:title="@string/pref_proxy_title"/>
+        <SwitchPreferenceCompat
+                android:key="prefVpnDownload"
+                android:title="@string/pref_vpn_download_title"
+                android:summary="@string/pref_vpn_download_sum"
+                android:defaultValue="false"
+                android:enabled="true" />
     </PreferenceCategory>
 </PreferenceScreen>

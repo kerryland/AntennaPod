@@ -106,6 +106,7 @@ public abstract class UserPreferences {
     private static final String PREF_PROXY_PORT = "prefProxyPort";
     private static final String PREF_PROXY_USER = "prefProxyUser";
     private static final String PREF_PROXY_PASSWORD = "prefProxyPassword";
+    private static final String PREF_VPN_DOWNLOAD = "prefVpnDownload";
 
     // Services
     private static final String PREF_GPODNET_NOTIFICATIONS = "pref_gpodnet_notifications";
@@ -726,6 +727,10 @@ public abstract class UserPreferences {
     public static void setDataFolder(String dir) {
         Log.d(TAG, "setDataFolder(dir: " + dir + ")");
         prefs.edit().putString(PREF_DATA_FOLDER, dir).apply();
+    }
+
+    public static void setVpnDownload(boolean vpnDownload) {
+        prefs.edit().putBoolean(PREF_VPN_DOWNLOAD, vpnDownload).apply();
     }
 
     /**

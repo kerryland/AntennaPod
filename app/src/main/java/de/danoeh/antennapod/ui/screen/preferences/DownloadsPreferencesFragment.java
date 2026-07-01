@@ -2,8 +2,13 @@ package de.danoeh.antennapod.ui.screen.preferences;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
+
 import androidx.preference.PreferenceManager;
+import androidx.preference.SwitchPreferenceCompat;
+
 import de.danoeh.antennapod.R;
+import de.danoeh.antennapod.net.download.service.feed.VpnNetworkChecker;
 import de.danoeh.antennapod.net.download.serviceinterface.FeedUpdateManager;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.preferences.screen.AnimatedPreferenceFragment;
@@ -18,6 +23,7 @@ public class DownloadsPreferencesFragment extends AnimatedPreferenceFragment
     private static final String PREF_SCREEN_AUTO_DELETE = "prefAutoDeleteScreen";
     private static final String PREF_PROXY = "prefProxy";
     private static final String PREF_CHOOSE_DATA_DIR = "prefChooseDataDir";
+    private static final String PREF_VPN_DOWNLOAD = "prefVpnDownload";
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
@@ -66,6 +72,24 @@ public class DownloadsPreferencesFragment extends AnimatedPreferenceFragment
             });
             return true;
         });
+
+        SwitchPreferenceCompat vpnSwitch = findPreference(PREF_VPN_DOWNLOAD);
+        if (vpnSwitch != null) {
+            vpnSwitch.setOnPreferenceChangeListener((preference, newValue) -> {
+                boolean isVpnEnabled = (Boolean) newValue;
+                UserPreferences.setVpnDownload(isVpnEnabled);
+
+                if (isVpnEnabled) {
+                    Log.d("KJS", "User turned the VPN switch ON");
+                    VpnNetworkChecker.launchVpnSelector(getContext());
+                } else {
+                    Log.d("KJS", "User turned the VPN switch OFF");
+                }
+
+                return true;
+            });
+        }
+
         setDataFolderText();
     }
 

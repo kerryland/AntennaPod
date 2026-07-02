@@ -1,9 +1,13 @@
 package de.danoeh.antennapod.playback.service;
 
+import android.content.Context;
+import android.media.AudioManager;
 import android.media.audiofx.LoudnessEnhancer;
 import android.os.Bundle;
 import android.util.Log;
 import android.webkit.URLUtil;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
@@ -124,8 +128,35 @@ public class Media3PlaybackService extends MediaLibraryService {
                         .build();
             }
 
+            private boolean warnBecauseMuted() {
+                AudioManager audioManager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
+
+                boolean isMuted = false;
+                boolean isZeroVolume = false;
+
+                if (audioManager != null) {
+                    isMuted = audioManager.isStreamMute(AudioManager.STREAM_MUSIC);
+                    isZeroVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) == 0;
+                }
+
+                if (isMuted || isZeroVolume) {
+                    Toast.makeText(
+                            getApplicationContext(),
+                            getApplicationContext().getString(R.string.audio_muted),
+                            Toast.LENGTH_LONG
+                    ).show();
+
+                    return true;
+                }
+                return false;
+            }
+
             @Override
             public void play() {
+                if (warnBecauseMuted()) {
+                    return;
+                }
+
                 if (handleStreamingConfirmation()) {
                     return;
                 } else if (shouldBlockForStreamingConfirmation()) {

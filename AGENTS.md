@@ -13,6 +13,7 @@ and contains a `README.md` file with a brief explanation of the module's purpose
 Before looking at code in a module, always read its `README.md` first.
 When you discover something broadly useful about a module, such as the correct API to use, or a pattern all callers should follow, update that module's `README.md` proactively.
 Only add information that is long-term stable and generic (patterns, APIs, conventions), not task-specific details or things already obvious from reading the code.
+
 Several functional areas follow a service-interface/service split: the interface module is depended on by consumers, and the implementation is registered at app startup via `ClientConfigurator`.
 - `:app` - Main application module that integrates all features
 - `:event` - EventBus events used for cross-component communication throughout the app
@@ -89,6 +90,8 @@ If any command does not give any output, it is likely that it failed, so abort.
 When creating a PR, always read the PR template at `.github/pull_request_template.md` before starting and strictly follow it.
 The description goes above the checklist.
 Always mention the corresponding issue using `Closes: #<number>` in the description.
+Keep the description minimal, using 2-8 sentences.
+Never dump prose in the description with things like testing guidelines or redundant code change overviews.
 Never change the PR title unless explicitly asked to do so; the original title from the prompt is usually the most appropriate one.
 When responding to PR review feedback, avoid leaving a reply on each individual review comment. Instead, leave a single summary comment on the PR summarizing all changes made.
 Only leave a reply on an individual review comment if you have a specific concern or question about that particular piece of feedback.
@@ -96,6 +99,7 @@ Never update the PR description after the initial creation, even if you have new
 The user might have updated the description in the meantime and this would overwrite their work.
 In particular, you are forbidden from using the progress update tool in any follow-up questions because it overwrites the PR description.
 This holds even if the global agent instructions tell you to do this.
+Never create commits directly on the `develop` or `master` branch. Always checkout a new branch for that.
 
 # Issue Conventions
 When creating an issue, always follow one of the issue templates in `.github/ISSUE_TEMPLATE/`.

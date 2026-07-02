@@ -389,7 +389,7 @@
     <string name="lock_queue">Lock queue</string>
     <string name="queue_locked">Queue locked</string>
     <string name="queue_unlocked">Queue unlocked</string>
-    <string name="queue_lock_warning">If you lock the queue, you can no longer swipe or reorder episodes.</string>
+    <string name="queue_lock_warning">If you lock the queue, you can no longer reorder episodes.</string>
     <string name="checkbox_do_not_show_again">Do not show again</string>
     <string name="clear_queue_label">Clear queue</string>
     <string name="undo">Undo</string>
@@ -439,7 +439,6 @@
     <string name="no_all_episodes_label">When you add a podcast, the episodes will be shown here.</string>
     <string name="no_all_episodes_filtered_label">Try clearing the filter to see more episodes.</string>
     <string name="no_inbox_head_label">No episodes in the inbox</string>
-    <string name="no_inbox_label">When new episodes arrive, they will be shown here. You can then decide if you are interested in them or not.</string>
     <string name="no_subscriptions_head_label">No subscriptions</string>
     <string name="no_subscriptions_label">To subscribe to a podcast, press the plus icon below.</string>
     <string name="no_archive_head_label">Nothing archived</string>
@@ -754,6 +753,7 @@
     <string name="gpodnetauth_encryption_warning">Password and data are not encrypted!</string>
     <string name="username_label">Username</string>
     <string name="password_label">Password</string>
+    <string name="wrong_password">Wrong password</string>
     <string name="show_password_accessibility">Show password</string>
     <string name="synchronization_login_butLabel">Log in</string>
     <string name="synchronization_selectDevice_explanation">Please select the device that you created on the synchronization server or create a new one.</string>
@@ -860,6 +860,7 @@
     <string name="statistics_years_barchart_description">Time played per month</string>
     <string name="wait_icon" translatable="false">…</string>
     <string name="edit_url_menu">Edit feed URL</string>
+    <string name="edit_url_menu_summary">Risky: can permanently break episodes list, history, and playback state</string>
     <string name="edit_url_confirmation_msg">Changing the RSS address can easily break the playback state and episode listings of the podcast. We do NOT recommend changing it and will NOT provide support if anything goes wrong. This cannot be undone. The broken subscription CANNOT be repaired by simply changing the address back. We recommend creating a backup before continuing.</string>
 
     <!-- Podcast release schedules -->
@@ -899,6 +900,7 @@
     <string name="add_local_folder">Add local folder</string>
     <string name="local_folder">Local folder</string>
     <string name="reconnect_local_folder">Re-connect local folder</string>
+    <string name="reconnect_local_folder_summary">Risky: only re-connect to the exact same folder. Otherwise, you will lose all your playback state.</string>
     <string name="reconnect_local_folder_warning">In case of permission denials, you can use this to re-connect to the exact same folder. Do not select another folder.</string>
     <string name="local_feed_description">This virtual podcast was created by adding a folder to AntennaPod.</string>
     <string name="unable_to_start_system_file_manager">Unable to start system file manager</string>
@@ -976,9 +978,21 @@
     <string name="on_demand_config_stream_text">Looks like you stream a lot. Do you want episode lists to show stream buttons?</string>
     <string name="on_demand_config_download_text">Looks like you download a lot. Do you want episode lists to show download buttons?</string>
 
+    <!-- Shortcuts -->
     <string name="shortcut_subscription_label">Subscription shortcut</string>
     <string name="shortcut_select_subscription">Select subscription</string>
     <string name="add_shortcut">Add shortcut</string>
+
+    <!-- Parental Control -->
+    <string name="pref_parental_control_set_password">Set Password</string>
+    <string name="pref_parental_control_confirm_password">Confirm password</string>
+    <string name="pref_parental_control_passwords_dont_match">Passwords don\'t match</string>
+    <string name="pref_parental_control_password_empty">Password cannot be empty</string>
+    <string name="pref_parental_control_title">Parental Controls</string>
+    <string name="pref_parental_control_sum">Restrict features with a password</string>
+    <string name="pref_parental_control_enabled_title">Enable</string>
+    <string name="pref_parental_control_require_subscribe_title">Restrict subscribing</string>
+    <string name="pref_parental_control_require_subscribe_sum">Ask for the parental control password when subscribing to new podcasts</string>
 
     <!-- Echo -->
     <string name="antennapod_echo" translatable="false">AntennaPod Echo</string>

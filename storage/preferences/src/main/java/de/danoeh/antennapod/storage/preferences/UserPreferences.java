@@ -729,6 +729,10 @@ public abstract class UserPreferences {
         prefs.edit().putString(PREF_DATA_FOLDER, dir).apply();
     }
 
+    public static boolean isVpnDownload() {
+        return prefs.getBoolean(PREF_VPN_DOWNLOAD, true);
+    }
+
     public static void setVpnDownload(boolean vpnDownload) {
         prefs.edit().putBoolean(PREF_VPN_DOWNLOAD, vpnDownload).apply();
     }

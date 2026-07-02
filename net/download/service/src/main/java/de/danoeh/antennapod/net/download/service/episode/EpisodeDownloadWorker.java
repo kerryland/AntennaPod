@@ -19,6 +19,7 @@ import androidx.work.WorkerParameters;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import de.danoeh.antennapod.net.download.service.R;
+import de.danoeh.antennapod.net.download.service.feed.VpnNetworkChecker;
 import de.danoeh.antennapod.net.download.service.feed.remote.DefaultDownloaderFactory;
 import de.danoeh.antennapod.net.download.service.feed.remote.Downloader;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadRequestCreator;
@@ -30,6 +31,7 @@ import de.danoeh.antennapod.model.download.DownloadResult;
 import de.danoeh.antennapod.model.feed.FeedMedia;
 import de.danoeh.antennapod.model.download.DownloadRequest;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
+import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.appstartintent.MainActivityStarter;
 import de.danoeh.antennapod.ui.notifications.NotificationUtils;
 import org.apache.commons.io.FileUtils;
@@ -41,12 +43,15 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class EpisodeDownloadWorker extends Worker {
     private static final String TAG = "EpisodeDownloadWorker";
     private static final Map<String, Integer> notificationProgress = new HashMap<>();
 
     private Downloader downloader = null;
+
+    private final AtomicInteger activeDownloads = new AtomicInteger();
 
     public EpisodeDownloadWorker(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
@@ -154,6 +159,12 @@ public class EpisodeDownloadWorker extends Worker {
             }
         }
 
+        if (UserPreferences.isVpnDownload() && !VpnNetworkChecker.isVpnConnected(getApplicationContext())) {
+            VpnNetworkChecker.launchVpnSelector(getApplicationContext());
+            // Not connected to a VPN, so try again
+            return Result.failure();
+        }
+
         downloader = new DefaultDownloaderFactory().create(request);
         if (downloader == null) {
             Log.d(TAG, "Unable to create downloader");
@@ -169,6 +180,7 @@ public class EpisodeDownloadWorker extends Worker {
 
         DownloadAnnouncer.announceStart(getApplicationContext(), request.getTitle());
         try {
+            activeDownloads.incrementAndGet();
             downloader.call();
         } catch (Exception e) {
             DBWriter.addDownloadStatus(downloader.getResult());
@@ -177,6 +189,9 @@ public class EpisodeDownloadWorker extends Worker {
         } finally {
             if (wifiLock != null) {
                 wifiLock.release();
+            }
+            if (activeDownloads.decrementAndGet() == 0) {
+                VpnNetworkChecker.launchVpnSelector(getApplicationContext());
             }
         }
 

@@ -36,8 +36,6 @@ public abstract class Downloader implements Callable<Downloader> {
     protected abstract void download();
 
     public final Downloader call() {
-        // TODO: If require VPN and VPN not connected, fail
-
         download();
         finished = true;
         return this;

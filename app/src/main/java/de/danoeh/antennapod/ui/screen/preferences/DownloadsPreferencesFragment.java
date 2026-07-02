@@ -78,14 +78,6 @@ public class DownloadsPreferencesFragment extends AnimatedPreferenceFragment
             vpnSwitch.setOnPreferenceChangeListener((preference, newValue) -> {
                 boolean isVpnEnabled = (Boolean) newValue;
                 UserPreferences.setVpnDownload(isVpnEnabled);
-
-                if (isVpnEnabled) {
-                    Log.d("KJS", "User turned the VPN switch ON");
-                    VpnNetworkChecker.launchVpnSelector(getContext());
-                } else {
-                    Log.d("KJS", "User turned the VPN switch OFF");
-                }
-
                 return true;
             });
         }

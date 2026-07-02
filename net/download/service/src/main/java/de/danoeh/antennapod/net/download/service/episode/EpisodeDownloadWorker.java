@@ -51,7 +51,7 @@ public class EpisodeDownloadWorker extends Worker {
 
     private Downloader downloader = null;
 
-    private final AtomicInteger activeDownloads = new AtomicInteger();
+    private static final AtomicInteger activeDownloads = new AtomicInteger();
 
     public EpisodeDownloadWorker(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);

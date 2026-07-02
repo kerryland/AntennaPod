@@ -19,6 +19,7 @@ public class ConnectivityActionReceiver extends BroadcastReceiver {
         if (TextUtils.equals(intent.getAction(), ConnectivityManager.CONNECTIVITY_ACTION)) {
             Log.d(TAG, "Received intent");
 
+            // TODO: Disallow if vpn needed and not on vpn
             if (NetworkUtils.isAutoDownloadAllowed()) {
                 Log.d(TAG, "auto-dl network available, starting auto-download");
                 AutoDownloadManager.getInstance().autodownloadUndownloadedItems(context);

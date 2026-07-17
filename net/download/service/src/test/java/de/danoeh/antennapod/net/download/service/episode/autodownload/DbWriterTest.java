@@ -11,6 +11,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.model.feed.SortOrder;
+import de.danoeh.antennapod.net.download.serviceinterface.AutoDownloadManager;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterfaceStub;
 import de.danoeh.antennapod.net.sync.serviceinterface.SynchronizationQueue;
@@ -27,6 +28,7 @@ import org.robolectric.RobolectricTestRunner;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -72,6 +74,10 @@ public class DbWriterTest {
         PodDBAdapter adapter = PodDBAdapter.getInstance();
         adapter.open();
         adapter.close();
+
+        // ./gradlew :net:download:service:testPlayDebugUnitTest
+        // does not run without this.
+        AutoDownloadManager.setInstance(new AutoDownloadManagerImpl());
 
         SharedPreferences.Editor prefEdit = PreferenceManager.getDefaultSharedPreferences(
                 context.getApplicationContext()).edit();
@@ -780,6 +786,83 @@ public class DbWriterTest {
                 FeedItemFilter.unfiltered(), SortOrder.DATE_NEW_OLD, 0, Integer.MAX_VALUE);
         for (FeedItem item : loadedItems) {
             assertFalse(item.isNew());
+        }
+    }
+
+    @Test
+    public void testMoveQueueItemsToTop() throws Exception {
+        // Generate feed items 1 to 10
+        final int numItems = 10;
+        Feed feed = createTestFeed(numItems);
+        withPodDB(adapter -> adapter.setQueue(feed.getItems()));
+
+        // Move two items, id "4" and "5" to the front
+        List<FeedItem> moveThese = new ArrayList<>(feed.getItems().subList(3, 5));
+        DBWriter.moveQueueItemsToTop(moveThese).get();
+
+        final List<FeedItem> queue = DBReader.getQueue();
+        assertEquals(10, queue.size());
+        for (FeedItem feedItem : queue) {
+            System.out.println(feedItem.getFeedId() + " " + feedItem.getDescription());
+        }
+
+        int[] expectedIds = { 4, 5, 1, 2, 3, 6, 7, 8, 9, 10 };
+
+        int element = 0;
+        for (int expectedId : expectedIds) {
+            assertEquals(expectedId, queue.get(element++).getId());
+        }
+    }
+
+    @Test
+    public void testMoveQueueItemsToBottom() throws Exception {
+        // Generate feed items 1 to 10
+        final int numItems = 10;
+        Feed feed = createTestFeed(numItems);
+        withPodDB(adapter -> adapter.setQueue(feed.getItems()));
+
+        // Move two items, id "4" and "5" to the end
+        List<FeedItem> moveThese = new ArrayList<>(feed.getItems().subList(3, 5));
+        DBWriter.moveQueueItemsToBottom(moveThese).get();
+
+        final List<FeedItem> queue = DBReader.getQueue();
+        assertEquals(10, queue.size());
+
+        for (FeedItem feedItem : queue) {
+            System.out.println(feedItem.getFeedId() + " " + feedItem.getDescription());
+        }
+
+
+        int[] expectedIds = { 1, 2, 3, 6, 7, 8, 9, 10, 4, 5 };
+
+        int element = 0;
+        for (int expectedId : expectedIds) {
+            assertEquals(expectedId, queue.get(element++).getId());
+        }
+    }
+
+    @Test
+    public void testMoveQueueItemsToNext() throws Exception {
+        // Generate feed items 1 to 10
+        final int numItems = 10;
+        Feed feed = createTestFeed(numItems);
+        withPodDB(adapter -> adapter.setQueue(feed.getItems()));
+
+        // Move two items, id "4" and "5" to after "8"
+        List<FeedItem> moveThese = new ArrayList<>(feed.getItems().subList(3, 5));
+        DBWriter.moveQueueItemsToNext(feed.getItems().get(8), moveThese).get();
+
+        final List<FeedItem> queue = DBReader.getQueue();
+        assertEquals(10, queue.size());
+        for (FeedItem feedItem : queue) {
+            System.out.println(feedItem.getFeedId() + " " + feedItem.getDescription());
+        }
+
+        int[] expectedIds = { 1, 2, 3, 6, 7, 8, 4, 5, 9, 10 };
+
+        int element = 0;
+        for (int expectedId : expectedIds) {
+            assertEquals(expectedId, queue.get(element++).getId());
         }
     }
 

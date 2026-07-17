@@ -404,6 +404,12 @@
         <item quantity="one">%d episode moved to bottom.</item>
         <item quantity="other">%d episodes moved to bottom.</item>
     </plurals>
+    <string name="move_to_play_next_label">Move to play next</string>
+    <plurals name="move_to_play_next_message">
+        <item quantity="one">%d episode moved to play next.</item>
+        <item quantity="other">%d episodes moved to play next.</item>
+    </plurals>
+
     <string name="sort">Sort</string>
     <string name="keep_sorted">Keep sorted</string>
     <string name="date">Date</string>

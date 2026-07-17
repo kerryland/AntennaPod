@@ -30,6 +30,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import de.danoeh.antennapod.event.MessageEvent;
 import de.danoeh.antennapod.event.playback.SpeedChangedEvent;
+import de.danoeh.antennapod.playback.service.PlaybackController;
 import de.danoeh.antennapod.ui.screen.InboxFragment;
 import de.danoeh.antennapod.ui.screen.SearchFragment;
 import de.danoeh.antennapod.net.download.serviceinterface.FeedUpdateManager;
@@ -41,6 +42,7 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.activity.MainActivity;
@@ -362,6 +364,24 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
         }
     }
 
+    private int findCurrentlyPlayingPosition() {
+        AtomicInteger currently_playing = new AtomicInteger(-1);
+        PlaybackController.bindToMedia3Service(getActivity(), controller -> {
+            Log.d(TAG, "KJS got inside");
+
+            int element = 0;
+            for (FeedItem feedItem : queue) {
+                if (controller.getCurrentMediaItem() != null
+                        && ("" + feedItem.getMedia().getId()).equals(controller.getCurrentMediaItem().mediaId)) {
+                    currently_playing.set(element);
+                    break;
+                }
+                element++;
+            }
+        });
+        return currently_playing.get();
+    }
+
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         Log.d(TAG, "onContextItemSelected() called with: " + "item = [" + item + "]");
@@ -390,11 +410,24 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
                 recyclerAdapter.notifyItemMoved(position, 0);
                 DBWriter.moveQueueItemsToTop(Collections.singletonList(selectedItem));
                 return true;
+
             } else if (itemId == R.id.move_to_bottom_item) {
                 queue.add(queue.remove(position));
                 recyclerAdapter.notifyItemMoved(position, queue.size() - 1);
                 DBWriter.moveQueueItemsToBottom(Collections.singletonList(selectedItem));
                 return true;
+
+            } else if (itemId == R.id.move_to_play_next_item) {
+                Log.d(TAG, "KJS Moving to play next");
+                int currentlyPlayingPosition = findCurrentlyPlayingPosition();
+                if (currentlyPlayingPosition != -1) {
+                    // TODO: Clean up queue and recycler code here and above
+                    queue.add(queue.remove(position));
+                    recyclerAdapter.notifyItemMoved(position, currentlyPlayingPosition + 1);
+                    DBWriter.moveQueueItemsToNext(queue.get(currentlyPlayingPosition + 1), Collections.singletonList(selectedItem));
+                }
+
+                return true; // not if nothing is playing?
             }
         }
         return FeedItemMenuHandler.onMenuItemClicked(this, item.getItemId(), selectedItem);

@@ -586,49 +586,58 @@ public class DBWriter {
     }
 
     public static Future<?> moveQueueItemsToTop(final List<FeedItem> items) {
-        return runOnDbThread(() -> moveQueueItemsSynchronous(true, items));
+        return runOnDbThread(() -> moveQueueItemsSynchronous(0, items));
     }
 
     public static Future<?> moveQueueItemsToBottom(final List<FeedItem> items) {
-        return runOnDbThread(() -> moveQueueItemsSynchronous(false, items));
+        return runOnDbThread(() -> moveQueueItemsSynchronous(DBReader.getQueue().size(), items));
     }
 
-    private static void moveQueueItemsSynchronous(final boolean moveToTop, final List<FeedItem> items) {
+    public static Future<?> moveQueueItemsToNext(final FeedItem afterThis, final List<FeedItem> items) {
+        return runOnDbThread(() -> moveQueueItemsSynchronous(DBReader.getQueue().size(), items));
+    }
+
+    private static void moveQueueItemsSynchronous(final int newPosition, final List<FeedItem> items) {
         if (items.isEmpty()) {
             return;
         }
 
-        final PodDBAdapter adapter = PodDBAdapter.getInstance();
-        adapter.open();
-        final List<FeedItem> queue = DBReader.getQueue();
-
-        List<FeedItem> selectedItems = moveToTop ? new ArrayList<>(items) : items;
-        if (moveToTop) {
+        List<FeedItem> selectedItems;
+        if (newPosition == 0) { // Move to top
+            selectedItems = new ArrayList<>(items);
+            // Sort items to move to top in reverse order (for some reason)
             Collections.reverse(selectedItems);
+        } else {
+            selectedItems = items; // why bother?
         }
 
         boolean queueModified = false;
-        List<QueueEvent> events = new ArrayList<>();
 
+        final List<FeedItem> queue = DBReader.getQueue();
         queue.removeAll(selectedItems);
+
+        List<QueueEvent> events = new ArrayList<>();
         events.add(QueueEvent.setQueue(queue));
 
         for (FeedItem item : selectedItems) {
-            int newIndex = moveToTop ? 0 : queue.size();
-            queue.add(newIndex, item);
-            events.add(QueueEvent.moved(item, newIndex));
+            queue.add(newPosition > queue.size() ?  queue.size() : newPosition, item);
+            events.add(QueueEvent.moved(item, newPosition));
             queueModified = true;
         }
 
         if (queueModified) {
+            final PodDBAdapter adapter = PodDBAdapter.getInstance();
+            adapter.open();
             adapter.setQueue(queue);
+            adapter.close();
+
+            System.out.println("QUEUE HAS " + queue.size() + " ITEMS inside");
             for (QueueEvent event : events) {
                 EventBus.getDefault().post(event);
             }
         } else {
-            Log.w(TAG, "moveToTop: " + moveToTop +  " - Queue was not modified.");
+            Log.w(TAG, "moveToTop: " + (newPosition == 0) +  " - Queue was not modified.");
         }
-        adapter.close();
     }
 
     public static Future<?> resetPagedFeedPage(Feed feed) {

@@ -19,6 +19,12 @@
 
     </PreferenceCategory>
 
+    <SwitchPreferenceCompat
+        android:icon="@drawable/ic_star"
+        android:key="feedPriority"
+        android:summary="@string/feed_priority_summary"
+        android:title="@string/feed_priority_label" />
+
     <PreferenceCategory
         android:title="@string/playback_pref">
 

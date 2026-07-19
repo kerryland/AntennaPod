@@ -71,7 +71,7 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
     private static final String PREF_TAGS = "tags";
     private static final String PREF_EDIT_FEED_URL = "editFeedUrl";
     private static final String PREF_RECONNECT_LOCAL_FOLDER = "reconnectLocalFolder";
-
+    private static final String PREF_PRIORITY = "feedPriority";
     private Feed feed;
     private Disposable disposable;
     private FeedPreferences feedPreferences;
@@ -241,6 +241,15 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
             feedPreferences.setNewEpisodesAction(FeedPreferences.NewEpisodesAction.fromCode(code));
             DBWriter.setFeedPreferences(feedPreferences);
             updateNewEpisodesActionSummary();
+            return false;
+        });
+        SwitchPreferenceCompat priorityPreference = findPreference(PREF_PRIORITY);
+        priorityPreference.setChecked(feedPreferences.getPriority());
+        priorityPreference.setOnPreferenceChangeListener((preference, newValue) -> {
+            boolean checked = Boolean.TRUE.equals(newValue);
+            feedPreferences.setPriority(checked);
+            DBWriter.setFeedPreferences(feedPreferences);
+            priorityPreference.setChecked(checked);
             return false;
         });
         SwitchPreferenceCompat keepUpdated = findPreference("keepUpdated");

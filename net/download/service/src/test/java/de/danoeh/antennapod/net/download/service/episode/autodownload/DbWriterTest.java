@@ -28,7 +28,6 @@ import org.robolectric.RobolectricTestRunner;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -801,12 +800,8 @@ public class DbWriterTest {
         DBWriter.moveQueueItemsToTop(moveThese).get();
 
         final List<FeedItem> queue = DBReader.getQueue();
-        assertEquals(10, queue.size());
-        for (FeedItem feedItem : queue) {
-            System.out.println(feedItem.getFeedId() + " " + feedItem.getDescription());
-        }
-
         int[] expectedIds = { 4, 5, 1, 2, 3, 6, 7, 8, 9, 10 };
+        assertEquals(expectedIds.length, queue.size());
 
         int element = 0;
         for (int expectedId : expectedIds) {
@@ -826,14 +821,13 @@ public class DbWriterTest {
         DBWriter.moveQueueItemsToBottom(moveThese).get();
 
         final List<FeedItem> queue = DBReader.getQueue();
-        assertEquals(10, queue.size());
 
         for (FeedItem feedItem : queue) {
-            System.out.println(feedItem.getFeedId() + " " + feedItem.getDescription());
+            System.out.println(feedItem.getId() + " " + feedItem.getTitle());
         }
 
-
         int[] expectedIds = { 1, 2, 3, 6, 7, 8, 9, 10, 4, 5 };
+        assertEquals(expectedIds.length, queue.size());
 
         int element = 0;
         for (int expectedId : expectedIds) {
@@ -842,26 +836,30 @@ public class DbWriterTest {
     }
 
     @Test
-    public void testMoveQueueItemsToNext() throws Exception {
+    public void testMoveQueueItemsToPosition() throws Exception {
         // Generate feed items 1 to 10
         final int numItems = 10;
         Feed feed = createTestFeed(numItems);
         withPodDB(adapter -> adapter.setQueue(feed.getItems()));
 
-        // Move two items, id "4" and "5" to after "8"
+        for (FeedItem feedItem : feed.getItems()) {
+            System.out.println(feedItem.getId() + " " + feedItem.getTitle());
+        }
+
+        // Move two items, id "4" and "5" to after "0"
         List<FeedItem> moveThese = new ArrayList<>(feed.getItems().subList(3, 5));
-        DBWriter.moveQueueItemsToNext(feed.getItems().get(8), moveThese).get();
+        DBWriter.moveQueueItemsToPosition(1, moveThese).get();
 
         final List<FeedItem> queue = DBReader.getQueue();
         assertEquals(10, queue.size());
         for (FeedItem feedItem : queue) {
-            System.out.println(feedItem.getFeedId() + " " + feedItem.getDescription());
+            System.out.println(feedItem.getId() + " " + feedItem.getTitle());
         }
 
-        int[] expectedIds = { 1, 2, 3, 6, 7, 8, 4, 5, 9, 10 };
+        long[] expectedIds = { 1, 4, 5, 2, 3, 6, 7, 8, 9, 10 };
 
         int element = 0;
-        for (int expectedId : expectedIds) {
+        for (long expectedId : expectedIds) {
             assertEquals(expectedId, queue.get(element++).getId());
         }
     }

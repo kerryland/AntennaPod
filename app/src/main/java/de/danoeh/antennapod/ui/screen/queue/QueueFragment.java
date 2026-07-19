@@ -1,5 +1,6 @@
 package de.danoeh.antennapod.ui.screen.queue;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
@@ -20,6 +21,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
 import androidx.fragment.app.Fragment;
+import androidx.media3.session.MediaController;
+import androidx.media3.session.SessionToken;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.SimpleItemAnimator;
@@ -27,10 +30,15 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.common.util.concurrent.ListenableFuture;
 
 import de.danoeh.antennapod.event.MessageEvent;
 import de.danoeh.antennapod.event.playback.SpeedChangedEvent;
+import de.danoeh.antennapod.playback.base.MediaItemAdapter;
+import de.danoeh.antennapod.playback.service.Media3PlaybackService;
 import de.danoeh.antennapod.playback.service.PlaybackController;
+import de.danoeh.antennapod.playback.service.PlaybackService;
+import de.danoeh.antennapod.ui.appstartintent.MainActivityStarter;
 import de.danoeh.antennapod.ui.screen.InboxFragment;
 import de.danoeh.antennapod.ui.screen.SearchFragment;
 import de.danoeh.antennapod.net.download.serviceinterface.FeedUpdateManager;
@@ -43,6 +51,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.activity.MainActivity;
@@ -364,22 +373,39 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
         }
     }
 
-    private int findCurrentlyPlayingPosition() {
-        AtomicInteger currently_playing = new AtomicInteger(-1);
+    public interface CurrentPositionCallback {
+        void onCurrentPosition(int position);
+    }
+    private void findCurrentlyPlayingPosition(final CurrentPositionCallback callback) {
+
         PlaybackController.bindToMedia3Service(getActivity(), controller -> {
-            Log.d(TAG, "KJS got inside");
+            int currently_playing = -1;
+            //controller.
+
+            if (controller.getCurrentMediaItem() != null) {
+                Log.d(TAG, "KJS got inside. currentMediaItem ID=" + controller.getCurrentMediaItem().mediaId);
+            } else {
+                Log.d(TAG, "KJS got inside. currentMediaItem is null");
+            }
+
+            Log.d(TAG, "KJS queue size=" + queue.size());
 
             int element = 0;
             for (FeedItem feedItem : queue) {
-                if (controller.getCurrentMediaItem() != null
-                        && ("" + feedItem.getMedia().getId()).equals(controller.getCurrentMediaItem().mediaId)) {
-                    currently_playing.set(element);
-                    break;
+                if (controller.getCurrentMediaItem() != null) {
+
+                    Log.d(TAG, "KJS feeditem: " + feedItem.getId() + ". " + feedItem.getTitle() + " MediaId= " + MediaItemAdapter.fromPlayableStub(feedItem.getMedia()).mediaId);
+                    if (("" + MediaItemAdapter.fromPlayableStub(feedItem.getMedia()).mediaId).equals(controller.getCurrentMediaItem().mediaId)) {
+                        currently_playing = element;
+                        Log.d(TAG, "KJS feeditem MATCH on " + currently_playing);
+                        break;
+                    }
+
                 }
                 element++;
             }
+            callback.onCurrentPosition(currently_playing);
         });
-        return currently_playing.get();
     }
 
     @Override
@@ -418,14 +444,21 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
                 return true;
 
             } else if (itemId == R.id.move_to_play_next_item) {
-                Log.d(TAG, "KJS Moving to play next");
-                int currentlyPlayingPosition = findCurrentlyPlayingPosition();
-                if (currentlyPlayingPosition != -1) {
-                    // TODO: Clean up queue and recycler code here and above
-                    queue.add(queue.remove(position));
-                    recyclerAdapter.notifyItemMoved(position, currentlyPlayingPosition + 1);
-                    DBWriter.moveQueueItemsToNext(queue.get(currentlyPlayingPosition + 1), Collections.singletonList(selectedItem));
-                }
+
+                findCurrentlyPlayingPosition(new CurrentPositionCallback() {
+                    @Override
+                    public void onCurrentPosition(int currentlyPlayingPosition) {
+                        if (currentlyPlayingPosition != -1 && currentlyPlayingPosition != position) {
+                            // TODO: Clean up queue and recycler code here and above
+                            queue.add(queue.remove(position));
+                            recyclerAdapter.notifyItemMoved(position, currentlyPlayingPosition + 1);
+                            DBWriter.moveQueueItemsToPosition(currentlyPlayingPosition + 1, Collections.singletonList(selectedItem));
+                        }
+                    }
+                });
+
+             //   Log.d(TAG, "KJS Moving to play next. currentlyPlayingPosition=" + currentlyPlayingPosition);
+
 
                 return true; // not if nothing is playing?
             }

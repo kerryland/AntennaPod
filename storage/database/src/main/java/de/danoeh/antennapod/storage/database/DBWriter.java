@@ -26,8 +26,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -593,36 +595,51 @@ public class DBWriter {
         return runOnDbThread(() -> moveQueueItemsSynchronous(DBReader.getQueue().size(), items));
     }
 
-    public static Future<?> moveQueueItemsToNext(final FeedItem afterThis, final List<FeedItem> items) {
-        return runOnDbThread(() -> moveQueueItemsSynchronous(DBReader.getQueue().size(), items));
+    public static Future<?> moveQueueItemsToPosition(final int position, final List<FeedItem> items) {
+        return runOnDbThread(() -> moveQueueItemsSynchronous(position, items));
     }
 
-    private static void moveQueueItemsSynchronous(final int newPosition, final List<FeedItem> items) {
-        if (items.isEmpty()) {
+    private static void moveQueueItemsSynchronous(final int newPosition, final List<FeedItem> selectedItems) {
+        if (selectedItems.isEmpty()) {
             return;
-        }
-
-        List<FeedItem> selectedItems;
-        if (newPosition == 0) { // Move to top
-            selectedItems = new ArrayList<>(items);
-            // Sort items to move to top in reverse order (for some reason)
-            Collections.reverse(selectedItems);
-        } else {
-            selectedItems = items; // why bother?
         }
 
         boolean queueModified = false;
 
         final List<FeedItem> queue = DBReader.getQueue();
+
+        // Snapshot the original positions of all items
+        Map<FeedItem, Integer> originalPositions = new HashMap<>();
+        for (int i = 0; i < queue.size(); i++) {
+            originalPositions.put(queue.get(i), i);
+        }
+
+        // Calculate the new insertion position.
+        int adjustedPosition = newPosition;
+        for (FeedItem item : selectedItems) {
+            Integer originalPos = originalPositions.get(item);
+            if (originalPos != null && originalPos < newPosition) {
+                adjustedPosition--;
+            }
+        }
+
         queue.removeAll(selectedItems);
 
+        adjustedPosition = Math.max(0, Math.min(queue.size(), adjustedPosition));
+        queue.addAll(adjustedPosition, selectedItems);
+
+        // Check for changed positions and fire notifications
         List<QueueEvent> events = new ArrayList<>();
         events.add(QueueEvent.setQueue(queue));
 
-        for (FeedItem item : selectedItems) {
-            queue.add(newPosition > queue.size() ?  queue.size() : newPosition, item);
-            events.add(QueueEvent.moved(item, newPosition));
-            queueModified = true;
+        for (int i = 0; i < queue.size(); i++) {
+            FeedItem item = queue.get(i);
+            Integer oldPos = originalPositions.get(item);
+
+            if (oldPos != null && oldPos != i) {
+                events.add(QueueEvent.moved(item, i));
+                queueModified = true;
+            }
         }
 
         if (queueModified) {

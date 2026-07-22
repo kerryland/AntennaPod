@@ -51,8 +51,6 @@ public class EpisodeDownloadWorker extends Worker {
 
     private Downloader downloader = null;
 
-    private static final AtomicInteger activeDownloads = new AtomicInteger();
-
     public EpisodeDownloadWorker(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
     }
@@ -159,12 +157,6 @@ public class EpisodeDownloadWorker extends Worker {
             }
         }
 
-        if (UserPreferences.isVpnDownload() && !VpnNetworkChecker.isVpnConnected(getApplicationContext())) {
-            VpnNetworkChecker.launchVpnSelector(getApplicationContext());
-            // Not connected to a VPN, so try again
-            return Result.failure();
-        }
-
         downloader = new DefaultDownloaderFactory().create(request);
         if (downloader == null) {
             Log.d(TAG, "Unable to create downloader");
@@ -180,7 +172,6 @@ public class EpisodeDownloadWorker extends Worker {
 
         DownloadAnnouncer.announceStart(getApplicationContext(), request.getTitle());
         try {
-            activeDownloads.incrementAndGet();
             downloader.call();
         } catch (Exception e) {
             DBWriter.addDownloadStatus(downloader.getResult());
@@ -189,9 +180,6 @@ public class EpisodeDownloadWorker extends Worker {
         } finally {
             if (wifiLock != null) {
                 wifiLock.release();
-            }
-            if (activeDownloads.decrementAndGet() == 0) {
-                VpnNetworkChecker.launchVpnSelector(getApplicationContext());
             }
         }
 

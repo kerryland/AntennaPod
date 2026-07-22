@@ -22,6 +22,7 @@ import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.storage.preferences.PlaybackPreferences;
 import de.danoeh.antennapod.storage.preferences.SynchronizationSettings;
+import de.danoeh.antennapod.ui.BulkDownloader;
 import de.danoeh.antennapod.ui.common.IntentUtils;
 import de.danoeh.antennapod.ui.share.ShareDialog;
 import de.danoeh.antennapod.ui.view.LocalDeleteModal;
@@ -138,11 +139,11 @@ public class EpisodeMultiSelectActionHandler {
     }
 
     private void downloadChecked(List<FeedItem> items) {
+        BulkDownloader.getInstance(activity).downloadAll(activity, items);
         // download the check episodes in the same order as they are currently displayed
         int downloaded = 0;
         for (FeedItem episode : items) {
             if (episode.hasMedia() && !episode.isDownloaded()) {
-                DownloadServiceInterface.get().download(activity, episode);
                 downloaded++;
             }
         }

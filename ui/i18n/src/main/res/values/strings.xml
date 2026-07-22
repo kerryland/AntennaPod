@@ -375,6 +375,9 @@
     <string name="confirm_mobile_streaming_button_always">Always</string>
     <string name="confirm_mobile_streaming_button_once">Once</string>
     <string name="already_downloaded">Episode is already downloaded</string>
+    <string name="vpn_download_complete">You may disconnect the VPN if you wish.</string>
+    <string name="vpn_download_timeout">Download failed because did not connect to VPN within %d seconds.</string>
+
 
     <!-- Mediaplayer messages -->
     <string name="playback_error_generic">The media file could not be played.\n\n- Try deleting and re-downloading the episode.\n- Check your network connection, and make sure no VPN or login page is blocking access.\n- Try long-pressing and sharing the \"Media address\" to your web browser to see if it can be played there. If not, contact the podcast creators.</string>
@@ -393,6 +396,8 @@
     <string name="queue_lock_warning">If you lock the queue, you can no longer reorder episodes.</string>
     <string name="checkbox_do_not_show_again">Do not show again</string>
     <string name="clear_queue_label">Clear queue</string>
+    <string name="download_all_label">Download all</string>
+    <string name="download_all_confirmation_msg">Are you sure you want to download %d episodes?</string>
     <string name="undo">Undo</string>
     <string name="move_to_top_label">Move to top</string>
     <plurals name="move_to_top_message">

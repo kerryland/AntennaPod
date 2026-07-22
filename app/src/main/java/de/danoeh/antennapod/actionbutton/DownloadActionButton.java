@@ -1,6 +1,7 @@
 package de.danoeh.antennapod.actionbutton;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -10,11 +11,13 @@ import androidx.annotation.StringRes;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import de.danoeh.antennapod.R;
+import de.danoeh.antennapod.net.download.service.feed.VpnNetworkChecker;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedMedia;
 import de.danoeh.antennapod.storage.preferences.UsageStatistics;
 import de.danoeh.antennapod.net.common.NetworkUtils;
+import de.danoeh.antennapod.storage.preferences.UserPreferences;
 
 public class DownloadActionButton extends ItemActionButton {
     private static final int TIMEOUT_NETWORK_WARN_SECONDS = 300;
@@ -60,6 +63,15 @@ public class DownloadActionButton extends ItemActionButton {
             Toast.makeText(context, context.getResources().getQuantityString(R.plurals.mobile_download_notice,
                     TIMEOUT_NETWORK_WARN_SECONDS / 60, TIMEOUT_NETWORK_WARN_SECONDS / 60), Toast.LENGTH_LONG).show();
         }
+
+        if (UserPreferences.isVpnDownload()) {
+            downloadAfterVpnConnects(context, shouldBypass);
+        } else {
+            downloadNow(context, shouldBypass);
+        }
+    }
+
+    private void downloadNow(Context context, boolean shouldBypass) {
         if (NetworkUtils.isEpisodeDownloadAllowed() || shouldBypass) {
             DownloadServiceInterface.get().downloadNow(context, item, bypassCellularNetworkType == BYPASS_TYPE_NOW);
         } else {
@@ -92,5 +104,31 @@ public class DownloadActionButton extends ItemActionButton {
     private boolean shouldNotDownload(@NonNull FeedMedia media) {
         boolean isDownloading = DownloadServiceInterface.get().isDownloadingEpisode(media.getDownloadUrl());
         return isDownloading || media.isDownloaded();
+    }
+
+    private void downloadAfterVpnConnects(Context context, boolean shouldBypass) {
+        if (!VpnNetworkChecker.isVpnConnected(context)) {
+            VpnNetworkChecker.launchVpnSelector(context);
+        }
+        VpnNetworkChecker.waitForVpnConnect(context, 60000, new VpnNetworkChecker.VpnListener() {
+            @Override
+            public void onDone() {
+                DownloadServiceInterface.get().notifyDownloadsComplete(context.getApplicationContext(), new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.d("KJS", "notifyDownloadsComplete - inside");
+                        if (UserPreferences.isVpnDownload() && VpnNetworkChecker.isVpnConnected(context.getApplicationContext())) {
+                            VpnNetworkChecker.waitForVpnDisconnect(context);
+                        }
+                    }});
+
+                downloadNow(context, shouldBypass);
+            }
+
+            @Override
+            public void onTimeout() {
+                return;
+            }
+        });
     }
 }

@@ -23,4 +23,22 @@ PlaybackStatus
 
 PlayerWidget extends AppWidgetProvider
 
+----------
+
+BulkDownloader
+
+DownloadServiceInterfaceImpl
+   .download  -- puts download into the queue (BulkDownloader, multi, Automatic)
+   .downloadNow (click in DownloadActionButton)
+|
+EpisodeDownloadWorker - a synchronous "Worker" triggered by WorkManager. 10 min max runtime
+   .doWork -- with progress bars
+|
+EpisodeDownloadWorker.performDownload (synchronous) 
+|
+DefaultDownloaderFactory
+|
+(actual download)
+        
+
 

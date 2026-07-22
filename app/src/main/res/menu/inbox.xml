@@ -19,6 +19,12 @@
         android:title="@string/sort" />
 
     <item
+        android:id="@+id/download_all"
+        android:title="@string/download_all_label"
+        custom:showAsAction="collapseActionView"
+        android:icon="@drawable/ic_check"/>
+
+    <item
         android:id="@+id/remove_all_inbox_item"
         android:title="@string/remove_all_inbox_label"
         android:menuCategory="container"

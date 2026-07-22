@@ -17,6 +17,7 @@ import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.event.MessageEvent;
 import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.database.DBWriter;
+import de.danoeh.antennapod.ui.BulkDownloader;
 import de.danoeh.antennapod.ui.screen.feed.ItemSortDialog;
 import de.danoeh.antennapod.event.FeedListUpdateEvent;
 import de.danoeh.antennapod.model.feed.FeedItem;
@@ -86,6 +87,10 @@ public class InboxFragment extends EpisodesListFragment {
                 showRemoveAllDialog();
             }
             return true;
+        } else if (item.getItemId() == R.id.download_all) {
+            BulkDownloader.getInstance(getContext()).downloadAll(getContext(), episodes);
+            return true;
+
         } else if (item.getItemId() == R.id.inbox_sort) {
             new InboxSortDialog().show(getChildFragmentManager(), "SortDialog");
             return true;

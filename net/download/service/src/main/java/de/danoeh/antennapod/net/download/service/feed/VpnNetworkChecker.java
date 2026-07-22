@@ -4,41 +4,54 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
+
+import android.content.Intent;
 import android.net.NetworkRequest;
+import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
+import android.provider.Settings;
+import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
-import android.content.Context;
-import android.content.Intent;
-import android.os.Build;
-import android.provider.Settings;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import de.danoeh.antennapod.net.download.service.R;
 
 
 public class VpnNetworkChecker {
+    private static final String TAG = "VpnNetworkChecker";
+
+    public interface VpnListener {
+        void onDone();
+
+        void onTimeout();
+    }
 
     public static boolean isVpnConnected(Context context) {
-        // 1. Get the system connectivity manager
-        ConnectivityManager connectivityManager =
-                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-
-        if (connectivityManager == null) {
+        Log.d(TAG, "Checking vpn connected");
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm == null) {
             return false;
         }
 
-        // 2. Retrieve the currently active data network
-        Network activeNetwork = connectivityManager.getActiveNetwork();
-        if (activeNetwork == null) {
-            return false;
+        Network network = cm.getActiveNetwork();
+        NetworkCapabilities caps = cm.getNetworkCapabilities(network);
+        if (caps != null) {
+            // Check if transport is explicitly VPN OR if it lacks the "NOT_VPN" capability
+            boolean isVpnTransport = caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN);
+            boolean isNotVpn = caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN);
+
+            if (isVpnTransport || !isNotVpn) {
+                Log.d(TAG, "Network is VPN");
+                return true;
+            }
         }
 
-        // 3. Fetch the capabilities for this network
-        NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(activeNetwork);
-        if (capabilities == null) {
-            return false;
-        }
-
-        // 4. Check if the network transport relies on a VPN
-        return capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN);
+        Log.d(TAG, "No VPN detected");
+        return false;
     }
 
     public static void launchVpnSelector(Context context) {
@@ -49,36 +62,107 @@ public class VpnNetworkChecker {
         }
     }
 
-    public static void monitorVpnConnection(Context context) {
-        // 1. Get the system connectivity manager with an explicit Java cast
-        ConnectivityManager connectivityManager =
-                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+    public static void waitForVpnDisconnect(Context context) {
+        Log.d("KJS", "notifyDownloadsComplete - launch selector");
+        Toast.makeText(context, context.getString(R.string.vpn_download_complete), Toast.LENGTH_LONG).show();
+        VpnNetworkChecker.launchVpnSelector(context.getApplicationContext());
+        // TODO: This should detect vpn disconnect, and then restore our app to front
+    }
 
-        if (connectivityManager == null) {
+    /**
+     * Waits asynchronously for a VPN connection to be established.
+     *
+     * @param context   Application/Activity context
+     * @param timeoutMs Maximum wait time in milliseconds (e.g., 10000 for 10s)
+     * @param listener  Callback invoked when connected or timed out
+     */
+    public static void waitForVpnConnect(@NonNull Context context, long timeoutMs, @NonNull VpnListener listener) {
+        if (isVpnConnected(context)) {
+            listener.onDone();
             return;
         }
 
-        // 2. Define a request looking specifically for VPN transports
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm == null) {
+            listener.onTimeout();
+            return;
+        }
+
+        Handler mainHandler = new Handler(Looper.getMainLooper());
+        AtomicBoolean isTriggered = new AtomicBoolean(false);
+
         NetworkRequest request = new NetworkRequest.Builder()
-                .addTransportType(NetworkCapabilities.TRANSPORT_VPN)
-                .removeCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN) // Ensures we only get VPNs
+                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .removeCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN) // Double negative means "VPNs only". Without this VPNs are not returned
                 .build();
 
-        // 3. Register the callback using an anonymous inner class
-        connectivityManager.registerNetworkCallback(request, new ConnectivityManager.NetworkCallback() {
+        ConnectivityManager.NetworkCallback callback = new ConnectivityManager.NetworkCallback() {
             @Override
-            public void onAvailable(@NonNull Network network) {
+            public void onAvailable(Network network) {
                 super.onAvailable(network);
-                // Triggered when a VPN connects
-                System.out.println("VPN Connected!");
+
+                Log.d(TAG, "New network available " + network);
+
+                if (isVpnConnected(context)) {
+                    // Ensure this runs only once
+                    if (isTriggered.compareAndSet(false, true)) {
+//                        mainHandler.removeCallbacksAndMessages(null);
+//                        safeUnregister(cm, this);
+
+                        // Notify listener on UI Thread
+                        mainHandler.post(listener::onDone);
+                    }
+                } else {
+                    Log.d(TAG, "New network not detected as a vpn");
+                }
             }
 
+            // TODO: This needs to work properly
             @Override
             public void onLost(@NonNull Network network) {
                 super.onLost(network);
-                // Triggered when the VPN disconnects
-                System.out.println("VPN Disconnected!");
+                Log.d(TAG, "Vpn disconnected");
+
+                mainHandler.removeCallbacksAndMessages(null);
+                safeUnregister(cm, this);
+
+                // Notify listener on UI Thread
+              //  mainHandler.post(listener::onVpnDisconnected);
             }
-        });
+        };
+
+        // 4. Set up Timeout Safety Net
+        Runnable timeoutRunnable = () -> {
+            if (isTriggered.compareAndSet(false, true)) {
+                Log.d(TAG, "VPN failed to connect -- timeout");
+                safeUnregister(cm, callback);
+                listener.onTimeout();
+            }
+        };
+
+        mainHandler.postDelayed(timeoutRunnable, timeoutMs);
+
+        // 5. Register listener directly on the Main Handler thread
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Log.d(TAG, "Registering network callback");
+                cm.registerNetworkCallback(request, callback, mainHandler);
+            } else {
+                Log.e(TAG, "WILL I SEE THIS");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to register network callback", e);
+            mainHandler.removeCallbacks(timeoutRunnable);
+            listener.onTimeout();
+        }
     }
+
+    private static void safeUnregister(ConnectivityManager cm, ConnectivityManager.NetworkCallback callback) {
+        try {
+            cm.unregisterNetworkCallback(callback);
+        } catch (IllegalArgumentException ignored) {
+            // Callback was already unregistered
+        }
+    }
+
 }

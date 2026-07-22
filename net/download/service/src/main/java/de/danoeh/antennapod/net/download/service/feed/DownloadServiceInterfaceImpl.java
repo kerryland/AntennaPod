@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 public class DownloadServiceInterfaceImpl extends DownloadServiceInterface {
 
     private boolean downloadStarted = false;
+    private static String TAG = "DownloadServiceInterfaceImpl";
 
     public void downloadNow(Context context, FeedItem item, boolean ignoreConstraints) {
         OneTimeWorkRequest.Builder workRequest = createDownloadRequest(context, item);
@@ -138,7 +139,7 @@ public class DownloadServiceInterfaceImpl extends DownloadServiceInterface {
                 @Override
                 public void onChanged(List<WorkInfo> workInfos) {
                     Integer activeCount = countActiveDownloads(workInfos);
-                    Log.d("KJS", "Active download count = " + activeCount);
+                    Log.d(TAG, "Active download count = " + activeCount);
                     if (activeCount == null) return;
 
                     if (activeCount == 0 && downloadStarted) {

@@ -831,6 +831,7 @@
     <string name="add_preset">Add preset</string>
     <string name="download_started_talkback">Download started for %1$s</string>
     <string name="download_completed_talkback">Download completed for %1$s</string>
+    <string name="bulk_downloads_completed">Downloads completed</string>
 
     <!-- Feed settings/information screen -->
     <string name="authentication_label">Authentication</string>

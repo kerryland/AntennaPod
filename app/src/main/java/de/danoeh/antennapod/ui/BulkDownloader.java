@@ -23,6 +23,8 @@ public class BulkDownloader {
         DownloadServiceInterface.get().notifyDownloadsComplete(context.getApplicationContext(), new Runnable() {
             @Override
             public void run() {
+                Toast.makeText(context, context.getString(R.string.bulk_downloads_completed), Toast.LENGTH_LONG).show();
+
                 if (UserPreferences.isVpnDownload() && VpnNetworkChecker.isVpnConnected(context.getApplicationContext())) {
                     VpnNetworkChecker.waitForVpnDisconnect(context.getApplicationContext());
                 }
@@ -44,6 +46,19 @@ public class BulkDownloader {
     }
 
     public void downloadAll(Context context, List<FeedItem> episodes) {
+        boolean needDownload = false;
+        for (FeedItem episode : episodes) {
+            if (episode.hasMedia() && !episode.isDownloaded()) {
+                needDownload = true;
+                break;
+            }
+        }
+
+        if (!needDownload) {
+            Toast.makeText(context, context.getString(R.string.bulk_downloads_completed), Toast.LENGTH_LONG).show();
+            return;
+        }
+
         if (UserPreferences.isVpnDownload() && !VpnNetworkChecker.isVpnConnected(context.getApplicationContext())) {
             VpnNetworkChecker.launchVpnSelector(context.getApplicationContext());
 

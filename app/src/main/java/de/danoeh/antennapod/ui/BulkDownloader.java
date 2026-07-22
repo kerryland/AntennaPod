@@ -2,6 +2,7 @@ package de.danoeh.antennapod.ui;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -9,7 +10,7 @@ import java.util.List;
 
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.model.feed.FeedItem;
-import de.danoeh.antennapod.net.download.service.feed.VpnNetworkChecker;
+import de.danoeh.antennapod.net.download.service.feed.remote.VpnMonitor;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.common.ConfirmationDialog;
@@ -18,17 +19,18 @@ import de.danoeh.antennapod.ui.common.ConfirmationDialog;
 public class BulkDownloader {
     private static BulkDownloader instance;
 
-    // Private constructor enforcing Singleton pattern
-    private BulkDownloader(Context context) {
-        DownloadServiceInterface.get().notifyDownloadsComplete(context.getApplicationContext(), new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(context, context.getString(R.string.bulk_downloads_completed), Toast.LENGTH_LONG).show();
+    private static final long VPN_DIALOG_WAIT_TIMEOUT_MS = 60000;
 
-                if (UserPreferences.isVpnDownload() && VpnNetworkChecker.isVpnConnected(context.getApplicationContext())) {
-                    VpnNetworkChecker.waitForVpnDisconnect(context.getApplicationContext());
-                }
-            }});
+    private BulkDownloader(Context context) {
+        // Disconnect from VPN when downloads complete
+        DownloadServiceInterface.get().notifyDownloadsComplete(context.getApplicationContext(), () -> {
+            Toast.makeText(context, context.getString(R.string.bulk_downloads_completed), Toast.LENGTH_LONG).show();
+            VpnMonitor vpnMonitor = VpnMonitor.getInstance(context);
+
+            if (UserPreferences.isVpnDownload() && vpnMonitor.isVpnConnected()) {
+                VpnLauncherHelper.launchVpnAndReturnOnDisconnect(context, 60000);
+            }
+        });
     }
 
     private static final String TAG = "BulkDownloader";
@@ -46,6 +48,7 @@ public class BulkDownloader {
     }
 
     public void downloadAll(Context context, List<FeedItem> episodes) {
+        Log.d(TAG, "in downloadAll.");
         boolean needDownload = false;
         for (FeedItem episode : episodes) {
             if (episode.hasMedia() && !episode.isDownloaded()) {
@@ -59,17 +62,20 @@ public class BulkDownloader {
             return;
         }
 
-        if (UserPreferences.isVpnDownload() && !VpnNetworkChecker.isVpnConnected(context.getApplicationContext())) {
-            VpnNetworkChecker.launchVpnSelector(context.getApplicationContext());
+        VpnMonitor vpnMonitor = VpnMonitor.getInstance(context);
+        if (UserPreferences.isVpnDownload() && !vpnMonitor.isVpnConnected()) {
+            VpnLauncherHelper.launchVpnAndReturnOnConnect(context, VPN_DIALOG_WAIT_TIMEOUT_MS);
 
-            final long TIMEOUT_MS = 60000;
-            VpnNetworkChecker.waitForVpnConnect(context.getApplicationContext(), TIMEOUT_MS, new VpnNetworkChecker.VpnListener() {
-                public void onDone() {
-                    confirmAndDownload(context, episodes);
-                }
-
-                public void onTimeout() {
-                    Toast.makeText(context, context.getString(R.string.vpn_download_timeout, TIMEOUT_MS / 1000), Toast.LENGTH_LONG).show();
+            vpnMonitor.onVpnConnect(VPN_DIALOG_WAIT_TIMEOUT_MS, new VpnMonitor.VpnCallback() {
+                @Override
+                public void onResult(boolean success) {
+                    if (success) {
+                        Log.d(TAG, "vpn connected -- is it really? " + vpnMonitor.isVpnConnected());
+                        confirmAndDownload(context, episodes);
+                    } else {
+                        Log.d(TAG, "vpn timeout happened");
+                        Toast.makeText(context, context.getString(R.string.vpn_download_timeout, VPN_DIALOG_WAIT_TIMEOUT_MS / 1000), Toast.LENGTH_LONG).show();
+                    }
                 }
             });
         } else {

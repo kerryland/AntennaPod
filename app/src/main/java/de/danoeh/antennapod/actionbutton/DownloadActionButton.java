@@ -1,7 +1,6 @@
 package de.danoeh.antennapod.actionbutton;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -11,18 +10,21 @@ import androidx.annotation.StringRes;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import de.danoeh.antennapod.R;
-import de.danoeh.antennapod.net.download.service.feed.VpnNetworkChecker;
+import de.danoeh.antennapod.net.download.service.feed.remote.VpnMonitor;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedMedia;
 import de.danoeh.antennapod.storage.preferences.UsageStatistics;
 import de.danoeh.antennapod.net.common.NetworkUtils;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
+import de.danoeh.antennapod.ui.VpnLauncherHelper;
 
 public class DownloadActionButton extends ItemActionButton {
     private static final int TIMEOUT_NETWORK_WARN_SECONDS = 300;
     private static final int BYPASS_TYPE_NOW = 1;
     private static final int BYPASS_TYPE_LATER = 2;
+
+    private static String TAG = "DownloadActionButton";
 
     private static int bypassCellularNetworkType = 0;
     private static long bypassCellularNetworkWarningTimer = 0;
@@ -107,27 +109,25 @@ public class DownloadActionButton extends ItemActionButton {
     }
 
     private void downloadAfterVpnConnects(Context context, boolean shouldBypass) {
-        if (!VpnNetworkChecker.isVpnConnected(context)) {
-            VpnNetworkChecker.launchVpnSelector(context);
+        VpnMonitor vpnMonitor = VpnMonitor.getInstance(context);
+        if (!vpnMonitor.isVpnConnected()) {
+            VpnLauncherHelper.launchVpnAndReturnOnConnect(context, 60000);
         }
-        VpnNetworkChecker.waitForVpnConnect(context, 60000, new VpnNetworkChecker.VpnListener() {
-            @Override
-            public void onDone() {
-                DownloadServiceInterface.get().notifyDownloadsComplete(context.getApplicationContext(), new Runnable() {
-                    @Override
-                    public void run() {
-                        Log.d("KJS", "notifyDownloadsComplete - inside");
-                        if (UserPreferences.isVpnDownload() && VpnNetworkChecker.isVpnConnected(context.getApplicationContext())) {
-                            VpnNetworkChecker.waitForVpnDisconnect(context);
-                        }
-                    }});
 
-                downloadNow(context, shouldBypass);
-            }
-
+        vpnMonitor.onVpnConnect(60000, new VpnMonitor.VpnCallback() {
             @Override
-            public void onTimeout() {
-                return;
+            public void onResult(boolean success) {
+                if (success) {
+                    DownloadServiceInterface.get().notifyDownloadsComplete(context.getApplicationContext(), new Runnable() {
+                        @Override
+                        public void run() {
+                            if (UserPreferences.isVpnDownload() && vpnMonitor.isVpnConnected()) {
+                                VpnLauncherHelper.launchVpnAndReturnOnDisconnect(context, 60000);
+                            }
+                        }});
+
+                    downloadNow(context, shouldBypass);
+                }
             }
         });
     }

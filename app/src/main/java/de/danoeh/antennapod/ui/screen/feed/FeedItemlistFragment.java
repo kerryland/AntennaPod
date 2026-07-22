@@ -361,7 +361,7 @@ public class FeedItemlistFragment extends Fragment implements AdapterView.OnItem
         if (adapter.onContextItemSelected(item)) {
             return true;
         }
-        return FeedItemMenuHandler.onMenuItemClicked(this, item.getItemId(), selectedItem);
+        return FeedItemMenuHandler.onMenuItemClicked(this, item.getItemId(), selectedItem, feed.getItems());
     }
 
     private void setupLoadMoreScrollListener() {

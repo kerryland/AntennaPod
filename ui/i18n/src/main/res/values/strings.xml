@@ -398,6 +398,7 @@
     <string name="clear_queue_label">Clear queue</string>
     <string name="download_all_label">Download all</string>
     <string name="download_all_confirmation_msg">Are you sure you want to download %d episodes?</string>
+    <string name="delete_after_label">Delete after here</string>
     <string name="undo">Undo</string>
     <string name="move_to_top_label">Move to top</string>
     <plurals name="move_to_top_message">

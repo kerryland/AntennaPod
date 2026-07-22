@@ -304,7 +304,7 @@ public class SearchFragment extends Fragment implements EpisodeItemListAdapter.O
             if (adapter.onContextItemSelected(item)) {
                 return true;
             }
-            if (FeedItemMenuHandler.onMenuItemClicked(this, item.getItemId(), selectedItem)) {
+            if (FeedItemMenuHandler.onMenuItemClicked(this, item.getItemId(), selectedItem, null)) {
                 return true;
             }
         }

@@ -455,13 +455,10 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
                     }
                 });
 
-             //   Log.d(TAG, "KJS Moving to play next. currentlyPlayingPosition=" + currentlyPlayingPosition);
-
-
                 return true; // not if nothing is playing?
             }
         }
-        return FeedItemMenuHandler.onMenuItemClicked(this, item.getItemId(), selectedItem);
+        return FeedItemMenuHandler.onMenuItemClicked(this, item.getItemId(), selectedItem, queue);
     }
 
     @Override

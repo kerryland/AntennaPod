@@ -237,7 +237,7 @@ public class CompletedDownloadsFragment extends Fragment
             return true;
         }
 
-        return FeedItemMenuHandler.onMenuItemClicked(this, item.getItemId(), selectedItem);
+        return FeedItemMenuHandler.onMenuItemClicked(this, item.getItemId(), selectedItem, null);
     }
 
     private void addEmptyView() {

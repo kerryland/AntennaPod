@@ -8,6 +8,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -179,7 +180,8 @@ public class FeedItemMenuHandler {
      * to support some UI operations, e.g., creating a Snackbar.
      */
     public static boolean onMenuItemClicked(@NonNull Fragment fragment, int menuItemId,
-                                            @NonNull FeedItem selectedItem) {
+                                            @NonNull FeedItem selectedItem,
+                                            @Nullable List<FeedItem> episodes) {
 
         @NonNull Context context = fragment.requireContext();
         if (menuItemId == R.id.skip_episode_item) {
@@ -199,6 +201,21 @@ public class FeedItemMenuHandler {
             DBWriter.addQueueItem(context, selectedItem);
         } else if (menuItemId == R.id.remove_from_queue_item) {
             DBWriter.removeQueueItem(context, true, selectedItem);
+        } else if (menuItemId == R.id.delete_after_item) {
+            Log.d(TAG, "delete_after_item selected. episodes=" + (episodes == null ? "" : episodes.size()));
+            if (episodes != null) {
+                boolean deleteEpisode = false;
+                for (int i = 0; i < episodes.size(); i++) {
+                    if (deleteEpisode) {
+                        DBWriter.removeQueueItem(context, false, episodes.get(i));
+                        Log.d(TAG, "Delete " + episodes.get(i));
+                    }
+                    if (episodes.get(i).getId() == selectedItem.getId()) {
+                        deleteEpisode = true;
+                    }
+                }
+            }
+
         } else if (menuItemId == R.id.add_to_favorites_item) {
             DBWriter.addFavoriteItems(Collections.singletonList(selectedItem));
         } else if (menuItemId == R.id.remove_from_favorites_item) {

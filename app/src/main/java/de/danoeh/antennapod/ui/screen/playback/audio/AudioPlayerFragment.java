@@ -498,7 +498,7 @@ public class AudioPlayerFragment extends Fragment implements
         }
 
         final @Nullable FeedItem feedItem = currentMedia.getItem();
-        if (feedItem != null && FeedItemMenuHandler.onMenuItemClicked(this, item.getItemId(), feedItem)) {
+        if (feedItem != null && FeedItemMenuHandler.onMenuItemClicked(this, item.getItemId(), feedItem, null)) {
             return true;
         }
 

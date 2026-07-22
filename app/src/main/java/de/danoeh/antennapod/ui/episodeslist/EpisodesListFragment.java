@@ -136,7 +136,7 @@ public abstract class EpisodesListFragment extends Fragment
             return true;
         }
         FeedItem selectedItem = listAdapter.getLongPressedItem();
-        return FeedItemMenuHandler.onMenuItemClicked(this, item.getItemId(), selectedItem);
+        return FeedItemMenuHandler.onMenuItemClicked(this, item.getItemId(), selectedItem, episodes);
     }
 
     @NonNull

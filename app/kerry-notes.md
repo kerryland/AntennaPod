@@ -40,5 +40,17 @@ DefaultDownloaderFactory
 |
 (actual download)
         
+---------------------------------------
+
+EpisodesListFragment -- inbox
+QueueFragment -- queue
+FeedItemListFragment -- podcast
+
+AudioPlayerFragment
+HomeSection
+ItemPagerFragment
+CompletedDownloadsFragment
+SearchFragment
+
 
 

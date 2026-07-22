@@ -168,7 +168,7 @@ public class ItemPagerFragment extends Fragment implements MaterialToolbar.OnMen
             openPodcast();
             return true;
         }
-        return FeedItemMenuHandler.onMenuItemClicked(this, menuItem.getItemId(), item);
+        return FeedItemMenuHandler.onMenuItemClicked(this, menuItem.getItemId(), item, null);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

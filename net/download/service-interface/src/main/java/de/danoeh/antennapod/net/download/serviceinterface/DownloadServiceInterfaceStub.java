@@ -26,4 +26,9 @@ public class DownloadServiceInterfaceStub extends DownloadServiceInterface {
     public int getNumberOfActiveDownloads(Context context) {
         return 0;
     }
+
+    @Override
+    public void notifyDownloadsComplete(Context context, Runnable onComplete) {
+
+    }
 }

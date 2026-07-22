@@ -1,6 +1,14 @@
 package de.danoeh.antennapod.net.download.service.feed;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
+
+import androidx.annotation.Nullable;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.work.Constraints;
 import androidx.work.Data;
 import androidx.work.ExistingWorkPolicy;
@@ -24,29 +32,28 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class DownloadServiceInterfaceImpl extends DownloadServiceInterface {
+
+    private boolean downloadStarted = false;
+
     public void downloadNow(Context context, FeedItem item, boolean ignoreConstraints) {
-        OneTimeWorkRequest.Builder workRequest = getRequest(context, item);
+        OneTimeWorkRequest.Builder workRequest = createDownloadRequest(context, item);
         workRequest.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST);
         if (ignoreConstraints) {
             workRequest.setConstraints(new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build());
-        } else {
-            workRequest.setConstraints(getConstraints());
         }
-        WorkManager.getInstance(context).enqueueUniqueWork(item.getMedia().getDownloadUrl(),
-                ExistingWorkPolicy.KEEP, workRequest.build());
+
+        enqueueDownloadRequest(context, item, workRequest);
     }
 
     public void download(Context context, FeedItem item) {
         if (item.isDownloaded()) {
             return;
         }
-        OneTimeWorkRequest.Builder workRequest = getRequest(context, item);
-        workRequest.setConstraints(getConstraints());
-        WorkManager.getInstance(context).enqueueUniqueWork(item.getMedia().getDownloadUrl(),
-                ExistingWorkPolicy.KEEP, workRequest.build());
+        OneTimeWorkRequest.Builder workRequest = createDownloadRequest(context, item);
+        enqueueDownloadRequest(context, item, workRequest);
     }
 
-    private static OneTimeWorkRequest.Builder getRequest(Context context, FeedItem item) {
+    private static OneTimeWorkRequest.Builder createDownloadRequest(Context context, FeedItem item) {
         OneTimeWorkRequest.Builder workRequest = new OneTimeWorkRequest.Builder(EpisodeDownloadWorker.class)
                 .setInitialDelay(0L, TimeUnit.MILLISECONDS)
                 .addTag(DownloadServiceInterface.WORK_TAG)
@@ -56,7 +63,14 @@ public class DownloadServiceInterfaceImpl extends DownloadServiceInterface {
             workRequest.addTag(DownloadServiceInterface.WORK_DATA_WAS_QUEUED);
         }
         workRequest.setInputData(new Data.Builder().putLong(WORK_DATA_MEDIA_ID, item.getMedia().getId()).build());
+        workRequest.setConstraints(getConstraints());
         return workRequest;
+    }
+
+    private void enqueueDownloadRequest(Context context, FeedItem item, OneTimeWorkRequest.Builder workRequest) {
+        WorkManager.getInstance(context).enqueueUniqueWork(item.getMedia().getDownloadUrl(),
+                ExistingWorkPolicy.KEEP, workRequest.build());
+        downloadStarted = true;
     }
 
     private static Constraints getConstraints() {
@@ -104,17 +118,52 @@ public class DownloadServiceInterfaceImpl extends DownloadServiceInterface {
         try {
             List<WorkInfo> workInfos = WorkManager.getInstance(context)
                     .getWorkInfosByTag(DownloadServiceInterface.WORK_TAG).get();
-            int count = 0;
-            for (WorkInfo info : workInfos) {
-                if (info.getState() == WorkInfo.State.RUNNING
-                        || info.getState() == WorkInfo.State.ENQUEUED
-                        || info.getState() == WorkInfo.State.BLOCKED) {
-                    count++;
-                }
-            }
-            return count;
+
+            Integer activeCount = countActiveDownloads(workInfos);
+            return activeCount == null ? 0 : activeCount;
+
         } catch (ExecutionException | InterruptedException e) {
             return 0;
         }
+    }
+
+    @Override
+    public void notifyDownloadsComplete(Context context, Runnable onComplete) {
+        // Post to the Main Thread Handler
+        new Handler(Looper.getMainLooper()).post(() -> {
+            LiveData<List<WorkInfo>> liveData = WorkManager.getInstance(context)
+                    .getWorkInfosByTagLiveData(DownloadServiceInterface.WORK_TAG);
+
+            liveData.observe(ProcessLifecycleOwner.get(), new Observer<List<WorkInfo>>() {
+                @Override
+                public void onChanged(List<WorkInfo> workInfos) {
+                    Integer activeCount = countActiveDownloads(workInfos);
+                    Log.d("KJS", "Active download count = " + activeCount);
+                    if (activeCount == null) return;
+
+                    if (activeCount == 0 && downloadStarted) {
+                      //  liveData.removeObserver(this);
+                        if (onComplete != null) {
+                            onComplete.run();
+                        }
+                    }
+                }
+            });
+        });
+    }
+
+    @Nullable
+    private static Integer countActiveDownloads(List<WorkInfo> workInfos) {
+        if (workInfos == null) return null;
+
+        int activeCount = 0;
+        for (WorkInfo info : workInfos) {
+            if (info.getState() == WorkInfo.State.RUNNING
+                    || info.getState() == WorkInfo.State.ENQUEUED
+                    || info.getState() == WorkInfo.State.BLOCKED) {
+                activeCount++;
+            }
+        }
+        return activeCount;
     }
 }

@@ -58,4 +58,6 @@ public abstract class DownloadServiceInterface {
     }
 
     public abstract int getNumberOfActiveDownloads(Context context);
+
+    public abstract void notifyDownloadsComplete(Context context, Runnable onComplete);
 }

@@ -594,6 +594,9 @@
 
     <string name="pref_vpn_download_title">VPN</string>
     <string name="pref_vpn_download_sum">Require VPN for Download</string>
+    <string name="pref_permission_title">Permission Required</string>
+    <string name="pref_permission_on_top_explanation">To automatically return you to the app after connecting to a VPN, please enable \'Display over other apps\'.</string>
+    <string name="pref_permission_grant">Grant Permission</string>
 
     <string name="pref_no_browser_found">No web browser found.</string>
     <string name="pref_enqueue_downloaded_title">Enqueue downloaded</string>

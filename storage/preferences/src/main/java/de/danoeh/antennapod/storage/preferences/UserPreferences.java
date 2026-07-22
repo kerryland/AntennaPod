@@ -109,7 +109,7 @@ public abstract class UserPreferences {
     private static final String PREF_PROXY_PORT = "prefProxyPort";
     private static final String PREF_PROXY_USER = "prefProxyUser";
     private static final String PREF_PROXY_PASSWORD = "prefProxyPassword";
-    private static final String PREF_VPN_DOWNLOAD = "prefVpnDownload";
+    public static final String PREF_VPN_DOWNLOAD = "prefVpnDownload";
 
     // Services
     private static final String PREF_GPODNET_NOTIFICATIONS = "pref_gpodnet_notifications";

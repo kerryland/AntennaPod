@@ -1,14 +1,17 @@
 package de.danoeh.antennapod.ui.screen.preferences;
 
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
+import android.provider.Settings;
 
 import androidx.preference.PreferenceManager;
 import androidx.preference.SwitchPreferenceCompat;
 
 import de.danoeh.antennapod.R;
-import de.danoeh.antennapod.net.download.service.feed.VpnNetworkChecker;
 import de.danoeh.antennapod.net.download.serviceinterface.FeedUpdateManager;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.preferences.screen.AnimatedPreferenceFragment;
@@ -31,6 +34,21 @@ public class DownloadsPreferencesFragment extends AnimatedPreferenceFragment
         setupNetworkScreen();
     }
 
+    private static void showVpnOnTopPermissionDialog(Context context) {
+        new AlertDialog.Builder(context)
+                .setTitle(R.string.pref_permission_title)
+                .setMessage(R.string.pref_permission_on_top_explanation)
+                .setPositiveButton(R.string.pref_permission_grant, (dialog, which) -> {
+                    Intent intent = new Intent(
+                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            Uri.parse("package:" + context.getPackageName())
+                    );
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(intent);
+                })
+                .setNegativeButton(R.string.cancel_label, null)
+                .show();
+    }
     @Override
     public void onStart() {
         super.onStart();
@@ -97,6 +115,10 @@ public class DownloadsPreferencesFragment extends AnimatedPreferenceFragment
         if (UserPreferences.PREF_UPDATE_INTERVAL_MINUTES.equals(key)
                 || UserPreferences.PREF_MOBILE_UPDATE.equals(key)) {
             FeedUpdateManager.getInstance().restartUpdateAlarm(getContext(), true);
+        }
+
+        if (UserPreferences.PREF_VPN_DOWNLOAD.equals(key) && UserPreferences.isVpnDownload() && !Settings.canDrawOverlays(getContext())) {
+            showVpnOnTopPermissionDialog(getContext());
         }
     }
 }

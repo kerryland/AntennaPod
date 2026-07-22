@@ -19,7 +19,6 @@ import androidx.work.WorkerParameters;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import de.danoeh.antennapod.net.download.service.R;
-import de.danoeh.antennapod.net.download.service.feed.VpnNetworkChecker;
 import de.danoeh.antennapod.net.download.service.feed.remote.DefaultDownloaderFactory;
 import de.danoeh.antennapod.net.download.service.feed.remote.Downloader;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadRequestCreator;
@@ -31,7 +30,6 @@ import de.danoeh.antennapod.model.download.DownloadResult;
 import de.danoeh.antennapod.model.feed.FeedMedia;
 import de.danoeh.antennapod.model.download.DownloadRequest;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
-import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.appstartintent.MainActivityStarter;
 import de.danoeh.antennapod.ui.notifications.NotificationUtils;
 import org.apache.commons.io.FileUtils;
@@ -43,7 +41,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class EpisodeDownloadWorker extends Worker {
     private static final String TAG = "EpisodeDownloadWorker";

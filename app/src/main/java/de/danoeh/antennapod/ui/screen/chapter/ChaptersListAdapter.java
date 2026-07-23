@@ -149,6 +149,7 @@ public class ChaptersListAdapter extends RecyclerView.Adapter<ChaptersListAdapte
 
     static class ChapterHolder extends RecyclerView.ViewHolder {
         final TextView title;
+        final TextView feedTitle;
         final TextView start;
         final TextView link;
         final TextView duration;
@@ -164,6 +165,7 @@ public class ChaptersListAdapter extends RecyclerView.Adapter<ChaptersListAdapte
             link = itemView.findViewById(R.id.txtvLink);
             image = itemView.findViewById(R.id.imgvCover);
             duration = itemView.findViewById(R.id.txtvDuration);
+            feedTitle = itemView.findViewById(R.id.feedTitle);
             secondaryActionButton = itemView.findViewById(R.id.secondaryActionButton);
             secondaryActionIcon = itemView.findViewById(R.id.secondaryActionIcon);
             progressBar = itemView.findViewById(R.id.secondaryActionProgress);

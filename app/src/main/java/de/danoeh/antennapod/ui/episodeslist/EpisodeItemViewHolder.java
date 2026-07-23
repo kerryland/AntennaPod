@@ -47,6 +47,7 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
     private final TextView pubDate;
     private final TextView position;
     private final TextView duration;
+    private final TextView feedTitle;
     private final TextView size;
     public final ImageView isInbox;
     public final ImageView isInQueue;
@@ -72,6 +73,7 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
         cover = itemView.findViewById(R.id.imgvCover);
         title = itemView.findViewById(R.id.txtvTitle);
         title.setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_FULL);
+        feedTitle = itemView.findViewById(R.id.feedTitle);
         pubDate = itemView.findViewById(R.id.txtvPubDate);
         position = itemView.findViewById(R.id.txtvPosition);
         duration = itemView.findViewById(R.id.txtvDuration);
@@ -94,6 +96,7 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
         this.item = item;
         placeholder.setText(item.getFeed().getTitle());
         title.setText(item.getTitle());
+        feedTitle.setText(item.getFeed().getTitle());
         if (item.isPlayed()) {
             leftPadding.setContentDescription(item.getTitle() + ". " + activity.getString(R.string.is_played));
         } else {
@@ -203,6 +206,7 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
         isFavorite.setVisibility(View.GONE);
         isInQueue.setVisibility(View.GONE);
         title.setText("███████");
+        feedTitle.setText("");
         pubDate.setText("████");
         duration.setText("████");
         secondaryActionProgress.setPercentage(0, null);

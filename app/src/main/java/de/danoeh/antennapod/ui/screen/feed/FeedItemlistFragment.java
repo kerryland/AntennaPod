@@ -751,6 +751,7 @@ public class FeedItemlistFragment extends Fragment implements AdapterView.OnItem
         @Override
         public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
             super.onCreateContextMenu(menu, v, menuInfo);
+            menu.findItem(R.id.delete_after_item).setVisible(false);
             if (!inActionMode() && feed.getState() != Feed.STATE_NOT_SUBSCRIBED) {
                 menu.findItem(R.id.multi_select).setVisible(true);
             }

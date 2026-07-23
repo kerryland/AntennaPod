@@ -207,8 +207,17 @@ public class FeedItemMenuHandler {
                 boolean deleteEpisode = false;
                 for (int i = 0; i < episodes.size(); i++) {
                     if (deleteEpisode) {
-                        DBWriter.removeQueueItem(context, false, episodes.get(i));
-                        Log.d(TAG, "Delete " + episodes.get(i));
+                        FeedItem item = episodes.get(i);
+
+                        if (item.isTagged(FeedItem.TAG_QUEUE)) { // canRemoveFromQueue
+                            Log.d(TAG, "Remove from Queue");
+                            DBWriter.removeQueueItem(context, false, episodes.get(i));
+                        } else if (item.isNew()) { // canRemoveFromInbox
+                            Log.d(TAG, "Remove from Inbox");
+                            removeNewFlagWithUndo(fragment, episodes.get(i));
+                      } else if (item.getMedia().isDownloaded() || DownloadServiceInterface.get().isDownloadingEpisode(item.getMedia().getDownloadUrl())) {
+                          Log.d(TAG, "Not sure how to remove " + item);
+                        }
                     }
                     if (episodes.get(i).getId() == selectedItem.getId()) {
                         deleteEpisode = true;

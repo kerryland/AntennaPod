@@ -42,9 +42,25 @@ DefaultDownloaderFactory
         
 ---------------------------------------
 
-EpisodesListFragment -- inbox
-QueueFragment -- queue
-FeedItemListFragment -- podcast
+MainActivity
+- HomeFragment
+- QueueFragment -- queue
+- InboxFragment
+- AllEpisodesFragment
+- CompletedDownloadsFragment
+- PlaybackHistoryFragment
+- EpisodesListFragment -- inbox
+- FeedItemListFragment -- list episodes in podcast feed
+
+FeedItemMenuHandler
+
+HomeFragment loads:
+- QueueSection
+- InboxSection
+- EpisodesSurpriseSection
+- SubscriptionsSection
+- DownloadsSection
+
 
 AudioPlayerFragment
 HomeSection

@@ -1,6 +1,7 @@
 package de.danoeh.antennapod.ui.screen.episode;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -37,6 +38,7 @@ import java.util.List;
  * Displays information about a list of FeedItems.
  */
 public class ItemPagerFragment extends Fragment implements MaterialToolbar.OnMenuItemClickListener {
+    public static final String TAG = "ItemPagerFragment";
     private static final String ARG_FEEDITEMS = "feeditems";
     private static final String ARG_FEEDITEM_POS = "feeditem_pos";
     private static final String KEY_PAGER_ID = "pager_id";

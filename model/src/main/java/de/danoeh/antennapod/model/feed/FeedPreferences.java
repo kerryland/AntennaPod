@@ -2,6 +2,7 @@ package de.danoeh.antennapod.model.feed;
 
 import androidx.annotation.NonNull;
 import android.text.TextUtils;
+import android.util.Log;
 
 import java.io.Serializable;
 import java.util.HashSet;
@@ -115,6 +116,7 @@ public class FeedPreferences implements Serializable {
     private AutoDeleteAction autoDeleteAction;
     private VolumeAdaptionSetting volumeAdaptionSetting;
     private NewEpisodesAction newEpisodesAction;
+    private int priority;
     private String username;
     private String password;
     private float feedPlaybackSpeed;
@@ -129,14 +131,14 @@ public class FeedPreferences implements Serializable {
                            String username, String password) {
         this(feedID, autoDownload, true, autoDeleteAction, volumeAdaptionSetting, username, password,
                 new FeedFilter(), SPEED_USE_GLOBAL, 0, 0, SkipSilence.GLOBAL,
-                false, newEpisodesAction, new HashSet<>());
+                false, newEpisodesAction, 0, new HashSet<>());
     }
 
     public FeedPreferences(long feedID, AutoDownloadSetting autoDownload, boolean keepUpdated,
                             AutoDeleteAction autoDeleteAction, VolumeAdaptionSetting volumeAdaptionSetting,
                             String username, String password, @NonNull FeedFilter filter,
                             float feedPlaybackSpeed, int feedSkipIntro, int feedSkipEnding, SkipSilence feedSkipSilence,
-                            boolean showEpisodeNotification, NewEpisodesAction newEpisodesAction,
+                            boolean showEpisodeNotification, NewEpisodesAction newEpisodesAction, int priority,
                             Set<String> tags) {
         this.feedID = feedID;
         this.autoDownload = autoDownload;
@@ -152,6 +154,7 @@ public class FeedPreferences implements Serializable {
         this.feedSkipSilence = feedSkipSilence;
         this.showEpisodeNotification = showEpisodeNotification;
         this.newEpisodesAction = newEpisodesAction;
+        this.priority = priority;
         this.tags.addAll(tags);
     }
 
@@ -245,6 +248,14 @@ public class FeedPreferences implements Serializable {
 
     public void setNewEpisodesAction(NewEpisodesAction newEpisodesAction) {
         this.newEpisodesAction = newEpisodesAction;
+    }
+
+    public int getPriority() {
+        return priority;
+    }
+
+    public void setPriority(int priority) {
+        this.priority = priority;
     }
 
     public AutoDeleteAction getCurrentAutoDelete() {

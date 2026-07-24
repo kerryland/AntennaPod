@@ -108,6 +108,7 @@ public class Feed implements Serializable {
     @Nullable
     private SortOrder sortOrder;
     private int state;
+    private int priority;
 
     /**
      * This constructor is used for restoring a feed from the database.
@@ -116,7 +117,7 @@ public class Feed implements Serializable {
                 String description, String paymentLinks, String author, String language,
                 String type, String feedIdentifier, String imageUrl, String fileUrl,
                 String downloadUrl, long lastRefreshAttempt, boolean paged, String nextPageLink,
-                String filter, @Nullable SortOrder sortOrder, boolean lastUpdateFailed, int state) {
+                String filter, @Nullable SortOrder sortOrder, boolean lastUpdateFailed, int state, int priority) {
         this.localFileUrl = fileUrl;
         this.downloadUrl = downloadUrl;
         this.lastRefreshAttempt = lastRefreshAttempt;
@@ -134,6 +135,7 @@ public class Feed implements Serializable {
         this.imageUrl = imageUrl;
         this.paged = paged;
         this.nextPageLink = nextPageLink;
+        this.priority = priority;
         this.items = new ArrayList<>();
         if (filter != null) {
             this.itemfilter = new FeedItemFilter(filter);
@@ -150,9 +152,10 @@ public class Feed implements Serializable {
      */
     public Feed(long id, String lastModified, String title, String link, String description, String paymentLink,
                 String author, String language, String type, String feedIdentifier, String imageUrl, String fileUrl,
-                String downloadUrl, long lastRefreshAttempt) {
+                String downloadUrl, long lastRefreshAttempt, int priority) {
         this(id, lastModified, title, null, link, description, paymentLink, author, language, type, feedIdentifier,
-                imageUrl, fileUrl, downloadUrl, lastRefreshAttempt, false, null, null, null, false, STATE_SUBSCRIBED);
+                imageUrl, fileUrl, downloadUrl, lastRefreshAttempt, false, null, null, null,
+                false, STATE_SUBSCRIBED, priority);
     }
 
     /**
@@ -484,6 +487,14 @@ public class Feed implements Serializable {
 
     public void setState(int state) {
         this.state = state;
+    }
+
+    public int getPriority() {
+        return priority;
+    }
+
+    public void setPriority(int priority) {
+        this.priority = priority;
     }
 
     public boolean hasEpisodeInApp() {

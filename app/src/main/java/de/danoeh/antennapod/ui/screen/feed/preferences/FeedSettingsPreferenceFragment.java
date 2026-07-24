@@ -22,6 +22,7 @@ import androidx.core.content.ContextCompat;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.SeekBarPreference;
 import androidx.preference.SwitchPreferenceCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -71,6 +72,7 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
     private static final String PREF_TAGS = "tags";
     private static final String PREF_EDIT_FEED_URL = "editFeedUrl";
     private static final String PREF_RECONNECT_LOCAL_FOLDER = "reconnectLocalFolder";
+    private static final String PREF_PRIORITY = "feedPriority";
 
     private Feed feed;
     private Disposable disposable;
@@ -243,6 +245,15 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
             updateNewEpisodesActionSummary();
             return false;
         });
+
+        SeekBarPreference priorityPreference = findPreference(PREF_PRIORITY);
+        priorityPreference.setValue(feedPreferences.getPriority());
+        priorityPreference.setOnPreferenceChangeListener((preference, newValue) -> {
+            feedPreferences.setPriority((Integer) newValue);
+            DBWriter.setFeedPreferences(feedPreferences);
+            return true;
+        });
+        
         SwitchPreferenceCompat keepUpdated = findPreference("keepUpdated");
         keepUpdated.setChecked(feedPreferences.getKeepUpdated());
         keepUpdated.setOnPreferenceChangeListener((preference, newValue) -> {

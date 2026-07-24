@@ -851,6 +851,8 @@
     <string name="exclude_terms">Exclude episodes containing any of the terms below</string>
     <string name="include_terms">Include only episodes containing any of the terms below</string>
     <string name="exclude_episodes_shorter_than">Exclude episodes shorter than</string>
+    <string name="feed_priority_label">Priority podcast</string>
+    <string name="feed_priority_summary">Queue Playback Order. Low numbers appear at the top of the queue</string>
     <string name="keep_updated">Keep updated</string>
     <string name="keep_updated_summary">Include this podcast when (auto-)refreshing all podcasts</string>
     <plurals name="statistics_episodes_started">

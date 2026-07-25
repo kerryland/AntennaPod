@@ -132,7 +132,7 @@ public class ItemEnqueuePositionCalculatorTest {
                                             List<FeedItem> queue,
                                             Playable currentlyPlaying,
                                             List<Long> idsExpected) {
-        int posActual = calculator.calcPosition(queue, currentlyPlaying);
+        int posActual = calculator.calcPosition(queue, itemToAdd, currentlyPlaying);
         queue.add(posActual, itemToAdd);
         assertEquals(message, idsExpected.size(), queue.size());
         for (int i = 0; i < idsExpected.size(); i++) {
@@ -170,7 +170,7 @@ public class ItemEnqueuePositionCalculatorTest {
     static FeedItem createFeedItem(long id) {
         Feed feed = new Feed(0, null, "title", "http://example.com", "This is the description",
                 "http://example.com/payment", "Daniel", "en", null, "http://example.com/feed",
-                "http://example.com/image", null, "http://example.com/feed", System.currentTimeMillis());
+                "http://example.com/image", null, "http://example.com/feed", System.currentTimeMillis(), 5);
         FeedItem item = new FeedItem(id, "Item" + id, "ItemId" + id, "url",
                 new Date(), FeedItem.PLAYED, feed);
         FeedMedia media = new FeedMedia(item, "http://download.url.net/" + id, 1234567, "audio/mpeg");

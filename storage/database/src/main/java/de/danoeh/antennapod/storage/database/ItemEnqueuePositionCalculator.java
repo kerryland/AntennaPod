@@ -30,8 +30,15 @@ public class ItemEnqueuePositionCalculator {
      * @param curQueue           the queue to which the item is to be inserted
      * @param currentPlaying     the currently playing media
      */
-    public int calcPosition(@NonNull List<FeedItem> curQueue, @Nullable Playable currentPlaying) {
+    public int calcPosition(@NonNull List<FeedItem> curQueue, @NonNull FeedItem item, @Nullable Playable currentPlaying) {
         switch (enqueueLocation) {
+            case PRIORITY:
+                for (int i = 0; i < curQueue.size(); i++) {
+                    if (item.getFeed().getPriority() <= curQueue.get(i).getFeed().getPriority()) {
+                        return i;
+                    }
+                }
+                return curQueue.size();
             case BACK:
                 return curQueue.size();
             case FRONT:

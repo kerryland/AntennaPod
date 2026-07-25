@@ -393,13 +393,15 @@ public class DBWriter {
             ItemEnqueuePositionCalculator positionCalculator =
                     new ItemEnqueuePositionCalculator(UserPreferences.getEnqueueLocation());
             Playable currentlyPlaying = DBReader.getFeedMedia(PlaybackPreferences.getCurrentlyPlayingFeedMediaId());
-            int insertPosition = positionCalculator.calcPosition(queue, currentlyPlaying);
+
             for (FeedItem item : items) {
                 if (itemListContains(queue, item.getId())) {
                     continue;
                 } else if (!item.hasMedia()) {
                     continue;
                 }
+                int insertPosition = positionCalculator.calcPosition(queue, item, currentlyPlaying);
+
                 queue.add(insertPosition, item);
                 events.add(QueueEvent.added(item, insertPosition));
 
@@ -408,10 +410,9 @@ public class DBWriter {
                 if (item.isNew()) {
                     markAsUnplayed.add(item);
                 }
-                insertPosition++;
             }
             if (!updatedItems.isEmpty()) {
-                applySortOrder(queue, events);
+                applySortOrder(queue, events); // TODO KJS (this is autosort)
                 adapter.setQueue(queue);
                 for (QueueEvent event : events) {
                     EventBus.getDefault().post(event);

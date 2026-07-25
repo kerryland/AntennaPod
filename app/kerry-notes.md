@@ -70,3 +70,4 @@ SearchFragment
 
 
 
+.\gradlew :app:testPlayDebugUnitTest

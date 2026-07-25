@@ -34,6 +34,7 @@ public class FeedPreferencesCursor extends CursorWrapper {
     private final int indexNewEpisodesAction;
     private final int indexTags;
     private final int indexFeedPriority;
+    private final int indexPlaybackOrder;
 
     public FeedPreferencesCursor(Cursor cursor) {
         super(cursor);
@@ -54,6 +55,7 @@ public class FeedPreferencesCursor extends CursorWrapper {
         indexEpisodeNotification = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_EPISODE_NOTIFICATION);
         indexNewEpisodesAction = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_NEW_EPISODES_ACTION);
         indexFeedPriority = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_FEED_PRIORITY);
+        indexPlaybackOrder = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_PLAYBACK_ORDER);
         indexTags = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_FEED_TAGS);
     }
 
@@ -83,6 +85,7 @@ public class FeedPreferencesCursor extends CursorWrapper {
                 getInt(indexEpisodeNotification) > 0,
                 FeedPreferences.NewEpisodesAction.fromCode(getInt(indexNewEpisodesAction)),
                 getInt(indexFeedPriority),
+                FeedPreferences.PlaybackOrderSetting.fromCode(getInt(indexPlaybackOrder)),
                 new HashSet<>(Arrays.asList(tagsString.split(FeedPreferences.TAG_SEPARATOR))));
     }
 }

@@ -36,6 +36,7 @@ public class FeedCursor extends CursorWrapper {
     private final int indexImageUrl;
     private final int indexState;
     private final int indexPriority;
+    private final int indexPlaybackOrder;
 
     public FeedCursor(Cursor cursor) {
         super(new FeedPreferencesCursor(cursor));
@@ -62,6 +63,7 @@ public class FeedCursor extends CursorWrapper {
         indexImageUrl = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_IMAGE_URL);
         indexState = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_STATE);
         indexPriority = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_FEED_PRIORITY);
+        indexPlaybackOrder = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_PLAYBACK_ORDER);
     }
 
     /**
@@ -91,7 +93,9 @@ public class FeedCursor extends CursorWrapper {
                 SortOrder.fromCodeString(getString(indexSortOrder)),
                 getInt(indexLastUpdateFailed) > 0,
                 getInt(indexState),
-                getInt(indexPriority));
+                getInt(indexPriority),
+                getInt(indexPlaybackOrder)
+        );
         feed.setPreferences(preferencesCursor.getFeedPreferences());
         return feed;
     }

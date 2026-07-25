@@ -73,6 +73,7 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
     private static final String PREF_EDIT_FEED_URL = "editFeedUrl";
     private static final String PREF_RECONNECT_LOCAL_FOLDER = "reconnectLocalFolder";
     private static final String PREF_PRIORITY = "feedPriority";
+    private static final String PREF_PLAYBACK_ORDER = "playbackOrder";
 
     private Feed feed;
     private Disposable disposable;
@@ -142,6 +143,7 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
                     setupPreferences();
                     updateAutoDeleteSummary();
                     updateAutoDownloadEnabledSummary();
+                    updatePlaybackOrderSummary();
                     updateNewEpisodesActionSummary();
 
                     findPreference(PREF_RECONNECT_LOCAL_FOLDER).setVisible(feed.isLocalFeed());
@@ -253,7 +255,15 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
             DBWriter.setFeedPreferences(feedPreferences);
             return true;
         });
-        
+
+        findPreference(PREF_PLAYBACK_ORDER).setOnPreferenceChangeListener((preference, newValue) -> {
+            int code = Integer.parseInt((String) newValue);
+            feedPreferences.setPlaybackOrder(FeedPreferences.PlaybackOrderSetting.fromCode(code));
+            DBWriter.setFeedPreferences(feedPreferences);
+            updatePlaybackOrderSummary();
+            return false;
+        });
+
         SwitchPreferenceCompat keepUpdated = findPreference("keepUpdated");
         keepUpdated.setChecked(feedPreferences.getKeepUpdated());
         keepUpdated.setOnPreferenceChangeListener((preference, newValue) -> {
@@ -375,6 +385,20 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
         };
         autoDownloadPreference.setSummary(summary);
         autoDownloadPreference.setValue("" + feedPreferences.getAutoDownload().code);
+    }
+
+    private void updatePlaybackOrderSummary() {
+        if (feed == null || feed.getPreferences() == null) {
+            return;
+        }
+        ListPreference playbackOrderPreference = findPreference(PREF_PLAYBACK_ORDER);
+        String summary = switch (feedPreferences.getPlaybackOrder()) {
+            case FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST -> getString(R.string.feed_playback_order_action_oldest_first);
+            case FeedPreferences.PlaybackOrderSetting.NEWEST_FIRST -> getString(R.string.feed_playback_order_action_newest_first);
+        };
+
+        playbackOrderPreference.setSummary(summary);
+        playbackOrderPreference.setValue(String.valueOf(feedPreferences.getPlaybackOrder().code));
     }
 
     private void addLocalFolderResult(final Uri uri) {

@@ -61,6 +61,26 @@ public class FeedPreferences implements Serializable {
         }
     }
 
+    public enum PlaybackOrderSetting {
+        OLDEST_FIRST(0), NEWEST_FIRST(1);
+
+        public final int code;
+
+        PlaybackOrderSetting(int code) {
+            this.code = code;
+        }
+
+        public static PlaybackOrderSetting fromCode(int code) {
+            for (PlaybackOrderSetting s : values()) {
+                if (s.code == code) {
+                    return s;
+                }
+            }
+            return NEWEST_FIRST;
+        }
+    }
+
+
     public enum SkipSilence {
         OFF(0), GLOBAL(1), AGGRESSIVE(2);
 
@@ -117,6 +137,7 @@ public class FeedPreferences implements Serializable {
     private VolumeAdaptionSetting volumeAdaptionSetting;
     private NewEpisodesAction newEpisodesAction;
     private int priority;
+    private PlaybackOrderSetting playbackOrder;
     private String username;
     private String password;
     private float feedPlaybackSpeed;
@@ -131,7 +152,7 @@ public class FeedPreferences implements Serializable {
                            String username, String password) {
         this(feedID, autoDownload, true, autoDeleteAction, volumeAdaptionSetting, username, password,
                 new FeedFilter(), SPEED_USE_GLOBAL, 0, 0, SkipSilence.GLOBAL,
-                false, newEpisodesAction, 0, new HashSet<>());
+                false, newEpisodesAction, 0, PlaybackOrderSetting.NEWEST_FIRST, new HashSet<>());
     }
 
     public FeedPreferences(long feedID, AutoDownloadSetting autoDownload, boolean keepUpdated,
@@ -139,7 +160,7 @@ public class FeedPreferences implements Serializable {
                             String username, String password, @NonNull FeedFilter filter,
                             float feedPlaybackSpeed, int feedSkipIntro, int feedSkipEnding, SkipSilence feedSkipSilence,
                             boolean showEpisodeNotification, NewEpisodesAction newEpisodesAction, int priority,
-                            Set<String> tags) {
+                           PlaybackOrderSetting playbackOrder, Set<String> tags) {
         this.feedID = feedID;
         this.autoDownload = autoDownload;
         this.keepUpdated = keepUpdated;
@@ -155,6 +176,7 @@ public class FeedPreferences implements Serializable {
         this.showEpisodeNotification = showEpisodeNotification;
         this.newEpisodesAction = newEpisodesAction;
         this.priority = priority;
+        this.playbackOrder = playbackOrder;
         this.tags.addAll(tags);
     }
 
@@ -256,6 +278,14 @@ public class FeedPreferences implements Serializable {
 
     public void setPriority(int priority) {
         this.priority = priority;
+    }
+
+    public PlaybackOrderSetting getPlaybackOrder() {
+        return playbackOrder;
+    }
+
+    public void setPlaybackOrder(PlaybackOrderSetting playbackOrder) {
+        this.playbackOrder = playbackOrder;
     }
 
     public AutoDeleteAction getCurrentAutoDelete() {

@@ -23,16 +23,23 @@
         android:title="@string/playback_pref">
 
         <androidx.preference.SeekBarPreference
+            android:icon="@drawable/ic_download"
             android:key="feedPriority"
             android:title="@string/feed_priority_label"
             android:summary="@string/feed_priority_summary"
             android:defaultValue="5"
             android:max="10"
             android:min="0" />
-    </PreferenceCategory>
 
-    <PreferenceCategory
-        android:title="@string/playback_pref">
+        <de.danoeh.antennapod.ui.preferences.preference.MaterialListPreference
+            android:entries="@array/feed_playback_order_options"
+            android:entryValues="@array/feed_playback_order_values"
+            android:icon="@drawable/ic_download"
+            android:key="playbackOrder"
+
+            android:title="@string/feed_playback_order_title" />
+<!--        android:summary="@string/global_default"-->
+
 
         <Preference
             android:icon="@drawable/ic_playback_speed"

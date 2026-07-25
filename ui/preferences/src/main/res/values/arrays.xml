@@ -282,4 +282,14 @@
         <item>@string/statistics_label</item>
         <item>@string/remember_last_page</item>
     </string-array>
+
+    <string-array name="feed_playback_order_options">
+        <item>@string/feed_playback_order_action_newest_first</item>
+        <item>@string/feed_playback_order_action_oldest_first</item>
+    </string-array>
+
+    <string-array name="feed_playback_order_values">
+        <item>1</item>
+        <item>0</item>
+    </string-array>
 </resources>

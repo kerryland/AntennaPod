@@ -37,6 +37,7 @@ public class FeedCursor extends CursorWrapper {
     private final int indexState;
     private final int indexPriority;
     private final int indexPlaybackOrder;
+    private final int indexMaxEpisodes;
 
     public FeedCursor(Cursor cursor) {
         super(new FeedPreferencesCursor(cursor));
@@ -64,6 +65,7 @@ public class FeedCursor extends CursorWrapper {
         indexState = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_STATE);
         indexPriority = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_FEED_PRIORITY);
         indexPlaybackOrder = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_PLAYBACK_ORDER);
+        indexMaxEpisodes = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_MAX_EPISODES);
     }
 
     /**
@@ -94,7 +96,8 @@ public class FeedCursor extends CursorWrapper {
                 getInt(indexLastUpdateFailed) > 0,
                 getInt(indexState),
                 getInt(indexPriority),
-                getInt(indexPlaybackOrder)
+                getInt(indexPlaybackOrder),
+                getInt(indexMaxEpisodes)
         );
         feed.setPreferences(preferencesCursor.getFeedPreferences());
         return feed;

@@ -20,7 +20,7 @@
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:title="@string/playback_pref">
+        android:title="@string/update_pref">
 
         <androidx.preference.SeekBarPreference
             android:icon="@drawable/ic_download"
@@ -31,6 +31,16 @@
             android:max="10"
             android:min="0" />
 
+        <androidx.preference.ListPreference
+            android:icon="@drawable/ic_download"
+            android:key="maxEpisodes"
+            android:title="@string/max_episodes_label"
+            android:summary="@string/max_episodes_summary"
+            android:defaultValue="3"
+            android:entries="@array/max_episodes_options"
+            android:entryValues="@array/max_episodes_values"
+             />
+
         <de.danoeh.antennapod.ui.preferences.preference.MaterialListPreference
             android:entries="@array/feed_playback_order_options"
             android:entryValues="@array/feed_playback_order_values"
@@ -40,6 +50,10 @@
             android:title="@string/feed_playback_order_title" />
 <!--        android:summary="@string/global_default"-->
 
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/playback_pref">
 
         <Preference
             android:icon="@drawable/ic_playback_speed"

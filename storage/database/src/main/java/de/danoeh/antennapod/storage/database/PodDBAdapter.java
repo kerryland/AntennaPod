@@ -55,7 +55,7 @@ public class PodDBAdapter {
 
     private static final String TAG = "PodDBAdapter";
     public static final String DATABASE_NAME = "Antennapod.db";
-    public static final int VERSION = 3130000;
+    public static final int VERSION = 3120005;
 
     /**
      * Maximum number of arguments for IN-operator.
@@ -119,6 +119,7 @@ public class PodDBAdapter {
     public static final String KEY_FEED_PLAYBACK_SPEED = "feed_playback_speed";
     public static final String KEY_FEED_PRIORITY = "priority";
     public static final String KEY_PLAYBACK_ORDER = "playback_order";
+    public static final String KEY_MAX_EPISODES = "max_episodes";
     public static final String KEY_FEED_SKIP_SILENCE = "feed_skip_silence";
     public static final String KEY_FEED_SKIP_INTRO = "feed_skip_intro";
     public static final String KEY_FEED_SKIP_ENDING = "feed_skip_ending";
@@ -183,7 +184,8 @@ public class PodDBAdapter {
             + KEY_STATE + " INTEGER DEFAULT " + Feed.STATE_SUBSCRIBED + ","
             + KEY_NEW_EPISODES_ACTION + " INTEGER DEFAULT 0,"
             + KEY_FEED_PRIORITY + " INTEGER DEFAULT 5,"
-            + KEY_PLAYBACK_ORDER + " INTEGER DEFAULT 1)";
+            + KEY_PLAYBACK_ORDER + " INTEGER DEFAULT 1,"
+            + KEY_MAX_EPISODES + " INTEGER DEFAULT 3)";
 
     private static final String CREATE_TABLE_FEED_ITEMS = "CREATE TABLE "
             + TABLE_NAME_FEED_ITEMS + " (" + TABLE_PRIMARY_KEY
@@ -350,7 +352,8 @@ public class PodDBAdapter {
             + TABLE_NAME_FEEDS + "." + KEY_STATE + ", "
             + TABLE_NAME_FEEDS + "." + KEY_NEW_EPISODES_ACTION + ","
             + TABLE_NAME_FEEDS + "." + KEY_FEED_PRIORITY + ","
-            + TABLE_NAME_FEEDS + "." + KEY_PLAYBACK_ORDER
+            + TABLE_NAME_FEEDS + "." + KEY_PLAYBACK_ORDER + ","
+            + TABLE_NAME_FEEDS + "." + KEY_MAX_EPISODES
             ;
 
     private static final String JOIN_FEED_ITEM_AND_MEDIA = " LEFT JOIN " + TABLE_NAME_FEED_MEDIA
@@ -477,6 +480,7 @@ public class PodDBAdapter {
         values.put(KEY_STATE, feed.getState());
         values.put(KEY_FEED_PRIORITY, feed.getPriority());
         values.put(KEY_PLAYBACK_ORDER, feed.getPlaybackOrder());
+        values.put(KEY_MAX_EPISODES, feed.getMaxEpisodes());
 
         values.put(KEY_IS_PAGED, feed.isPaged());
         values.put(KEY_NEXT_PAGE_LINK, feed.getNextPageLink());
@@ -522,6 +526,7 @@ public class PodDBAdapter {
         values.put(KEY_NEW_EPISODES_ACTION, prefs.getNewEpisodesAction().code);
         values.put(KEY_FEED_PRIORITY, prefs.getPriority());
         values.put(KEY_PLAYBACK_ORDER, prefs.getPlaybackOrder().code);
+        values.put(KEY_MAX_EPISODES, prefs.getMaxEpisodes());
         db.update(TABLE_NAME_FEEDS, values, KEY_ID + "=?", new String[]{String.valueOf(prefs.getFeedID())});
     }
 

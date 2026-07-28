@@ -138,6 +138,7 @@ public class FeedPreferences implements Serializable {
     private NewEpisodesAction newEpisodesAction;
     private int priority;
     private PlaybackOrderSetting playbackOrder;
+    private int maxEpisodes;
     private String username;
     private String password;
     private float feedPlaybackSpeed;
@@ -152,7 +153,7 @@ public class FeedPreferences implements Serializable {
                            String username, String password) {
         this(feedID, autoDownload, true, autoDeleteAction, volumeAdaptionSetting, username, password,
                 new FeedFilter(), SPEED_USE_GLOBAL, 0, 0, SkipSilence.GLOBAL,
-                false, newEpisodesAction, 0, PlaybackOrderSetting.NEWEST_FIRST, new HashSet<>());
+                false, newEpisodesAction, 0, PlaybackOrderSetting.NEWEST_FIRST, 3, new HashSet<>());
     }
 
     public FeedPreferences(long feedID, AutoDownloadSetting autoDownload, boolean keepUpdated,
@@ -160,7 +161,8 @@ public class FeedPreferences implements Serializable {
                             String username, String password, @NonNull FeedFilter filter,
                             float feedPlaybackSpeed, int feedSkipIntro, int feedSkipEnding, SkipSilence feedSkipSilence,
                             boolean showEpisodeNotification, NewEpisodesAction newEpisodesAction, int priority,
-                           PlaybackOrderSetting playbackOrder, Set<String> tags) {
+                           PlaybackOrderSetting playbackOrder,
+                           int maxEpisodes, Set<String> tags) {
         this.feedID = feedID;
         this.autoDownload = autoDownload;
         this.keepUpdated = keepUpdated;
@@ -177,6 +179,7 @@ public class FeedPreferences implements Serializable {
         this.newEpisodesAction = newEpisodesAction;
         this.priority = priority;
         this.playbackOrder = playbackOrder;
+        this.maxEpisodes = maxEpisodes;
         this.tags.addAll(tags);
     }
 
@@ -286,6 +289,14 @@ public class FeedPreferences implements Serializable {
 
     public void setPlaybackOrder(PlaybackOrderSetting playbackOrder) {
         this.playbackOrder = playbackOrder;
+    }
+
+    public int getMaxEpisodes() {
+        return maxEpisodes;
+    }
+
+    public void setMaxEpisodes(int maxEpisodes) {
+        this.maxEpisodes = maxEpisodes;
     }
 
     public AutoDeleteAction getCurrentAutoDelete() {

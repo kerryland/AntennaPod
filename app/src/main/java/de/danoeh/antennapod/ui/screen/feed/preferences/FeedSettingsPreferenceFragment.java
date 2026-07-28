@@ -74,6 +74,7 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
     private static final String PREF_RECONNECT_LOCAL_FOLDER = "reconnectLocalFolder";
     private static final String PREF_PRIORITY = "feedPriority";
     private static final String PREF_PLAYBACK_ORDER = "playbackOrder";
+    private static final String PREF_MAX_EPISODES = "maxEpisodes";
 
     private Feed feed;
     private Disposable disposable;
@@ -144,6 +145,7 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
                     updateAutoDeleteSummary();
                     updateAutoDownloadEnabledSummary();
                     updatePlaybackOrderSummary();
+                    updateMaxEpisodesSummary();
                     updateNewEpisodesActionSummary();
 
                     findPreference(PREF_RECONNECT_LOCAL_FOLDER).setVisible(feed.isLocalFeed());
@@ -261,6 +263,14 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
             feedPreferences.setPlaybackOrder(FeedPreferences.PlaybackOrderSetting.fromCode(code));
             DBWriter.setFeedPreferences(feedPreferences);
             updatePlaybackOrderSummary();
+            return false;
+        });
+
+        findPreference(PREF_MAX_EPISODES).setOnPreferenceChangeListener((preference, newValue) -> {
+            int code = Integer.parseInt((String) newValue);
+            feedPreferences.setMaxEpisodes(code);
+            DBWriter.setFeedPreferences(feedPreferences);
+            updateMaxEpisodesSummary();
             return false;
         });
 
@@ -399,6 +409,16 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
 
         playbackOrderPreference.setSummary(summary);
         playbackOrderPreference.setValue(String.valueOf(feedPreferences.getPlaybackOrder().code));
+    }
+
+    private void updateMaxEpisodesSummary() {
+        if (feed == null || feed.getPreferences() == null) {
+            return;
+        }
+        ListPreference maxEpisodesPreference = findPreference(PREF_MAX_EPISODES);
+        maxEpisodesPreference.setValue(String.valueOf(feedPreferences.getMaxEpisodes()));
+        String summary = getString(R.string.max_episodes_summary) + " " + maxEpisodesPreference.getValue();
+        maxEpisodesPreference.setSummary(summary);
     }
 
     private void addLocalFolderResult(final Uri uri) {

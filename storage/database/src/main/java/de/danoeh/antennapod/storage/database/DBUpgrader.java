@@ -15,6 +15,7 @@ import static de.danoeh.antennapod.model.feed.FeedPreferences.SPEED_USE_GLOBAL;
 class DBUpgrader {
     /**
      * Upgrades the given database to a new schema version
+     * (version in PodDBAdapter.VERSION, not `versionCode` in build.gradle)
      */
     static void upgrade(final SQLiteDatabase db, final int oldVersion, final int newVersion) {
         if (oldVersion <= 1) {
@@ -361,11 +362,15 @@ class DBUpgrader {
                     + " ADD COLUMN " + PodDBAdapter.KEY_FEED_PRIORITY + " INTEGER DEFAULT 5");
         }
 
-        if (oldVersion < 3130000) {
+        if (oldVersion < 3120002) {
             db.execSQL("ALTER TABLE " + PodDBAdapter.TABLE_NAME_FEEDS
                     + " ADD COLUMN " + PodDBAdapter.KEY_PLAYBACK_ORDER + " INTEGER DEFAULT 1");
         }
 
+        if (oldVersion < 3120002) {
+            db.execSQL("ALTER TABLE " + PodDBAdapter.TABLE_NAME_FEEDS
+                    + " ADD COLUMN " + PodDBAdapter.KEY_MAX_EPISODES + " INTEGER DEFAULT 3");
+        }
 
     }
 

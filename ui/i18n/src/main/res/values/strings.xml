@@ -505,6 +505,7 @@
     <string name="pref_skip_keeps_episodes_title">Keep skipped episodes</string>
     <string name="pref_favorite_keeps_episodes_sum">Keep episodes when they are marked favorite</string>
     <string name="pref_favorite_keeps_episodes_title">Keep favorite episodes</string>
+    <string name="update_pref">Updates</string>
     <string name="playback_pref">Playback</string>
     <string name="playback_pref_sum">Headphone controls, Skip intervals, Queue</string>
     <string name="downloads_pref">Downloads</string>
@@ -857,6 +858,10 @@
     <string name="exclude_episodes_shorter_than">Exclude episodes shorter than</string>
     <string name="feed_priority_label">Priority podcast</string>
     <string name="feed_priority_summary">Queue Playback Order. Low numbers appear at the top of the queue</string>
+    <string name="max_episodes_label">Max Episodes</string>
+    <string name="max_episodes_summary">How many episodes do you want at once?</string>
+
+
     <string name="keep_updated">Keep updated</string>
     <string name="keep_updated_summary">Include this podcast when (auto-)refreshing all podcasts</string>
     <plurals name="statistics_episodes_started">

@@ -478,9 +478,6 @@ public class PodDBAdapter {
         values.put(KEY_TYPE, feed.getType());
         values.put(KEY_FEED_IDENTIFIER, feed.getFeedIdentifier());
         values.put(KEY_STATE, feed.getState());
-        values.put(KEY_FEED_PRIORITY, feed.getPriority());
-        values.put(KEY_PLAYBACK_ORDER, feed.getPlaybackOrder());
-        values.put(KEY_MAX_EPISODES, feed.getMaxEpisodes());
 
         values.put(KEY_IS_PAGED, feed.isPaged());
         values.put(KEY_NEXT_PAGE_LINK, feed.getNextPageLink());
@@ -650,6 +647,7 @@ public class PodDBAdapter {
                 setFeed(feed);
                 if (feed.getItems() != null) {
                     for (FeedItem item : feed.getItems()) {
+                        item.setFeed(feed);
                         updateOrInsertFeedItem(item, false);
                     }
                 }
@@ -1069,7 +1067,6 @@ public class PodDBAdapter {
 
     /**
      * Returns a cursor which contains all feed items in the queue. The returned
-     * cursor uses the FEEDITEM_SEL_FI_SMALL selection.
      * cursor uses the FEEDITEM_SEL_FI_SMALL selection.
      */
     public final Cursor getQueueCursor() {

@@ -34,7 +34,7 @@ public class ItemEnqueuePositionCalculator {
         switch (enqueueLocation) {
             case PRIORITY:
                 for (int i = 0; i < curQueue.size(); i++) {
-                    if (item.getFeed().getPriority() <= curQueue.get(i).getFeed().getPriority()) {
+                    if (item.getFeed().getPreferences().getPriority() <= curQueue.get(i).getFeed().getPreferences().getPriority()) {
                         return i;
                     }
                 }

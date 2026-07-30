@@ -1,6 +1,7 @@
 package de.danoeh.antennapod.storage.database;
 
 import de.danoeh.antennapod.model.feed.Feed;
+import de.danoeh.antennapod.model.feed.PlaybackOrder;
 import de.danoeh.antennapod.model.playback.RemoteMedia;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterfaceStub;
@@ -170,7 +171,7 @@ public class ItemEnqueuePositionCalculatorTest {
     static FeedItem createFeedItem(long id) {
         Feed feed = new Feed(0, null, "title", "http://example.com", "This is the description",
                 "http://example.com/payment", "Daniel", "en", null, "http://example.com/feed",
-                "http://example.com/image", null, "http://example.com/feed", System.currentTimeMillis(), 5);
+                "http://example.com/image", null, "http://example.com/feed", System.currentTimeMillis());
         FeedItem item = new FeedItem(id, "Item" + id, "ItemId" + id, "url",
                 new Date(), FeedItem.PLAYED, feed);
         FeedMedia media = new FeedMedia(item, "http://download.url.net/" + id, 1234567, "audio/mpeg");

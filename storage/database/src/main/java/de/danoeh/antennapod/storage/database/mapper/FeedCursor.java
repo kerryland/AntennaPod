@@ -6,6 +6,7 @@ import android.database.CursorWrapper;
 import androidx.annotation.NonNull;
 
 import de.danoeh.antennapod.model.feed.Feed;
+import de.danoeh.antennapod.model.feed.PlaybackOrder;
 import de.danoeh.antennapod.model.feed.SortOrder;
 import de.danoeh.antennapod.storage.database.PodDBAdapter;
 
@@ -35,9 +36,6 @@ public class FeedCursor extends CursorWrapper {
     private final int indexLastUpdateFailed;
     private final int indexImageUrl;
     private final int indexState;
-    private final int indexPriority;
-    private final int indexPlaybackOrder;
-    private final int indexMaxEpisodes;
 
     public FeedCursor(Cursor cursor) {
         super(new FeedPreferencesCursor(cursor));
@@ -63,9 +61,6 @@ public class FeedCursor extends CursorWrapper {
         indexLastUpdateFailed = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_LAST_UPDATE_FAILED);
         indexImageUrl = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_IMAGE_URL);
         indexState = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_STATE);
-        indexPriority = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_FEED_PRIORITY);
-        indexPlaybackOrder = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_PLAYBACK_ORDER);
-        indexMaxEpisodes = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_MAX_EPISODES);
     }
 
     /**
@@ -94,10 +89,7 @@ public class FeedCursor extends CursorWrapper {
                 getString(indexHide),
                 SortOrder.fromCodeString(getString(indexSortOrder)),
                 getInt(indexLastUpdateFailed) > 0,
-                getInt(indexState),
-                getInt(indexPriority),
-                getInt(indexPlaybackOrder),
-                getInt(indexMaxEpisodes)
+                getInt(indexState)
         );
         feed.setPreferences(preferencesCursor.getFeedPreferences());
         return feed;

@@ -6,7 +6,6 @@ import android.database.CursorWrapper;
 import androidx.annotation.NonNull;
 
 import de.danoeh.antennapod.model.feed.Feed;
-import de.danoeh.antennapod.model.feed.PlaybackOrder;
 import de.danoeh.antennapod.model.feed.SortOrder;
 import de.danoeh.antennapod.storage.database.PodDBAdapter;
 

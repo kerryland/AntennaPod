@@ -48,7 +48,7 @@ public class FeedItem implements Serializable {
     private Transcript transcript;
 
     private int state;
-    public static final int NEW = -1;
+    public static final int NEW = -1; // i.e. in the inbox
     public static final int UNPLAYED = 0;
     public static final int PLAYED = 1;
 
@@ -117,7 +117,7 @@ public class FeedItem implements Serializable {
         this.link = link;
         this.pubDate = (pubDate != null) ? (Date) pubDate.clone() : null;
         this.state = state;
-        this.feed = feed;
+        setFeed(feed);
         this.hasChapters = false;
     }
 
@@ -284,6 +284,7 @@ public class FeedItem implements Serializable {
 
     public void setFeed(Feed feed) {
         this.feed = feed;
+        this.feedId = feed.getId();
     }
 
     public boolean isNew() {

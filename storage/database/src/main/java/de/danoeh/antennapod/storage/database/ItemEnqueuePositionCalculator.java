@@ -8,6 +8,7 @@ import java.util.Random;
 
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedMedia;
+import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
 import de.danoeh.antennapod.storage.preferences.UserPreferences.EnqueueLocation;
 import de.danoeh.antennapod.model.playback.Playable;
@@ -33,6 +34,23 @@ public class ItemEnqueuePositionCalculator {
     public int calcPosition(@NonNull List<FeedItem> curQueue, @NonNull FeedItem item, @Nullable Playable currentPlaying) {
         switch (enqueueLocation) {
             case PRIORITY:
+                if (item.getFeed().getPreferences().getPlaybackOrder() == FeedPreferences.PlaybackOrderSetting.NEWEST_FIRST) {
+                    for (int i = 0; i < curQueue.size(); i++) {
+                        if (curQueue.get(i).getFeedId() == item.getFeedId()
+                                && curQueue.get(i).getPubDate().before(item.getPubDate())) {
+                            return i;
+                        }
+                    }
+                }
+                if (item.getFeed().getPreferences().getPlaybackOrder() == FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST) {
+                    for (int i = curQueue.size() - 1; i >= 0; i--) {
+                        if (curQueue.get(i).getFeedId() == item.getFeedId()
+                         && curQueue.get(i).getPubDate().after(item.getPubDate())) {
+                            return i+1;
+                        }
+                    }
+                }
+
                 for (int i = 0; i < curQueue.size(); i++) {
                     if (item.getFeed().getPreferences().getPriority() <= curQueue.get(i).getFeed().getPreferences().getPriority()) {
                         return i;

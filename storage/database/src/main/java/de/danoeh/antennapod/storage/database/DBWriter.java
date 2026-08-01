@@ -371,7 +371,7 @@ public class DBWriter {
     }
 
     /**
-     * Appends FeedItem objects to the end of the queue. The 'read'-attribute of all items will be set to true.
+     * Adds FeedItem objects to the queue, in the "correct" position based on user preference. The 'read'-attribute of all items will be set to true.
      * If a FeedItem is already in the queue, the FeedItem will not change its position in the queue.
      *
      * @param context  A context that is used for opening a database connection.
@@ -387,7 +387,7 @@ public class DBWriter {
             adapter.open();
             final List<FeedItem> queue = DBReader.getQueue();
 
-            List<FeedItem>  markAsUnplayed = new ArrayList<>();
+            List<FeedItem> markAsUnplayed = new ArrayList<>();
             List<QueueEvent> events = new ArrayList<>();
             List<FeedItem> updatedItems = new ArrayList<>();
             ItemEnqueuePositionCalculator positionCalculator =
@@ -1012,6 +1012,20 @@ public class DBWriter {
             }
         } else {
             Log.w(TAG, "removeFeedWithDownloadUrl: Could not find feed with url: " + downloadUrl);
+        }
+    }
+
+    /**
+     * For test classes that need to wait for database thread to finish
+     */
+    public static void waitForDatabase() {
+        try {
+            runOnDbThread(() -> {
+           }).get();
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 

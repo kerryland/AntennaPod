@@ -9,8 +9,9 @@ glide = "4.16.0"
 okhttp = "4.12.0"
 espresso = "3.5.0"
 androidx-test = "1.5.0"
-lifecycle-common-jvm = "2.11.0"
-lifecycle-process = "2.11.0"
+lifecycle-common-jvm = "2.10.0"
+lifecycle-process = "2.10.0"
+lifecycle-process-version = "2.10.0"
 
 [libraries]
 androidx-annotation = { module = "androidx.annotation:annotation", version = "1.9.1" }
@@ -78,8 +79,9 @@ awaitility = { module = "org.awaitility:awaitility", version = "3.1.6" }
 junit = { module = "junit:junit", version = "4.13" }
 robolectric = { module = "org.robolectric:robolectric", version = "4.16" }
 mockito-core = { module = "org.mockito:mockito-core", version = "5.15.2" }
-androidx-lifecycle-common-jvm = { group = "androidx.lifecycle", name = "lifecycle-common-jvm", version.ref = "lifecycle-common-jvm" }
-androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycle-process" }
+androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycle-process-version" }
+#androidx-lifecycle-common-jvm = { group = "androidx.lifecycle", name = "lifecycle-common-jvm", version.ref = "lifecycle-common-jvm" }
+#androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycle-process" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

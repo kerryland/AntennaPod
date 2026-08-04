@@ -90,7 +90,7 @@ public class BulkDownloader {
                 downloadList.add(episode);
             }
         }
-        final int DOWNLOAD_WARN_LEVEL = 3;
+        final int DOWNLOAD_WARN_LEVEL = 20;
 
         if (downloadList.size() > DOWNLOAD_WARN_LEVEL) {
             // make sure the user really wants to clear the queue

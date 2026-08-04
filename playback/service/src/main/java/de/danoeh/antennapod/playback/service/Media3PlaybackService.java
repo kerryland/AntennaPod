@@ -46,6 +46,7 @@ import de.danoeh.antennapod.playback.base.MediaItemAdapter;
 import de.danoeh.antennapod.playback.base.PlayerStatus;
 import de.danoeh.antennapod.playback.base.RewindAfterPauseUtils;
 import de.danoeh.antennapod.playback.cast.CastPlayerWrapper;
+import de.danoeh.antennapod.playback.service.internal.BluetoothReconnectPlayer;
 import de.danoeh.antennapod.playback.service.internal.ExoPlayerUtils;
 import de.danoeh.antennapod.playback.service.internal.MediaLibrarySessionCallback;
 import de.danoeh.antennapod.playback.service.internal.PlayableUtils;
@@ -86,6 +87,7 @@ public class Media3PlaybackService extends MediaLibraryService {
     private Player player;
     private MediaLibrarySession mediaSession;
     private FeedMedia currentPlayable;
+    private BluetoothReconnectPlayer bluetoothReconnectPlayer;
     private String pendingStreamMediaId;
     private boolean allowStreamingThisTime = false;
     private Disposable mediaLoaderDisposable;
@@ -115,6 +117,9 @@ public class Media3PlaybackService extends MediaLibraryService {
                 initLoudnessEnhancer(audioSessionId);
             }
         });
+        bluetoothReconnectPlayer = new BluetoothReconnectPlayer(this);
+        bluetoothReconnectPlayer.register();
+
         initLoudnessEnhancer(exoPlayer.getAudioSessionId());
         Player maybeCastPlayer = CastPlayerWrapper.wrap(exoPlayer, this);
         player = new ForwardingPlayer(maybeCastPlayer) {
@@ -243,6 +248,12 @@ public class Media3PlaybackService extends MediaLibraryService {
             } else if (customCommand.customAction.equals(SESSION_COMMAND_EXTEND_SLEEP_TIMER.customAction)) {
                 extendSleepTimer(MediaLibrarySessionCallback.getLong(args, 0));
                 return Futures.immediateFuture(new SessionResult(SessionResult.RESULT_SUCCESS));
+            } else if (customCommand.customAction.equals(PAUSE_ON_DISCONNECT.customAction)) {
+                boolean pauseOnHeadsetDisconnect = MediaLibrarySessionCallback.getBoolean(args, true);
+                if (exoPlayer != null) {
+                    exoPlayer.setHandleAudioBecomingNoisy(pauseOnHeadsetDisconnect);
+                }
+                return Futures.immediateFuture(new SessionResult(SessionResult.RESULT_SUCCESS));
             }
             return super.onCustomCommand(session, controller, customCommand, args);
         }
@@ -367,6 +378,9 @@ public class Media3PlaybackService extends MediaLibraryService {
     @Override
     public void onDestroy() {
         PlaybackService.isRunning = false;
+        if (bluetoothReconnectPlayer != null) {
+            bluetoothReconnectPlayer.unregister();
+        }
         cancelPositionObserver();
         if (sleepTimer != null) {
             sleepTimer.stop();

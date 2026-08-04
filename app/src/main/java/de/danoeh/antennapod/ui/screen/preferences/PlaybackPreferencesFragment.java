@@ -1,5 +1,7 @@
 package de.danoeh.antennapod.ui.screen.preferences;
 
+import static de.danoeh.antennapod.storage.preferences.UserPreferences.PREF_PAUSE_ON_HEADSET_DISCONNECT;
+
 import android.app.Activity;
 import android.content.res.Resources;
 import android.os.Build;
@@ -9,6 +11,8 @@ import androidx.collection.ArrayMap;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import de.danoeh.antennapod.R;
+import de.danoeh.antennapod.playback.service.PlaybackController;
+import de.danoeh.antennapod.playback.service.internal.MediaLibrarySessionCallback;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.preferences.screen.AnimatedPreferenceFragment;
 import de.danoeh.antennapod.ui.screen.feed.preferences.SkipPreferenceDialog;
@@ -38,6 +42,20 @@ public class PlaybackPreferencesFragment extends AnimatedPreferenceFragment {
     private void setupPlaybackScreen() {
         final Activity activity = getActivity();
 
+        findPreference(PREF_PAUSE_ON_HEADSET_DISCONNECT).setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
+                boolean pauseOnHeadsetDisconnect = (Boolean)newValue;
+
+                PlaybackController.bindToMedia3Service(getActivity(), mediaController -> {
+                    mediaController.sendCustomCommand(
+                            MediaLibrarySessionCallback.PAUSE_ON_DISCONNECT,
+                            MediaLibrarySessionCallback.createBundle(pauseOnHeadsetDisconnect));
+                });
+                return true;
+            }
+        });
+
         findPreference(PREF_PLAYBACK_SPEED_LAUNCHER).setOnPreferenceClickListener(preference -> {
             new VariableSpeedDialog().show(getChildFragmentManager(), null);
             return true;
@@ -52,7 +70,6 @@ public class PlaybackPreferencesFragment extends AnimatedPreferenceFragment {
         });
         if (Build.VERSION.SDK_INT >= 31) {
             findPreference(UserPreferences.PREF_UNPAUSE_ON_HEADSET_RECONNECT).setVisible(false);
-            findPreference(UserPreferences.PREF_UNPAUSE_ON_BLUETOOTH_RECONNECT).setVisible(false);
         }
 
         buildEnqueueLocationPreference();

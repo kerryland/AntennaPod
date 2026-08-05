@@ -1,0 +1,100 @@
+package de.danoeh.antennapod.net.download.service.feed;
+
+import static de.danoeh.antennapod.model.feed.SortOrder.PRIORITY_PLAYBACK_DATE_OLD_NEW;
+
+import android.content.Context;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import de.danoeh.antennapod.model.feed.Feed;
+import de.danoeh.antennapod.model.feed.FeedItem;
+import de.danoeh.antennapod.model.feed.FeedItemFilter;
+import de.danoeh.antennapod.model.feed.FeedPreferences;
+import de.danoeh.antennapod.model.feed.SortOrder;
+import de.danoeh.antennapod.storage.database.DBReader;
+import de.danoeh.antennapod.storage.database.DBWriter;
+import de.danoeh.antennapod.storage.preferences.UserPreferences;
+
+
+public class DestinationSelector {
+    /**
+     * Decide where to put feed items, based on Feed Priority, Playback Order, and Max Episodes
+     */
+    public static void populateInboxOrQueue(Context context, List<Feed> feeds) {
+        List<FeedItem> queueAdditions = new ArrayList<>();
+        List<FeedItem> queueRemovals = new ArrayList<>();
+
+        Set<FeedItem> currentQueue = new HashSet<>(DBReader.getQueue());
+        List<FeedItem> inboxStateChanges = new ArrayList<>();
+
+        for (Feed feed : feeds) {
+            if (feed.getState() != Feed.STATE_SUBSCRIBED) {
+                continue;
+            }
+
+            SortOrder sortOrder = (feed.getPreferences().getPlaybackOrder() == FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST)
+                    ? SortOrder.DATE_OLD_NEW
+                    : SortOrder.DATE_NEW_OLD;
+
+            List<FeedItem> feedItems = DBReader.getFeedItemList(
+                    feed, FeedItemFilter.unfiltered(), sortOrder, 0, Integer.MAX_VALUE
+            );
+
+            FeedPreferences.NewEpisodesAction episodeDestination = feed.getPreferences().getNewEpisodesAction();
+            if (episodeDestination == FeedPreferences.NewEpisodesAction.GLOBAL) {
+                episodeDestination = UserPreferences.getNewEpisodesAction();
+            }
+
+            int maxEpisodes = feed.getPreferences().getMaxEpisodes();
+            int addCount = 0;
+
+            for (FeedItem feedItem : feedItems) {
+                if (feedItem.isPlayed()) {
+                    continue;
+                }
+
+                boolean isInQueue = currentQueue.contains(feedItem);
+
+                if (addCount < maxEpisodes) {
+                    addCount++;
+
+                    if (isInQueue) {
+                        continue;
+                    }
+
+                    if (episodeDestination == FeedPreferences.NewEpisodesAction.ADD_TO_INBOX) {
+                        if (!feedItem.isNew()) {
+                            feedItem.setNew();
+                            inboxStateChanges.add(feedItem);
+                        }
+                    } else if (episodeDestination == FeedPreferences.NewEpisodesAction.ADD_TO_QUEUE) {
+                        queueAdditions.add(feedItem);
+                    }
+                } else { // Limit exceeded
+                    if (isInQueue) {
+                        queueRemovals.add(feedItem);
+                    }
+
+                    if (feedItem.isNew()) {
+                        feedItem.setPlayed(false);
+                        inboxStateChanges.add(feedItem);
+                    }
+                }
+            }
+        }
+
+        if (!inboxStateChanges.isEmpty()) {
+            DBWriter.setItemList(inboxStateChanges);
+        }
+
+        long[] removeFromQueueItemIds = new long[queueRemovals.size()];
+        for (int i = 0; i < queueRemovals.size(); i++) {
+            removeFromQueueItemIds[i] = queueRemovals.get(i).getId();
+        }
+        DBWriter.removeQueueItem(context, false, removeFromQueueItemIds);
+        DBWriter.addQueueItem(context, queueAdditions.toArray(new FeedItem[0]));
+    }
+}

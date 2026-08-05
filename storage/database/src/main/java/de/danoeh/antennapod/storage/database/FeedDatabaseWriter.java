@@ -8,11 +8,10 @@ import de.danoeh.antennapod.model.download.DownloadResult;
 import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
-import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.model.feed.SortOrder;
 import de.danoeh.antennapod.net.sync.serviceinterface.EpisodeAction;
 import de.danoeh.antennapod.net.sync.serviceinterface.SynchronizationQueue;
-import de.danoeh.antennapod.storage.preferences.UserPreferences;
+
 import org.greenrobot.eventbus.EventBus;
 
 import java.util.ArrayList;
@@ -20,7 +19,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -71,7 +69,7 @@ public abstract class FeedDatabaseWriter {
 
             resultFeed = newFeed;
         } else {
-            Log.d(TAG, "Feed with title " + newFeed.getTitle()
+            Log.d(TAG, "Feed id " + savedFeed.getId() + newFeed.getTitle()
                         + " already exists. Syncing new with existing one.");
 
             Collections.sort(newFeed.getItems(), new FeedItemPubdateComparator());
@@ -191,16 +189,6 @@ public abstract class FeedDatabaseWriter {
             e.printStackTrace();
         }
 
-        // We need to add to queue after items are saved to database
-        List<FeedItem> addToQueue = new ArrayList<>();
-        List<FeedItem> removeFromQueue = new ArrayList<>();
-
-        chooseFeedItemsForInboxOrQueue(addToQueue, removeFromQueue);
-
-        for (FeedItem removeFeedItem : removeFromQueue) {
-            DBWriter.removeQueueItem(context, false, removeFeedItem);
-        }
-        DBWriter.addQueueItem(context, addToQueue.toArray(new FeedItem[0]));
         adapter.close();
 
         if (savedFeed != null) {
@@ -210,80 +198,6 @@ public abstract class FeedDatabaseWriter {
         }
 
         return resultFeed;
-    }
-
-    private static void chooseFeedItemsForInboxOrQueue(List<FeedItem> itemsToAddToQueue, List<FeedItem> removedFromQueue) {
-        List<Feed> feeds = DBReader.getFeedList();
-
-        List<FeedItem> queue = DBReader.getQueue();
-
-        for (Feed feed : feeds) {
-            if (feed.getState() != Feed.STATE_SUBSCRIBED) {
-                continue;
-            }
-            int addCount = 0;
-            Optional<FeedItem> mostRecent = Optional.empty();
-
-            List<FeedItem> feedItems;
-            switch (feed.getPreferences().getPlaybackOrder()) {
-                case FeedPreferences.PlaybackOrderSetting.NEWEST_FIRST:
-                    feedItems = DBReader.getFeedItemList(feed, FeedItemFilter.unfiltered(),
-                            SortOrder.DATE_NEW_OLD, 0, Integer.MAX_VALUE);
-                    if (!feedItems.isEmpty()) {
-                        mostRecent = Optional.of(feedItems.get(0));
-                    }
-                    break;
-                case FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST:
-                    feedItems = DBReader.getFeedItemList(feed, FeedItemFilter.unfiltered(),
-                            SortOrder.DATE_OLD_NEW, 0, Integer.MAX_VALUE);
-                    if (!feedItems.isEmpty()) {
-                        mostRecent = Optional.of(feedItems.get(feedItems.size()-1));
-                    }
-                    break;
-                default:
-                    throw new IllegalStateException();
-            }
-            List<FeedItem> unplayedEpisodes = new ArrayList<>();
-
-            // Where does user want new episodes? In the inbox, or queue, or nowhere.
-            FeedPreferences.NewEpisodesAction episodeDestination = feed.getPreferences().getNewEpisodesAction();
-            if (episodeDestination == FeedPreferences.NewEpisodesAction.GLOBAL) {
-                episodeDestination = UserPreferences.getNewEpisodesAction();
-            }
-
-            for (FeedItem feedItem : feedItems) {
-                if (feedItem.isPlayed()) {
-                    continue;
-                }
-                if (mostRecent.isEmpty()) {
-                    mostRecent = Optional.of(feedItem);
-                }
-                if (!feedItem.isPlayed()) { // unplayed or new
-                    unplayedEpisodes.add(feedItem);
-                }
-                if (addCount < feed.getPreferences().getMaxEpisodes()) {
-                    addCount++;
-
-                    if (queue.contains(feedItem)) {
-                        // Do nothing
-                    } else if (episodeDestination == FeedPreferences.NewEpisodesAction.ADD_TO_INBOX) {
-                        feedItem.setNew();
-                        DBWriter.setItemList(List.of(feedItem));
-                    } else if (episodeDestination == FeedPreferences.NewEpisodesAction.ADD_TO_QUEUE) {
-                        if (!queue.contains(feedItem)) {
-                            itemsToAddToQueue.add(feedItem);
-                        }
-                    }
-                } else {
-                    if (queue.contains(feedItem)) {
-                        removedFromQueue.add(feedItem);
-                    }
-                    if (feedItem.isNew()) {
-                        feedItem.setPlayed(false);
-                    }
-                }
-            }
-        }
     }
 
     private static String duplicateEpisodeDetails(FeedItem item) {

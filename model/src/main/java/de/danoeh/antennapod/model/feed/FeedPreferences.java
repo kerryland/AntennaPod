@@ -153,7 +153,7 @@ public class FeedPreferences implements Serializable {
                            String username, String password) {
         this(feedID, autoDownload, true, autoDeleteAction, volumeAdaptionSetting, username, password,
                 new FeedFilter(), SPEED_USE_GLOBAL, 0, 0, SkipSilence.GLOBAL,
-                false, newEpisodesAction, 0, PlaybackOrderSetting.NEWEST_FIRST, 3, new HashSet<>());
+                false, newEpisodesAction, 0, PlaybackOrderSetting.OLDEST_FIRST, 3, new HashSet<>());
     }
 
     public FeedPreferences(long feedID, AutoDownloadSetting autoDownload, boolean keepUpdated,

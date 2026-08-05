@@ -1,5 +1,7 @@
 package de.danoeh.antennapod.net.download.service.feed;
 
+import static de.danoeh.antennapod.model.feed.SortOrder.PRIORITY_PLAYBACK_DATE_OLD_NEW;
+
 import android.Manifest;
 import android.app.Notification;
 import android.content.Context;
@@ -17,6 +19,9 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+
+import de.danoeh.antennapod.model.feed.FeedItemFilter;
+import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.net.download.service.R;
 import de.danoeh.antennapod.net.download.service.feed.local.LocalFeedUpdater;
 import de.danoeh.antennapod.net.download.service.feed.remote.DefaultDownloaderFactory;
@@ -71,7 +76,7 @@ public class FeedUpdateWorker extends Worker {
         boolean isAutomaticRefresh = !getInputData().getBoolean(FeedUpdateManagerImpl.EXTRA_MANUAL, false);
         boolean isAutomaticRefreshEnabled = !UserPreferences.isAutoUpdateDisabled();
         if (feedId == -1) { // Update all
-            toUpdate = DBReader.getFeedList();
+            toUpdate = findFeedsToRefresh();
             Iterator<Feed> itr = toUpdate.iterator();
             while (itr.hasNext()) {
                 Feed feed = itr.next();
@@ -110,13 +115,42 @@ public class FeedUpdateWorker extends Worker {
                 return Result.retry();
             }
         }
-        refreshFeeds(toUpdate,  force);
+        refreshFeeds(toUpdate, force);
+        DestinationSelector.populateInboxOrQueue(getApplicationContext(), toUpdate);
 
         NonSubscribedFeedsCleaner.deleteOldNonSubscribedFeeds(getApplicationContext());
         AutoDownloadManager.getInstance().autodownloadUndownloadedItems(getApplicationContext());
         notificationManager.cancel(R.id.notification_updating_feeds);
         SynchronizationQueue.getInstance().syncImmediately();
         return Result.success();
+    }
+
+    /**
+     * Feeds that are OLDEST_FIRST and already have episodes don't need to be refreshed
+     */
+    private List<Feed> findFeedsToRefresh() {
+        List<Feed> feeds = DBReader.getFeedList();
+        List<Feed> feedsForRssCheck = new ArrayList<>();
+        for (Feed feed : feeds) {
+            if (feed.getState() != Feed.STATE_SUBSCRIBED) {
+                continue;
+            }
+
+            if (feed.getPreferences().getPlaybackOrder() == FeedPreferences.PlaybackOrderSetting.NEWEST_FIRST) {
+                feedsForRssCheck.add(feed);
+
+            } else if (feed.getPreferences().getPlaybackOrder() == FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST) {
+                FeedItemFilter feedItemFilter = new FeedItemFilter(FeedItemFilter.UNPLAYED);
+                feedItemFilter = new FeedItemFilter(feedItemFilter, FeedItemFilter.NEW);
+                int availableEpisodes = DBReader.getFeedItemList(feed, feedItemFilter,
+                        PRIORITY_PLAYBACK_DATE_OLD_NEW, 0, feed.getPreferences().getMaxEpisodes()).size();
+
+                if (availableEpisodes < feed.getPreferences().getMaxEpisodes()) {
+                    feedsForRssCheck.add(feed);
+                }
+            }
+        }
+        return feedsForRssCheck;
     }
 
     @NonNull

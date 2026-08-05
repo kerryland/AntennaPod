@@ -128,7 +128,7 @@ public final class DBReader {
      */
     public static synchronized List<FeedItem> getFeedItemList(final Feed feed,
                                              final FeedItemFilter filter, SortOrder sortOrder, int offset, int limit) {
-        Log.d(TAG, "getFeedItemList() called with: " + "feed = [" + feed + "]");
+        Log.d(TAG, "getFeedItemList() called with: " + "feedId = [" + feed.getId() + "] " + feed.getTitle() );
 
         PodDBAdapter adapter = PodDBAdapter.getInstance();
         adapter.open();

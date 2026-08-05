@@ -412,7 +412,7 @@ public class DBWriter {
                 }
             }
             if (!updatedItems.isEmpty()) {
-                applySortOrder(queue, events); // TODO KJS (this is autosort)
+                applySortOrder(queue, events);
                 adapter.setQueue(queue);
                 for (QueueEvent event : events) {
                     EventBus.getDefault().post(event);

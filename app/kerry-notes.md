@@ -10,7 +10,6 @@ Media3PlaybackService extends MediaLibraryService extends MediaSessionService
   private MediaLibrarySession mediaSession;
 ```
 
-
 MediaButtonReceiver extends BroadcastReceiver
 PlaybackController
 PlaybackService
@@ -20,10 +19,47 @@ PlaybackServiceStarter
     .start 
 PlaybackStatus
 
+## Feed Updates
 
-PlayerWidget extends AppWidgetProvider
+```
+OpmlImportActivity.doImport
+	FeedDatabaseWriter.updateFeed(Feed) 
 
-----------
+AddFeedFragment.addLocalFolder
+	FeedDatabaseWriter.updateFeed(Feed) 
+
+FeedSettingsPrefererenceFragment.addLocalFolderResult
+	FeedDatabaseWriter.updateFeed(Feed) 
+
+FeedUpdateWorker.refreshFeeds()
+    FeedUpdateWorker.refreshFeed(feed)
+    	FeedDatabaseWriter.updateFeed(Feed) 
+    LocalFeedUpdater.UpdateFeed
+        LocalFeedUpdater.tryUpdateFeed
+            FeedDatabaseWriter.updateFeed(Feed)
+    populateInboxOrQueue
+
+SyncService.syncSubscriptions
+	FeedDatabaseWriter.updateFeed(Feed) 
+```
+
+## Queue updates
+
+When something is removed from the queue we need to repopulate it to maintain maxEpisodes (ideally). Could just wait for refresh
+
+See `DBWriter.removeQueueItemSynchronous`
+
+## Inbox Updates
+
+When something is removed from the queue we need to repopulate it to maintain maxEpisodes (ideally). Could just wait for refresh
+
+
+
+
+
+
+
+## Downloads
 
 BulkDownloader
 
@@ -39,8 +75,10 @@ EpisodeDownloadWorker.performDownload (synchronous)
 DefaultDownloaderFactory
 |
 (actual download)
-        
----------------------------------------
+
+
+​        
+## UI
 
 MainActivity
 - HomeFragment
@@ -61,13 +99,14 @@ HomeFragment loads:
 - SubscriptionsSection
 - DownloadsSection
 
-
 AudioPlayerFragment
 HomeSection
 ItemPagerFragment
 CompletedDownloadsFragment
 SearchFragment
 
+PlayerWidget extends AppWidgetProvider
 
 
+## Tests
 .\gradlew :app:testPlayDebugUnitTest

@@ -295,14 +295,20 @@
 
     <string-array name="max_episodes_options">
         <item>1</item>
+        <item>2</item>
         <item>3</item>
+        <item>5</item>
         <item>10</item>
+        <item>20</item>
     </string-array>
 
     <string-array name="max_episodes_values">
         <item>1</item>
+        <item>2</item>
         <item>3</item>
+        <item>5</item>
         <item>10</item>
+        <item>20</item>
     </string-array>
 
     max_episodes_entries

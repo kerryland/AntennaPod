@@ -40,6 +40,7 @@ import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.model.download.DownloadResult;
 import de.danoeh.antennapod.model.feed.SortOrder;
 import de.danoeh.antennapod.storage.database.mapper.FeedItemFilterQuery;
+import de.danoeh.antennapod.storage.database.mapper.FeedItemJoinQuery;
 import de.danoeh.antennapod.storage.database.mapper.FeedItemSortQuery;
 
 import de.danoeh.antennapod.system.utils.ThreadUtils;
@@ -1029,6 +1030,7 @@ public class PodDBAdapter {
         String filterQuery = FeedItemFilterQuery.generateFrom(filter);
         String whereClauseAnd = "".equals(filterQuery) ? "" : " AND " + filterQuery;
         final String query = SELECT_FEED_ITEMS_AND_MEDIA
+                + " " + FeedItemJoinQuery.generateFrom(sortOrder)
                 + " WHERE " + TABLE_NAME_FEED_ITEMS + "." + KEY_FEED + "=" + feed.getId()
                 + whereClauseAnd
                 + " ORDER BY " + orderByQuery
@@ -1133,8 +1135,11 @@ public class PodDBAdapter {
         String orderByQuery = FeedItemSortQuery.generateFrom(sortOrder);
         String filterQuery = FeedItemFilterQuery.generateFrom(filter);
         String whereClause = "".equals(filterQuery) ? "" : " WHERE " + filterQuery;
-        final String query = SELECT_FEED_ITEMS_AND_MEDIA + whereClause
-                + "ORDER BY " +  orderByQuery + " LIMIT " + offset + ", " + limit;
+
+        final String query = SELECT_FEED_ITEMS_AND_MEDIA
+                + FeedItemJoinQuery.generateFrom(sortOrder) // Join
+                + whereClause
+                + "ORDER BY " + orderByQuery + " LIMIT " + offset + ", " + limit;
         return db.rawQuery(query, null);
     }
 

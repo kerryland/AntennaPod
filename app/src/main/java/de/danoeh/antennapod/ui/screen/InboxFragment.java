@@ -148,13 +148,6 @@ public class InboxFragment extends EpisodesListFragment {
         }
 
         @Override
-        protected void onAddItem(int title, SortOrder ascending, SortOrder descending, boolean ascendingIsDefault) {
-            if (ascending == SortOrder.DATE_OLD_NEW || ascending == SortOrder.DURATION_SHORT_LONG) {
-                super.onAddItem(title, ascending, descending, ascendingIsDefault);
-            }
-        }
-
-        @Override
         protected void onSelectionChanged() {
             super.onSelectionChanged();
             UserPreferences.setInboxSortedOrder(sortOrder);

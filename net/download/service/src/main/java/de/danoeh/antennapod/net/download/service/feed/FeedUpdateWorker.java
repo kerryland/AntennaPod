@@ -1,7 +1,5 @@
 package de.danoeh.antennapod.net.download.service.feed;
 
-import static de.danoeh.antennapod.model.feed.SortOrder.PRIORITY_PLAYBACK_DATE_OLD_NEW;
-
 import android.Manifest;
 import android.app.Notification;
 import android.content.Context;
@@ -22,6 +20,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.model.feed.FeedPreferences;
+import de.danoeh.antennapod.model.feed.SortOrder;
 import de.danoeh.antennapod.net.download.service.R;
 import de.danoeh.antennapod.net.download.service.feed.local.LocalFeedUpdater;
 import de.danoeh.antennapod.net.download.service.feed.remote.DefaultDownloaderFactory;
@@ -69,15 +68,18 @@ public class FeedUpdateWorker extends Worker {
     public Result doWork() {
         newEpisodesNotification.loadCountersBeforeRefresh();
 
-        List<Feed> toUpdate;
+        List<Feed> toUpdateExternally = new ArrayList<>();
+        List<Feed> toUpdateFromDB = new ArrayList<>();
+
         long feedId = getInputData().getLong(FeedUpdateManagerImpl.EXTRA_FEED_ID, -1);
         boolean allAreLocal = true;
         boolean force = false;
         boolean isAutomaticRefresh = !getInputData().getBoolean(FeedUpdateManagerImpl.EXTRA_MANUAL, false);
         boolean isAutomaticRefreshEnabled = !UserPreferences.isAutoUpdateDisabled();
         if (feedId == -1) { // Update all
-            toUpdate = findFeedsToRefresh();
-            Iterator<Feed> itr = toUpdate.iterator();
+            List<Feed> feeds = DBReader.getFeedList();
+            findFeedsToRefresh(feeds, toUpdateExternally, toUpdateFromDB);
+            Iterator<Feed> itr = toUpdateExternally.iterator();
             while (itr.hasNext()) {
                 Feed feed = itr.next();
                 if (!feed.getPreferences().getKeepUpdated() || feed.getState() != Feed.STATE_SUBSCRIBED) {
@@ -95,17 +97,18 @@ public class FeedUpdateWorker extends Worker {
                     allAreLocal = false;
                 }
             }
-            Collections.shuffle(toUpdate); // If the worker gets cancelled early, every feed has a chance to be updated
+            Collections.shuffle(toUpdateExternally); // If the worker gets cancelled early, every feed has a chance to be updated
         } else {
             Feed feed = DBReader.getFeed(feedId, false, 0, Integer.MAX_VALUE);
             if (feed == null) {
                 return Result.success();
             }
+            List<Feed> feeds = List.of(feed);
+            findFeedsToRefresh(feeds, toUpdateExternally, toUpdateFromDB);
+
             if (!feed.isLocalFeed()) {
                 allAreLocal = false;
             }
-            toUpdate = new ArrayList<>();
-            toUpdate.add(feed); // Needs to be updatable, so no singletonList
             force = true;
         }
 
@@ -115,8 +118,9 @@ public class FeedUpdateWorker extends Worker {
                 return Result.retry();
             }
         }
-        refreshFeeds(toUpdate, force);
-        DestinationSelector.populateInboxOrQueue(getApplicationContext(), toUpdate);
+        refreshFeeds(toUpdateExternally, force);
+        DestinationSelector.populateInboxOrQueue(getApplicationContext(), toUpdateFromDB);
+        DestinationSelector.populateInboxOrQueue(getApplicationContext(), toUpdateExternally);
 
         NonSubscribedFeedsCleaner.deleteOldNonSubscribedFeeds(getApplicationContext());
         AutoDownloadManager.getInstance().autodownloadUndownloadedItems(getApplicationContext());
@@ -128,14 +132,8 @@ public class FeedUpdateWorker extends Worker {
     /**
      * Feeds that are OLDEST_FIRST and already have episodes don't need to be refreshed
      */
-    private List<Feed> findFeedsToRefresh() {
-        List<Feed> feeds = DBReader.getFeedList();
-        List<Feed> feedsForRssCheck = new ArrayList<>();
+    private void findFeedsToRefresh(List<Feed> feeds, List<Feed> feedsForRssCheck, List<Feed> localFeeds) {
         for (Feed feed : feeds) {
-            if (feed.getState() != Feed.STATE_SUBSCRIBED) {
-                continue;
-            }
-
             if (feed.getPreferences().getPlaybackOrder() == FeedPreferences.PlaybackOrderSetting.NEWEST_FIRST) {
                 feedsForRssCheck.add(feed);
 
@@ -143,14 +141,15 @@ public class FeedUpdateWorker extends Worker {
                 FeedItemFilter feedItemFilter = new FeedItemFilter(FeedItemFilter.UNPLAYED);
                 feedItemFilter = new FeedItemFilter(feedItemFilter, FeedItemFilter.NEW);
                 int availableEpisodes = DBReader.getFeedItemList(feed, feedItemFilter,
-                        PRIORITY_PLAYBACK_DATE_OLD_NEW, 0, feed.getPreferences().getMaxEpisodes()).size();
+                        SortOrder.PRIORITY_PLAYBACK_DATE, 0, feed.getPreferences().getMaxEpisodes()).size();
 
                 if (availableEpisodes < feed.getPreferences().getMaxEpisodes()) {
                     feedsForRssCheck.add(feed);
+                } else {
+                    localFeeds.add(feed);
                 }
             }
         }
-        return feedsForRssCheck;
     }
 
     @NonNull

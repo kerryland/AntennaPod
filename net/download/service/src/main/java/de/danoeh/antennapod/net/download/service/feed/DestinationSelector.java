@@ -1,7 +1,5 @@
 package de.danoeh.antennapod.net.download.service.feed;
 
-import static de.danoeh.antennapod.model.feed.SortOrder.PRIORITY_PLAYBACK_DATE_OLD_NEW;
-
 import android.content.Context;
 
 import java.util.ArrayList;
@@ -40,7 +38,8 @@ public class DestinationSelector {
                     : SortOrder.DATE_NEW_OLD;
 
             List<FeedItem> feedItems = DBReader.getFeedItemList(
-                    feed, FeedItemFilter.unfiltered(), sortOrder, 0, Integer.MAX_VALUE
+                    feed, new FeedItemFilter(FeedItemFilter.UNPLAYED, FeedItemFilter.NEW),
+                    sortOrder, 0, feed.getPreferences().getMaxEpisodes()
             );
 
             FeedPreferences.NewEpisodesAction episodeDestination = feed.getPreferences().getNewEpisodesAction();
@@ -52,7 +51,7 @@ public class DestinationSelector {
             int addCount = 0;
 
             for (FeedItem feedItem : feedItems) {
-                if (feedItem.isPlayed()) {
+                if (feedItem.isPlayed()) { // should never happen
                     continue;
                 }
 

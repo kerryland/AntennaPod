@@ -31,13 +31,8 @@ public class FeedItemSortQuery {
                 return PodDBAdapter.TABLE_NAME_FEED_ITEMS + "." + PodDBAdapter.KEY_LINK + " " + "ASC";
             case EPISODE_FILENAME_Z_A:
                 return PodDBAdapter.TABLE_NAME_FEED_ITEMS + "." +PodDBAdapter.KEY_LINK + " " + "DESC";
-            case PRIORITY_PLAYBACK_DATE_NEW_OLD:
-                return PodDBAdapter.TABLE_NAME_FEEDS + "." + PodDBAdapter.KEY_FEED_PRIORITY + ", " +
-                        PodDBAdapter.TABLE_NAME_FEED_ITEMS + "." + PodDBAdapter.KEY_PUBDATE + " " + "DESC";
-            case PRIORITY_PLAYBACK_DATE_OLD_NEW:
-                return PodDBAdapter.TABLE_NAME_FEEDS + "." + PodDBAdapter.KEY_FEED_PRIORITY + ", " +
-                        PodDBAdapter.TABLE_NAME_FEED_ITEMS + "." + PodDBAdapter.KEY_PUBDATE + " " + "ASC";
-
+            case PRIORITY_PLAYBACK_DATE:
+                throw new IllegalArgumentException("Should never call this method with this sort order");
             case DATE_NEW_OLD:
             default:
                 return PodDBAdapter.TABLE_NAME_FEED_ITEMS + "." + PodDBAdapter.KEY_PUBDATE + " " + "DESC";

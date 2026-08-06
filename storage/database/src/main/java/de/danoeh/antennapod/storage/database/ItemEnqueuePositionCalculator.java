@@ -3,9 +3,14 @@ package de.danoeh.antennapod.storage.database;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
+import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedMedia;
 import de.danoeh.antennapod.model.feed.FeedPreferences;
@@ -25,6 +30,36 @@ public class ItemEnqueuePositionCalculator {
         this.enqueueLocation = enqueueLocation;
     }
 
+    public static List<FeedItem> sortFeedItemsByPriority(List<FeedItem> input) {
+        if (input == null || input.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        Comparator<FeedItem> feedItemComparator = Comparator
+                .comparingInt((FeedItem item) -> item.getFeed().getPreferences().getPriority())
+                .thenComparing(
+                        item -> item.getFeed().getTitle(),
+                        Comparator.nullsLast(Comparator.naturalOrder())
+                )
+                .thenComparingLong(item -> item.getFeed().getId())
+                .thenComparing((o1, o2) -> {
+                    if (o1.getPubDate() == null || o2.getPubDate() == null) {
+                        return 0;
+                    }
+
+                   if (o1.getFeed().getPreferences().getPlaybackOrder() ==
+                           FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST) {
+                        return o1.getPubDate().compareTo(o2.getPubDate());
+                    } else {
+                        return o2.getPubDate().compareTo(o1.getPubDate());
+                    }
+                });
+
+        return input.stream()
+                .sorted(feedItemComparator)
+                .collect(Collectors.toList());
+    }
+
     /**
      * Determine the position (0-based) that the item(s) should be inserted to the named queue.
      *
@@ -34,29 +69,7 @@ public class ItemEnqueuePositionCalculator {
     public int calcPosition(@NonNull List<FeedItem> curQueue, @NonNull FeedItem item, @Nullable Playable currentPlaying) {
         switch (enqueueLocation) {
             case PRIORITY:
-                if (item.getFeed().getPreferences().getPlaybackOrder() == FeedPreferences.PlaybackOrderSetting.NEWEST_FIRST) {
-                    for (int i = 0; i < curQueue.size(); i++) {
-                        if (curQueue.get(i).getFeedId() == item.getFeedId()
-                                && curQueue.get(i).getPubDate().before(item.getPubDate())) {
-                            return i;
-                        }
-                    }
-                }
-                if (item.getFeed().getPreferences().getPlaybackOrder() == FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST) {
-                    for (int i = curQueue.size() - 1; i >= 0; i--) {
-                        if (curQueue.get(i).getFeedId() == item.getFeedId()
-                         && curQueue.get(i).getPubDate().after(item.getPubDate())) {
-                            return i+1;
-                        }
-                    }
-                }
-
-                for (int i = 0; i < curQueue.size(); i++) {
-                    if (item.getFeed().getPreferences().getPriority() <= curQueue.get(i).getFeed().getPreferences().getPriority()) {
-                        return i;
-                    }
-                }
-                return curQueue.size();
+                return calcPriorityPosition(curQueue, item);
             case BACK:
                 return curQueue.size();
             case FRONT:
@@ -76,6 +89,91 @@ public class ItemEnqueuePositionCalculator {
                 throw new AssertionError("calcPosition() : unrecognized enqueueLocation option: " + enqueueLocation);
         }
     }
+
+    public int calcPriorityPosition(@NonNull List<FeedItem> queue, @NonNull FeedItem newItem) {
+        if (queue.isEmpty() || newItem.getFeed() == null) {
+            return queue.size();
+        }
+
+        long targetFeedId = newItem.getFeedId();
+
+        List<Integer> sameFeedIndices = new ArrayList<>();
+        for (int i = 0; i < queue.size(); i++) {
+            FeedItem item = queue.get(i);
+            if (item.getFeed() != null && item.getFeedId() == targetFeedId) {
+                sameFeedIndices.add(i);
+            }
+        }
+
+        // Items from the same feed exist in the queue.
+        // Find the right date to add this one before (or after)
+        if (!sameFeedIndices.isEmpty()) {
+            for (int index : sameFeedIndices) {
+                FeedItem existingItem = queue.get(index);
+
+                if (newItem.getFeed().getPreferences().getPlaybackOrder() == FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST) {
+                    if (isAfter(existingItem.getPubDate(), newItem.getPubDate())) {
+                        return index;
+                    }
+                } else {
+                    // NEWEST_FIRSTe
+                    if (isBefore(existingItem.getPubDate(), newItem.getPubDate())) {
+                        return index;
+                    }
+                }
+            }
+
+            return sameFeedIndices.get(sameFeedIndices.size() - 1) + 1;
+        }
+
+        // No items from this feed exist in the queue
+        for (int i = 0; i < queue.size(); i++) {
+            FeedItem existingItem = queue.get(i);
+            // if newItem has higher priority feed, insert now.
+            if (comparePriorityFeeds(newItem.getFeed(), existingItem.getFeed()) < 0) {
+                return i;
+            }
+        }
+
+        // If newItem has lower priority than all current feeds in the queue, append to back
+        return queue.size();
+    }
+
+    /**
+     * Compares two feeds based on sorting hierarchy: Priority -> Title -> ID.
+     */
+    private int comparePriorityFeeds(Feed f1, Feed f2) {
+        if (f1 == f2 || f1.getId() == f2.getId()) {
+            return 0;
+        }
+
+        int p1 = (f1.getPreferences() != null) ? f1.getPreferences().getPriority() : Integer.MAX_VALUE;
+        int p2 = (f2.getPreferences() != null) ? f2.getPreferences().getPriority() : Integer.MAX_VALUE;
+        int priorityCompare = Integer.compare(p1, p2);
+        if (priorityCompare != 0) {
+            return priorityCompare;
+        }
+
+        String t1 = (f1.getTitle() != null) ? f1.getTitle() : "";
+        String t2 = (f2.getTitle() != null) ? f2.getTitle() : "";
+        int titleCompare = t1.compareToIgnoreCase(t2);
+        if (titleCompare != 0) {
+            return titleCompare;
+        }
+
+        return Long.compare(f1.getId(), f2.getId());
+    }
+
+    private boolean isAfter(Date d1, Date d2) {
+        if (d1 == null || d2 == null) return false;
+        return d1.after(d2);
+    }
+
+    private boolean isBefore(Date d1, Date d2) {
+        if (d1 == null || d2 == null) return false;
+        return d1.before(d2);
+    }
+
 
     private int getPositionOfFirstNonDownloadingItem(int startPosition, List<FeedItem> curQueue) {
         final int curQueueSize = curQueue.size();

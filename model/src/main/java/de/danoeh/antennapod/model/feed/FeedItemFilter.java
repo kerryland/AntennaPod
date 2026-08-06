@@ -26,6 +26,7 @@ public class FeedItemFilter implements Serializable {
     public final boolean includeSubscribed;
     public final boolean includeArchived;
     public final boolean includeNotSubscribed;
+    public Long feedId = null;
 
     public static final String PLAYED = "played";
     public static final String UNPLAYED = "unplayed";
@@ -81,6 +82,11 @@ public class FeedItemFilter implements Serializable {
         includeSubscribed = hasProperty(INCLUDE_SUBSCRIBED);
         includeArchived = hasProperty(INCLUDE_ARCHIVED);
         includeNotSubscribed = hasProperty(INCLUDE_NOT_SUBSCRIBED);
+    }
+
+    public FeedItemFilter setFeedId(Long feedId) {
+        this.feedId = feedId;
+        return this;
     }
 
     private boolean hasProperty(String property) {
@@ -147,6 +153,9 @@ public class FeedItemFilter implements Serializable {
             } else if (state != Feed.STATE_SUBSCRIBED) {
                 return false;
             }
+        }
+        if (feedId != null && item.getFeedId() != feedId) {
+            return false;
         }
         return true;
     }

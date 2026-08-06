@@ -34,6 +34,9 @@ public class FeedItemFilterQuery {
         String tableFavorites = PodDBAdapter.TABLE_NAME_FAVORITES;
 
         List<String> statements = new ArrayList<>();
+        if (filter.feedId != null) {
+            statements.add(keyFeedId + " = " + filter.feedId);
+        }
         if (filter.showPlayed) {
             statements.add(keyRead + " = 1 ");
         } else if (filter.showUnplayed) {

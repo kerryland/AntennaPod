@@ -87,20 +87,8 @@ public class FeedItemPermutors {
                 comparator = (f1, f2) -> f2.getMedia().getLastPlayedTimeHistory()
                         .compareTo(f1.getMedia().getLastPlayedTimeHistory());
                 break;
-            case PRIORITY_PLAYBACK_DATE_OLD_NEW:
-                comparator = Comparator
-                        .comparing((FeedItem item) -> item.getFeed().getPreferences().getPriority())
-                        .thenComparing((FeedItem item) -> item.getFeed().getFeedTitle())
-                        .thenComparing((FeedItem item) -> item.getFeed().getId())
-                        .thenComparing(FeedItem::getPubDate, Comparator.reverseOrder());
-                break;
-            case PRIORITY_PLAYBACK_DATE_NEW_OLD:
-                comparator = Comparator
-                        .comparing((FeedItem item) -> item.getFeed().getPreferences().getPriority())
-                        .thenComparing((FeedItem item) -> item.getFeed().getFeedTitle())
-                        .thenComparing((FeedItem item) -> item.getFeed().getId())
-                        .thenComparing(FeedItem::getPubDate, Comparator.naturalOrder());
-                break;
+            case PRIORITY_PLAYBACK_DATE:
+                throw new IllegalArgumentException("Use ItemEnqueuePositionCalculator.sortFeedItemsByPriority");
             default:
                 throw new IllegalArgumentException("Permutor not implemented");
         }

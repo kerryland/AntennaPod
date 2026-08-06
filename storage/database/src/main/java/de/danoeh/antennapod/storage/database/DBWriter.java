@@ -1,5 +1,7 @@
 package de.danoeh.antennapod.storage.database;
 
+import static de.danoeh.antennapod.model.feed.SortOrder.PRIORITY_PLAYBACK_DATE;
+
 import android.app.backup.BackupManager;
 import android.content.Context;
 import android.database.Cursor;
@@ -401,7 +403,6 @@ public class DBWriter {
                     continue;
                 }
                 int insertPosition = positionCalculator.calcPosition(queue, item, currentlyPlaying);
-
                 queue.add(insertPosition, item);
                 events.add(QueueEvent.added(item, insertPosition));
 
@@ -444,8 +445,12 @@ public class DBWriter {
             // do not shuffle the list on every change
             return;
         }
-        Permutor<FeedItem> permutor = FeedItemPermutors.getPermutor(sortOrder);
-        permutor.reorder(queue);
+        if (sortOrder == PRIORITY_PLAYBACK_DATE) {
+            queue = ItemEnqueuePositionCalculator.sortFeedItemsByPriority(queue);
+        } else {
+            Permutor<FeedItem> permutor = FeedItemPermutors.getPermutor(sortOrder);
+            permutor.reorder(queue);
+        }
 
         // Replace ADDED events by a single SORTED event
         events.clear();
@@ -923,13 +928,18 @@ public class DBWriter {
             Log.w(TAG, "reorderQueue() - sortOrder is null. Do nothing.");
             return runOnDbThread(() -> { });
         }
-        final Permutor<FeedItem> permutor = FeedItemPermutors.getPermutor(sortOrder);
         return runOnDbThread(() -> {
             final PodDBAdapter adapter = PodDBAdapter.getInstance();
             adapter.open();
-            final List<FeedItem> queue = DBReader.getQueue();
+            List<FeedItem> queue = DBReader.getQueue();
 
-            permutor.reorder(queue);
+            if (sortOrder == PRIORITY_PLAYBACK_DATE) {
+                queue = ItemEnqueuePositionCalculator.sortFeedItemsByPriority(queue);
+            } else {
+                final Permutor<FeedItem> permutor = FeedItemPermutors.getPermutor(sortOrder);
+                permutor.reorder(queue);
+            }
+
             adapter.setQueue(queue);
             if (broadcastUpdate) {
                 EventBus.getDefault().post(QueueEvent.sorted(queue));

@@ -76,8 +76,6 @@ DefaultDownloaderFactory
 |
 (actual download)
 
-
-​        
 ## UI
 
 MainActivity
@@ -87,7 +85,7 @@ MainActivity
 - AllEpisodesFragment
 - CompletedDownloadsFragment
 - PlaybackHistoryFragment
-- EpisodesListFragment -- inbox
+- EpisodesListFragment -- base class. extended by InboxFragment etc (bu t not QueueFragment)
 - FeedItemListFragment -- list episodes in podcast feed
 
 FeedItemMenuHandler

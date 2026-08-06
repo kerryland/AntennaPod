@@ -40,13 +40,13 @@ import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.model.download.DownloadResult;
 import de.danoeh.antennapod.model.feed.SortOrder;
 import de.danoeh.antennapod.storage.database.mapper.FeedItemFilterQuery;
-import de.danoeh.antennapod.storage.database.mapper.FeedItemJoinQuery;
 import de.danoeh.antennapod.storage.database.mapper.FeedItemSortQuery;
 
 import de.danoeh.antennapod.system.utils.ThreadUtils;
 import org.apache.commons.io.FileUtils;
 
 import static de.danoeh.antennapod.model.feed.FeedPreferences.SPEED_USE_GLOBAL;
+import static de.danoeh.antennapod.model.feed.SortOrder.PRIORITY_PLAYBACK_DATE;
 import static de.danoeh.antennapod.model.feed.SortOrder.toCodeString;
 
 /**
@@ -1025,17 +1025,9 @@ public class PodDBAdapter {
      */
     public final Cursor getItemsOfFeedCursor(final Feed feed, FeedItemFilter filter, SortOrder sortOrder,
                                              int offset, int limit) {
-        String orderByQuery = FeedItemSortQuery.generateFrom(sortOrder);
-        filter = new FeedItemFilter(filter, FeedItemFilter.INCLUDE_ALL_FEED_STATES);
-        String filterQuery = FeedItemFilterQuery.generateFrom(filter);
-        String whereClauseAnd = "".equals(filterQuery) ? "" : " AND " + filterQuery;
-        final String query = SELECT_FEED_ITEMS_AND_MEDIA
-                + " " + FeedItemJoinQuery.generateFrom(sortOrder)
-                + " WHERE " + TABLE_NAME_FEED_ITEMS + "." + KEY_FEED + "=" + feed.getId()
-                + whereClauseAnd
-                + " ORDER BY " + orderByQuery
-                + " LIMIT " + offset + ", " + limit;
-        return db.rawQuery(query, null);
+
+        filter = new FeedItemFilter(filter, FeedItemFilter.INCLUDE_ALL_FEED_STATES).setFeedId(feed.getId());
+        return getEpisodesCursor(offset, limit, filter, sortOrder);
     }
 
     /**
@@ -1131,13 +1123,49 @@ public class PodDBAdapter {
         db.execSQL(sql);
     }
 
+
+    private Cursor getEpisodesByPriority(int offset, int limit, FeedItemFilter filter, SortOrder sortOrder) {
+        String query =
+            """
+            WITH RankedEpisodes AS (
+            """ +
+               "SELECT " + KEYS_FEED_ITEM_WITHOUT_DESCRIPTION + ", " + KEYS_FEED_MEDIA +
+                """
+                     ,
+                     feeds.priority,
+                     feeds.max_episodes,
+                     ROW_NUMBER() OVER (
+                         PARTITION BY FeedItems.feed
+                         ORDER BY CASE WHEN feeds.playback_order = 0 THEN FeedItems.pubDate ELSE -FeedItems.pubDate END ASC
+                     ) AS row_num
+                 FROM FeedItems
+                 INNER JOIN Feeds ON FeedItems.feed = feeds.id
+                 LEFT JOIN FeedMedia ON FeedItems.id=FeedMedia.feeditem
+                 WHERE
+               """ +  FeedItemFilterQuery.generateFrom(filter) +
+           " )" +
+                """
+                 SELECT * FROM RankedEpisodes
+                 WHERE row_num <= max_episodes
+                 ORDER BY priority ASC,
+                          feed, row_num ASC
+                 LIMIT
+                  """ + offset + ", " + limit;
+
+        return db.rawQuery(query, null);
+    }
+
+
     public final Cursor getEpisodesCursor(int offset, int limit, FeedItemFilter filter, SortOrder sortOrder) {
+        if (sortOrder == PRIORITY_PLAYBACK_DATE) {
+            return getEpisodesByPriority(offset, limit, filter, sortOrder);
+        }
+
         String orderByQuery = FeedItemSortQuery.generateFrom(sortOrder);
         String filterQuery = FeedItemFilterQuery.generateFrom(filter);
         String whereClause = "".equals(filterQuery) ? "" : " WHERE " + filterQuery;
 
         final String query = SELECT_FEED_ITEMS_AND_MEDIA
-                + FeedItemJoinQuery.generateFrom(sortOrder) // Join
                 + whereClause
                 + "ORDER BY " + orderByQuery + " LIMIT " + offset + ", " + limit;
         return db.rawQuery(query, null);

@@ -3,18 +3,20 @@ package de.danoeh.antennapod.ui.screen.playback.audio;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.media3.session.MediaController;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
-import de.danoeh.antennapod.BuildConfig;
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.activity.MainActivity;
 import de.danoeh.antennapod.event.PlayerStatusEvent;
@@ -27,7 +29,6 @@ import de.danoeh.antennapod.playback.service.PlaybackService;
 import de.danoeh.antennapod.playback.service.PlaybackServiceStarter;
 import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.preferences.PlaybackPreferences;
-import de.danoeh.antennapod.ui.appstartintent.MediaButtonStarter;
 import de.danoeh.antennapod.ui.episodes.ImageResourceUtils;
 import de.danoeh.antennapod.ui.screen.playback.PlayButton;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
@@ -46,8 +47,10 @@ public class ExternalPlayerFragment extends Fragment {
 
     private ImageView imgvCover;
     private TextView txtvTitle;
-    private PlayButton butPlay;
     private TextView feedName;
+    private PlayButton butPlay;
+    private ImageButton butRev;
+    private ImageButton butFF;
     private ProgressBar progressBar;
     private Disposable disposable;
     private Playable currentMedia;
@@ -57,13 +60,17 @@ public class ExternalPlayerFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.external_player_fragment, container, false);
         imgvCover = root.findViewById(R.id.imgvCover);
         txtvTitle = root.findViewById(R.id.txtvTitle);
-        butPlay = root.findViewById(R.id.butPlay);
         feedName = root.findViewById(R.id.txtvAuthor);
+
+        butPlay = root.findViewById(R.id.butPlay);
+        butRev = root.findViewById(R.id.butRev);
+        butFF = root.findViewById(R.id.butFF);
+
         progressBar = root.findViewById(R.id.episodeProgress);
 
         root.findViewById(R.id.fragmentLayout).setOnClickListener(v -> {
@@ -81,17 +88,18 @@ public class ExternalPlayerFragment extends Fragment {
         butPlay.setOnClickListener(v -> {
             if (PlaybackService.isRunning
                     && PlaybackPreferences.getCurrentPlayerStatus() == PlaybackPreferences.PLAYER_STATUS_PLAYING) {
-                if (BuildConfig.USE_MEDIA3_PLAYBACK_SERVICE) {
-                    PlaybackController.bindToMedia3Service(getContext(), controller -> controller.pause());
-                } else {
-                    getContext().sendBroadcast(
-                            MediaButtonStarter.createIntent(getContext(), KeyEvent.KEYCODE_MEDIA_PAUSE));
-                }
+                PlaybackController.bindToMedia3Service(getContext(), controller -> controller.pause());
             } else {
                 new PlaybackServiceStarter(getContext(), currentMedia)
                         .callEvenIfRunning(true)
                         .start();
             }
+        });
+        butRev.setOnClickListener(v -> {
+            PlaybackController.bindToMedia3Service(getContext(), MediaController::seekBack);
+        });
+        butFF.setOnClickListener(v -> {
+            PlaybackController.bindToMedia3Service(getContext(), MediaController::seekForward);
         });
         return root;
     }
@@ -182,10 +190,14 @@ public class ExternalPlayerFragment extends Fragment {
 
         if (currentMedia.getMediaType() == MediaType.VIDEO) {
             butPlay.setVisibility(View.GONE);
+            butRev.setVisibility(View.GONE);
+            butFF.setVisibility(View.GONE);
             ((MainActivity) getActivity()).getBottomSheet().setLocked(true);
             ((MainActivity) getActivity()).getBottomSheet().setState(BottomSheetBehavior.STATE_COLLAPSED);
         } else {
             butPlay.setVisibility(View.VISIBLE);
+            butRev.setVisibility(View.VISIBLE);
+            butFF.setVisibility(View.VISIBLE);
             ((MainActivity) getActivity()).getBottomSheet().setLocked(false);
         }
     }

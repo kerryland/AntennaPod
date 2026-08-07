@@ -55,6 +55,17 @@
 
         </LinearLayout>
 
+        <ImageButton
+            android:id="@+id/butRev"
+            android:layout_width="52dp"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/rewind_label"
+            android:background="?attr/selectableItemBackground"
+            android:scaleType="fitCenter"
+            android:padding="8dp"
+            app:srcCompat="@drawable/ic_fast_rewind"
+            tools:src="@drawable/ic_fast_rewind" />
+
         <de.danoeh.antennapod.ui.screen.playback.PlayButton
             android:id="@+id/butPlay"
             android:layout_width="52dp"
@@ -65,6 +76,17 @@
             android:padding="8dp"
             app:srcCompat="@drawable/ic_play_48dp"
             tools:src="@drawable/ic_play_48dp" />
+
+        <ImageButton
+            android:id="@+id/butFF"
+            android:layout_width="52dp"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/fast_forward_label"
+            android:background="?attr/selectableItemBackground"
+            android:scaleType="fitCenter"
+            android:padding="8dp"
+            app:srcCompat="@drawable/ic_fast_forward"
+            tools:src="@drawable/ic_fast_forward" />
 
     </LinearLayout>
 

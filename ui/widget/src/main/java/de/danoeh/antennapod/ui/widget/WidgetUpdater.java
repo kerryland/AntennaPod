@@ -16,18 +16,18 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.Transformation;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 
+import de.danoeh.antennapod.model.playback.MediaType;
 import de.danoeh.antennapod.ui.appstartintent.MediaButtonStarter;
+import de.danoeh.antennapod.ui.appstartintent.VideoPlayerActivityStarter;
 import de.danoeh.antennapod.ui.common.Converter;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 
 import java.util.concurrent.TimeUnit;
 
-import de.danoeh.antennapod.model.playback.MediaType;
 import de.danoeh.antennapod.model.playback.Playable;
 import de.danoeh.antennapod.playback.base.PlayerStatus;
 import de.danoeh.antennapod.ui.appstartintent.MainActivityStarter;
 import de.danoeh.antennapod.ui.appstartintent.PlaybackSpeedActivityStarter;
-import de.danoeh.antennapod.ui.appstartintent.VideoPlayerActivityStarter;
 import de.danoeh.antennapod.ui.episodes.ImageResourceUtils;
 import de.danoeh.antennapod.ui.episodes.TimeSpeedConverter;
 import de.danoeh.antennapod.ui.glide.FastBlurTransformation;
@@ -67,11 +67,12 @@ public abstract class WidgetUpdater {
         }
 
         PendingIntent startMediaPlayer;
+        // Not sure VIDEO media needs to be a special case
         if (widgetState.media != null && widgetState.media.getMediaType() == MediaType.VIDEO) {
             startMediaPlayer = new VideoPlayerActivityStarter(context).getPendingIntent();
         } else {
             startMediaPlayer = new MainActivityStarter(context)
-                    .withOpenPlayer().withClearBackStack().getPendingIntent();
+                    .withOpenDefaultPage().withClearBackStack().getPendingIntent();
         }
 
         PendingIntent startPlaybackSpeedDialog = new PlaybackSpeedActivityStarter(context).getPendingIntent();

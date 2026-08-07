@@ -12,6 +12,7 @@ import android.os.Bundle;
 public class MainActivityStarter {
     public static final String INTENT = "de.danoeh.antennapod.intents.MAIN_ACTIVITY";
     public static final String EXTRA_OPEN_PLAYER = "open_player";
+    public static final String EXTRA_OPEN_DEFAULT_PAGE = "open_default_page";
     public static final String EXTRA_FEED_ID = "fragment_feed_id";
     public static final String EXTRA_EPISODE_ID = "episode_id";
     public static final String EXTRA_CLEAR_BACK_STACK = "clear_back_stack";
@@ -49,6 +50,11 @@ public class MainActivityStarter {
 
     public MainActivityStarter withOpenPlayer() {
         intent.putExtra(EXTRA_OPEN_PLAYER, true);
+        return this;
+    }
+
+    public MainActivityStarter withOpenDefaultPage() {
+        intent.putExtra(EXTRA_OPEN_DEFAULT_PAGE, true);
         return this;
     }
 

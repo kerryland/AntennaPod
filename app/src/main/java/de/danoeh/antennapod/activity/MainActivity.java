@@ -767,6 +767,18 @@ public class MainActivity extends CastEnabledActivity implements NavigationToolb
         } else if (intent.getBooleanExtra(MainActivityStarter.EXTRA_OPEN_PLAYER, false)) {
             sheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
             bottomSheetCallback.onSlide(null, 1.0f);
+        } else if (intent.getBooleanExtra(MainActivityStarter.EXTRA_OPEN_DEFAULT_PAGE, false)) {
+            if (!UserPreferences.DEFAULT_PAGE_REMEMBER.equals(UserPreferences.getDefaultPage())) {
+                loadFragment(UserPreferences.getDefaultPage(), null);
+            } else {
+                String lastFragment = NavDrawerFragment.getLastNavFragment(this);
+                if (ArrayUtils.contains(getResources().getStringArray(R.array.nav_drawer_section_tags), lastFragment)) {
+                    loadFragment(lastFragment, null);
+                } else {
+                    loadFragment(de.danoeh.antennapod.ui.screen.home.HomeFragment.TAG, null);
+                }
+            }
+            sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
         } else {
             handleDeeplink(intent.getData());
         }

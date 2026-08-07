@@ -99,12 +99,17 @@ public class FeedUpdateWorker extends Worker {
             }
             Collections.shuffle(toUpdateExternally); // If the worker gets cancelled early, every feed has a chance to be updated
         } else {
+            // Update just one feed
             Feed feed = DBReader.getFeed(feedId, false, 0, Integer.MAX_VALUE);
             if (feed == null) {
                 return Result.success();
             }
             List<Feed> feeds = List.of(feed);
             findFeedsToRefresh(feeds, toUpdateExternally, toUpdateFromDB);
+            // Still update feed from RSS, even though we have some in the DB and won't put them in the inbox or queue.
+            if (!toUpdateFromDB.isEmpty()) {
+                refreshFeeds(toUpdateFromDB, true);
+            }
 
             if (!feed.isLocalFeed()) {
                 allAreLocal = false;

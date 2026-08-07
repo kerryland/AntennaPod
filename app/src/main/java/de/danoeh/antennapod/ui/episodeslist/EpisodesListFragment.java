@@ -23,6 +23,8 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.google.android.material.appbar.MaterialToolbar;
 
 import de.danoeh.antennapod.event.MessageEvent;
+import de.danoeh.antennapod.model.feed.SortOrder;
+import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.ui.screen.SearchFragment;
 import de.danoeh.antennapod.net.download.serviceinterface.FeedUpdateManager;
 import de.danoeh.antennapod.ui.view.FloatingSelectMenu;
@@ -426,14 +428,22 @@ public abstract class EpisodesListFragment extends Fragment
     }
 
     @NonNull
-    protected abstract List<FeedItem> loadData();
+    protected List<FeedItem> loadData() {
+        return loadMoreData(1);
+    }
 
     @NonNull
-    protected abstract List<FeedItem> loadMoreData(int page);
+    protected List<FeedItem> loadMoreData(int page) {
+        return DBReader.getEpisodes((page - 1) * EPISODES_PER_PAGE, EPISODES_PER_PAGE, getFilter(),
+                getSortOrder());
+    }
 
-    protected abstract int loadTotalItemCount();
-
+    protected int loadTotalItemCount() {
+        return DBReader.getTotalEpisodeCount(getFilter());
+    }
     protected abstract FeedItemFilter getFilter();
+
+    protected abstract SortOrder getSortOrder();
 
     protected abstract String getFragmentTag();
 

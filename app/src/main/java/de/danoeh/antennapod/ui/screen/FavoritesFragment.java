@@ -8,8 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.core.util.Pair;
 
 import de.danoeh.antennapod.R;
-import de.danoeh.antennapod.storage.database.DBReader;
-import de.danoeh.antennapod.model.feed.FeedItem;
+import de.danoeh.antennapod.model.feed.SortOrder;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.episodeslist.EpisodesListFragment;
@@ -41,6 +40,11 @@ public class FavoritesFragment extends EpisodesListFragment {
     }
 
     @Override
+    protected SortOrder getSortOrder() {
+        return UserPreferences.getAllEpisodesSortOrder();
+    }
+
+    @Override
     protected String getFragmentTag() {
         return TAG;
     }
@@ -54,24 +58,5 @@ public class FavoritesFragment extends EpisodesListFragment {
     @Override
     protected void onItemsFirstLoaded() {
         recyclerView.restoreScrollPosition(scrollPosition);
-    }
-
-    @NonNull
-    @Override
-    protected List<FeedItem> loadData() {
-        return DBReader.getEpisodes(0, page * EPISODES_PER_PAGE, FILTER_FAVORITES,
-                UserPreferences.getAllEpisodesSortOrder());
-    }
-
-    @NonNull
-    @Override
-    protected List<FeedItem> loadMoreData(int page) {
-        return DBReader.getEpisodes((page - 1) * EPISODES_PER_PAGE, EPISODES_PER_PAGE, FILTER_FAVORITES,
-                UserPreferences.getAllEpisodesSortOrder());
-    }
-
-    @Override
-    protected int loadTotalItemCount() {
-        return DBReader.getTotalEpisodeCount(FILTER_FAVORITES);
     }
 }

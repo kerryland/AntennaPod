@@ -15,6 +15,7 @@ import androidx.core.util.Pair;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.event.MessageEvent;
+import de.danoeh.antennapod.model.feed.SortOrder;
 import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.ui.BulkDownloader;
@@ -59,6 +60,11 @@ public class InboxFragment extends EpisodesListFragment {
     }
 
     @Override
+    protected SortOrder getSortOrder() {
+        return UserPreferences.getInboxSortedOrder();
+    }
+
+    @Override
     protected String getFragmentTag() {
         return TAG;
     }
@@ -95,25 +101,6 @@ public class InboxFragment extends EpisodesListFragment {
             return true;
         }
         return false;
-    }
-
-    @NonNull
-    @Override
-    protected List<FeedItem> loadData() {
-        if (page != 1) throw new IllegalStateException("Page not 1!");
-        return loadMoreData(1);
-    }
-
-    @NonNull
-    @Override
-    protected List<FeedItem> loadMoreData(int page) {
-        return DBReader.getEpisodesForInbox((page - 1) * EPISODES_PER_PAGE, EPISODES_PER_PAGE,
-                new FeedItemFilter(FeedItemFilter.NEW), UserPreferences.getInboxSortedOrder());
-    }
-
-    @Override
-    protected int loadTotalItemCount() {
-        return DBReader.getTotalEpisodeCount(new FeedItemFilter(FeedItemFilter.NEW));
     }
 
     private void removeAllFromInbox() {

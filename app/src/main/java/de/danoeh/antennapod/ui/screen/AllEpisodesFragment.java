@@ -51,25 +51,6 @@ public class AllEpisodesFragment extends EpisodesListFragment {
         return root;
     }
 
-    @NonNull
-    @Override
-    protected List<FeedItem> loadData() {
-        return DBReader.getEpisodes(0, page * EPISODES_PER_PAGE, getFilter(),
-                UserPreferences.getAllEpisodesSortOrder());
-    }
-
-    @NonNull
-    @Override
-    protected List<FeedItem> loadMoreData(int page) {
-        return DBReader.getEpisodes((page - 1) * EPISODES_PER_PAGE, EPISODES_PER_PAGE, getFilter(),
-                UserPreferences.getAllEpisodesSortOrder());
-    }
-
-    @Override
-    protected int loadTotalItemCount() {
-        return DBReader.getTotalEpisodeCount(getFilter());
-    }
-
     @Override
     protected FeedItemFilter getFilter() {
         FeedItemFilter filter = new FeedItemFilter(UserPreferences.getPrefFilterAllEpisodes());
@@ -78,6 +59,11 @@ public class AllEpisodesFragment extends EpisodesListFragment {
         } else {
             return filter;
         }
+    }
+
+    @Override
+    protected SortOrder getSortOrder() {
+        return UserPreferences.getAllEpisodesSortOrder();
     }
 
     @Override

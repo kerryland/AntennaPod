@@ -11,17 +11,13 @@ import androidx.core.util.Pair;
 
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.ui.common.ConfirmationDialog;
-import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.event.playback.PlaybackHistoryEvent;
-import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.model.feed.SortOrder;
 import de.danoeh.antennapod.ui.episodeslist.EpisodesListFragment;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
-
-import java.util.List;
 
 public class PlaybackHistoryFragment extends EpisodesListFragment {
     public static final String TAG = "PlaybackHistoryFragment";
@@ -44,7 +40,12 @@ public class PlaybackHistoryFragment extends EpisodesListFragment {
 
     @Override
     protected FeedItemFilter getFilter() {
-        return FeedItemFilter.unfiltered();
+        return FILTER_HISTORY;
+    }
+
+    @Override
+    protected SortOrder getSortOrder() {
+        return SortOrder.COMPLETION_DATE_NEW_OLD;
     }
 
     @Override
@@ -98,23 +99,5 @@ public class PlaybackHistoryFragment extends EpisodesListFragment {
     public void onHistoryUpdated(PlaybackHistoryEvent event) {
         loadItems();
         updateToolbar();
-    }
-
-    @NonNull
-    @Override
-    protected List<FeedItem> loadData() {
-        return DBReader.getEpisodes(0, page * EPISODES_PER_PAGE, FILTER_HISTORY, SortOrder.COMPLETION_DATE_NEW_OLD);
-    }
-
-    @NonNull
-    @Override
-    protected List<FeedItem> loadMoreData(int page) {
-        return DBReader.getEpisodes((page - 1) * EPISODES_PER_PAGE, EPISODES_PER_PAGE, FILTER_HISTORY,
-                SortOrder.COMPLETION_DATE_NEW_OLD);
-    }
-
-    @Override
-    protected int loadTotalItemCount() {
-        return DBReader.getTotalEpisodeCount(FILTER_HISTORY);
     }
 }

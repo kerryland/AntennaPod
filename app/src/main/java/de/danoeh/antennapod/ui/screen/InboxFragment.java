@@ -100,13 +100,14 @@ public class InboxFragment extends EpisodesListFragment {
     @NonNull
     @Override
     protected List<FeedItem> loadData() {
+        if (page != 1) throw new IllegalStateException("Page not 1!");
         return loadMoreData(1);
     }
 
     @NonNull
     @Override
     protected List<FeedItem> loadMoreData(int page) {
-        return DBReader.getEpisodes((page - 1) * EPISODES_PER_PAGE, EPISODES_PER_PAGE,
+        return DBReader.getEpisodesForInbox((page - 1) * EPISODES_PER_PAGE, EPISODES_PER_PAGE,
                 new FeedItemFilter(FeedItemFilter.NEW), UserPreferences.getInboxSortedOrder());
     }
 

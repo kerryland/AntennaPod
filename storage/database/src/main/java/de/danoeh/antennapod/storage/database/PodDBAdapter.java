@@ -42,6 +42,7 @@ import de.danoeh.antennapod.model.feed.SortOrder;
 import de.danoeh.antennapod.storage.database.mapper.FeedItemFilterQuery;
 import de.danoeh.antennapod.storage.database.mapper.FeedItemSortQuery;
 
+import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.system.utils.ThreadUtils;
 import org.apache.commons.io.FileUtils;
 
@@ -1026,8 +1027,18 @@ public class PodDBAdapter {
     public final Cursor getItemsOfFeedCursor(final Feed feed, FeedItemFilter filter, SortOrder sortOrder,
                                              int offset, int limit) {
 
+        if (sortOrder == SortOrder.GLOBAL_DEFAULT) {
+            sortOrder = UserPreferences.getPrefGlobalSortedOrder();
+        }
+        if (sortOrder == SortOrder.PRIORITY_PLAYBACK_DATE) {
+            if (feed.getPreferences().getPlaybackOrder() == FeedPreferences.PlaybackOrderSetting.NEWEST_FIRST) {
+                sortOrder = SortOrder.DATE_NEW_OLD;
+            } else {
+                sortOrder = SortOrder.DATE_OLD_NEW;
+            }
+        }
         filter = new FeedItemFilter(filter, FeedItemFilter.INCLUDE_ALL_FEED_STATES).setFeedId(feed.getId());
-        return getEpisodesCursor(offset, limit, filter, sortOrder);
+        return getEpisodesCursor(offset, limit, filter, sortOrder, false);
     }
 
     /**
@@ -1124,7 +1135,7 @@ public class PodDBAdapter {
     }
 
 
-    private Cursor getEpisodesByPriority(int offset, int limit, FeedItemFilter filter, SortOrder sortOrder) {
+    private Cursor getEpisodesByPriority(int offset, int limit, FeedItemFilter filter, boolean useMaxEpisodes) {
         String query =
             """
             WITH RankedEpisodes AS (
@@ -1146,19 +1157,24 @@ public class PodDBAdapter {
            " )" +
                 """
                  SELECT * FROM RankedEpisodes
-                 WHERE row_num <= max_episodes
+                """
+                + (useMaxEpisodes ? " WHERE row_num <= max_episodes ":" ") +
+                """
                  ORDER BY priority ASC,
                           feed, row_num ASC
                  LIMIT
-                  """ + offset + ", " + limit;
+                 """ + offset + ", " + limit;
 
         return db.rawQuery(query, null);
     }
 
 
-    public final Cursor getEpisodesCursor(int offset, int limit, FeedItemFilter filter, SortOrder sortOrder) {
+    public final Cursor getEpisodesCursor(int offset, int limit, FeedItemFilter filter, SortOrder sortOrder, boolean useMaxEpisodes) {
+        if (sortOrder == null) {
+            sortOrder = UserPreferences.getPrefGlobalSortedOrder();
+        }
         if (sortOrder == PRIORITY_PLAYBACK_DATE) {
-            return getEpisodesByPriority(offset, limit, filter, sortOrder);
+            return getEpisodesByPriority(offset, limit, filter, useMaxEpisodes);
         }
 
         String orderByQuery = FeedItemSortQuery.generateFrom(sortOrder);

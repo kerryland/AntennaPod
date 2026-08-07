@@ -126,7 +126,7 @@ public class InboxSection extends HomeSection {
             disposable.dispose();
         }
         disposable = Observable.fromCallable(() ->
-                        new Pair<>(DBReader.getEpisodes(0, NUM_EPISODES,
+                        new Pair<>(DBReader.getEpisodesForInbox(0, NUM_EPISODES,
                                 new FeedItemFilter(FeedItemFilter.NEW), UserPreferences.getInboxSortedOrder()),
                                 DBReader.getTotalEpisodeCount(new FeedItemFilter(FeedItemFilter.NEW))))
                 .subscribeOn(Schedulers.computation())

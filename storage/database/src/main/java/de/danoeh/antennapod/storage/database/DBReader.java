@@ -222,10 +222,24 @@ public final class DBReader {
     @NonNull
     public static synchronized List<FeedItem> getEpisodes(int offset, int limit,
                                                           FeedItemFilter filter, SortOrder sortOrder) {
+        return getEpisodes(offset, limit, filter, sortOrder, false);
+    }
+
+    // This variation limits the number of episodes shown for each feed to "maxEpisodes" value
+    // defined on the FeedItem's matching Feed.
+    public static synchronized List<FeedItem> getEpisodesForInbox(int offset, int limit,
+                                                          FeedItemFilter filter, SortOrder sortOrder) {
+        return getEpisodes(offset, limit, filter, sortOrder, true);
+    }
+
+    @NonNull
+    private static synchronized List<FeedItem> getEpisodes(int offset, int limit,
+                                                          FeedItemFilter filter, SortOrder sortOrder,
+                                                          boolean useMaxEpisodes) {
         Log.d(TAG, "getRecentlyPublishedEpisodes() called with: offset=" + offset + ", limit=" + limit);
         PodDBAdapter adapter = PodDBAdapter.getInstance();
         adapter.open();
-        try (FeedItemCursor cursor = new FeedItemCursor(adapter.getEpisodesCursor(offset, limit, filter, sortOrder))) {
+        try (FeedItemCursor cursor = new FeedItemCursor(adapter.getEpisodesCursor(offset, limit, filter, sortOrder, useMaxEpisodes))) {
             List<FeedItem> items = extractItemlistFromCursor(cursor);
             loadFeedDataOfFeedItemList(items);
             return items;

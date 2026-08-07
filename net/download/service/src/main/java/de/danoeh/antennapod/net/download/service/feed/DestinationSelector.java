@@ -1,6 +1,7 @@
 package de.danoeh.antennapod.net.download.service.feed;
 
 import android.content.Context;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -18,10 +19,14 @@ import de.danoeh.antennapod.storage.preferences.UserPreferences;
 
 
 public class DestinationSelector {
+    private static String TAG = "DestinationSelector";
     /**
      * Decide where to put feed items, based on Feed Priority, Playback Order, and Max Episodes
      */
     public static void populateInboxOrQueue(Context context, List<Feed> feeds) {
+        if (feeds.isEmpty()) {
+            return;
+        }
         List<FeedItem> queueAdditions = new ArrayList<>();
         List<FeedItem> queueRemovals = new ArrayList<>();
 
@@ -95,5 +100,7 @@ public class DestinationSelector {
         }
         DBWriter.removeQueueItem(context, false, removeFromQueueItemIds);
         DBWriter.addQueueItem(context, queueAdditions.toArray(new FeedItem[0]));
+
+        Log.d(TAG, "Inbox changes: " + inboxStateChanges.size() + ". Queue changes: " + (queueRemovals.size() + queueAdditions.size()));
     }
 }

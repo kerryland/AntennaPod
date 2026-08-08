@@ -156,13 +156,11 @@ public class FeedUpdateManagerImpl extends FeedUpdateManager {
 
     @Subscribe(threadMode = ThreadMode.BACKGROUND)
     public void onPlaybackHistoryUpdated(PlaybackHistoryEvent event) {
-        // When podcast is finished, refresh inbox/queue if we have some local "old" episodes in the DB
+        // When podcast is finished, refresh inbox/queue if we have some local episodes in the DB
         Log.d(TAG, "Podcast finished, refresh inbox/queue " + event.getFeedId());
         if (event.getFeedId() != null) {
             Feed feed = DBReader.getFeed(event.getFeedId(), false, 0, 0);
-            if (feed != null && feed.getPreferences().getPlaybackOrder().equals(FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST)) {
-                runOnce(context, feed, false, true);
-            }
+            runOnce(context, feed, false, true);
         }
     }
 }

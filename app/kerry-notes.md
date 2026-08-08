@@ -20,6 +20,7 @@ PlaybackServiceStarter
 PlaybackStatus
 
 ## Feed Updates
+FeedUpdateWorker.doWork and DestinationSelector.populateInboxOrQueue are good places to start looking
 
 ```
 OpmlImportActivity.doImport

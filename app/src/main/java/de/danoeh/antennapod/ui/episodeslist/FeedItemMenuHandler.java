@@ -201,30 +201,6 @@ public class FeedItemMenuHandler {
             DBWriter.addQueueItem(context, selectedItem);
         } else if (menuItemId == R.id.remove_from_queue_item) {
             DBWriter.removeQueueItem(context, true, selectedItem);
-        } else if (menuItemId == R.id.delete_after_item) {
-            Log.d(TAG, "delete_after_item selected. episodes=" + (episodes == null ? "" : episodes.size()));
-            if (episodes != null) {
-                boolean deleteEpisode = false;
-                for (int i = 0; i < episodes.size(); i++) {
-                    if (deleteEpisode) {
-                        FeedItem item = episodes.get(i);
-
-                        if (item.isTagged(FeedItem.TAG_QUEUE)) { // canRemoveFromQueue
-                            Log.d(TAG, "Remove from Queue");
-                            DBWriter.removeQueueItem(context, false, episodes.get(i));
-                        } else if (item.isNew()) { // canRemoveFromInbox
-                            Log.d(TAG, "Remove from Inbox");
-                            removeNewFlagWithUndo(fragment, episodes.get(i));
-                      } else if (item.getMedia().isDownloaded() || DownloadServiceInterface.get().isDownloadingEpisode(item.getMedia().getDownloadUrl())) {
-                          Log.d(TAG, "Not sure how to remove " + item);
-                        }
-                    }
-                    if (episodes.get(i).getId() == selectedItem.getId()) {
-                        deleteEpisode = true;
-                    }
-                }
-            }
-
         } else if (menuItemId == R.id.add_to_favorites_item) {
             DBWriter.addFavoriteItems(Collections.singletonList(selectedItem));
         } else if (menuItemId == R.id.remove_from_favorites_item) {

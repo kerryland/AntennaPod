@@ -102,8 +102,8 @@ public class EpisodeMultiSelectActionHandler {
     }
 
     private void markedCheckedPlayed(List<FeedItem> items) {
+        DBWriter.markItemsPlayed(FeedItem.PLAYED, true, items);
         for (FeedItem item : items) {
-            item.setPlayed(true);
             if (!item.getFeed().isLocalFeed() && item.getFeed().getState() != Feed.STATE_NOT_SUBSCRIBED
                     && SynchronizationSettings.isProviderConnected()) {
                 FeedMedia media = item.getMedia();
@@ -119,13 +119,12 @@ public class EpisodeMultiSelectActionHandler {
                 }
             }
         }
-        DBWriter.markItemsPlayed(FeedItem.PLAYED, true, items);
         showMessage(R.plurals.marked_as_played_message, items.size());
     }
 
     private void markedCheckedUnplayed(List<FeedItem> items) {
+        DBWriter.markItemsPlayed(FeedItem.UNPLAYED, false, items);
         for (FeedItem item : items) {
-            item.setPlayed(false);
             if (!item.getFeed().isLocalFeed() && item.getMedia() != null
                     && item.getFeed().getState() != Feed.STATE_NOT_SUBSCRIBED) {
                 SynchronizationQueue.getInstance().enqueueEpisodeAction(
@@ -134,7 +133,6 @@ public class EpisodeMultiSelectActionHandler {
                                 .build());
             }
         }
-        DBWriter.markItemsPlayed(FeedItem.UNPLAYED, false, items);
         showMessage(R.plurals.marked_as_unplayed_message, items.size());
     }
 

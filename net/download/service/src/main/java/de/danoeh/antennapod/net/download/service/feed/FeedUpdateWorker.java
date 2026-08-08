@@ -73,6 +73,7 @@ public class FeedUpdateWorker extends Worker {
 
         long feedId = getInputData().getLong(FeedUpdateManagerImpl.EXTRA_FEED_ID, -1);
         boolean ignoreRss = getInputData().getBoolean(FeedUpdateManagerImpl.EXTRA_IGNORE_RSS, false);
+        Log.d(TAG, "Starting feed update worker. Ignore RSS=" + ignoreRss);
 
         boolean allAreLocal = true;
         boolean force = false;
@@ -125,14 +126,20 @@ public class FeedUpdateWorker extends Worker {
                 return Result.retry();
             }
         }
-        refreshFeeds(toUpdateExternally, force);
+        if (!ignoreRss) {
+            refreshFeeds(toUpdateExternally, force);
+        }
+        Log.d(TAG, "Populate inbox from UNREAD in DB:");
         DestinationSelector.populateInboxOrQueue(getApplicationContext(), toUpdateFromDB);
+        Log.d(TAG, "Populate inbox from RSS:");
         DestinationSelector.populateInboxOrQueue(getApplicationContext(), toUpdateExternally);
 
-        NonSubscribedFeedsCleaner.deleteOldNonSubscribedFeeds(getApplicationContext());
-        AutoDownloadManager.getInstance().autodownloadUndownloadedItems(getApplicationContext());
-        notificationManager.cancel(R.id.notification_updating_feeds);
-        SynchronizationQueue.getInstance().syncImmediately();
+        if (!ignoreRss) {
+            NonSubscribedFeedsCleaner.deleteOldNonSubscribedFeeds(getApplicationContext());
+            AutoDownloadManager.getInstance().autodownloadUndownloadedItems(getApplicationContext());
+            notificationManager.cancel(R.id.notification_updating_feeds);
+            SynchronizationQueue.getInstance().syncImmediately();
+        }
         return Result.success();
     }
 

@@ -16,6 +16,7 @@ import androidx.documentfile.provider.DocumentFile;
 import com.google.common.util.concurrent.Futures;
 import de.danoeh.antennapod.event.DownloadLogEvent;
 
+import de.danoeh.antennapod.event.InboxEvent;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.net.download.serviceinterface.AutoDownloadManager;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
@@ -683,18 +684,26 @@ public class DBWriter {
      */
     @NonNull
     public static Future<?> markItemsPlayed(int played, boolean resetMediaPosition, List<FeedItem> items) {
+        boolean wasInInbox = false;
         for (FeedItem item : items) {
             if (item.hasMedia() && resetMediaPosition) {
                 item.getMedia().setPosition(0);
             }
+            if (item.getPlayState() == FeedItem.NEW) {
+                wasInInbox = true;
+            }
             item.setPlayState(played);
         }
+        boolean itemsRemovedFromInbox = wasInInbox;
         return runOnDbThread(() -> {
             final PodDBAdapter adapter = PodDBAdapter.getInstance();
             adapter.open();
             adapter.setFeedItemsRead(played, resetMediaPosition, items);
             adapter.close();
             EventBus.getDefault().post(new FeedItemEvent(items, true));
+            if (itemsRemovedFromInbox) {
+                EventBus.getDefault().post(new InboxEvent(InboxEvent.Action.REMOVED));
+            }
         });
     }
 
@@ -710,6 +719,7 @@ public class DBWriter {
             adapter.setFeedItems(FeedItem.NEW, FeedItem.UNPLAYED, feedId);
             adapter.close();
             EventBus.getDefault().post(new FeedItemEvent(Collections.emptyList(), true));
+            EventBus.getDefault().post(new InboxEvent(InboxEvent.Action.REMOVED));
         });
     }
 
@@ -717,13 +727,7 @@ public class DBWriter {
      * Sets the 'read'-attribute of all NEW FeedItems to UNPLAYED.
      */
     public static Future<?> removeAllNewFlags() {
-        return runOnDbThread(() -> {
-            final PodDBAdapter adapter = PodDBAdapter.getInstance();
-            adapter.open();
-            adapter.setFeedItems(FeedItem.NEW, FeedItem.UNPLAYED);
-            adapter.close();
-            EventBus.getDefault().post(new FeedItemEvent(Collections.emptyList(), true));
-        });
+        return removeFeedNewFlag(0);
     }
 
     static Future<?> addNewFeed(final Context context, final Feed... feeds) {

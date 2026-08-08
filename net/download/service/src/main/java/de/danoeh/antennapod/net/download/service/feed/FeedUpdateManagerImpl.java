@@ -15,8 +15,8 @@ import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import de.danoeh.antennapod.event.FeedUpdateRunningEvent;
+import de.danoeh.antennapod.event.InboxEvent;
 import de.danoeh.antennapod.event.playback.PlaybackHistoryEvent;
-import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.net.common.NetworkUtils;
 import de.danoeh.antennapod.event.MessageEvent;
 import de.danoeh.antennapod.model.feed.Feed;
@@ -89,17 +89,17 @@ public class FeedUpdateManagerImpl extends FeedUpdateManager {
                 .setInitialDelay(0L, TimeUnit.MILLISECONDS)
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .addTag(WORK_TAG_FEED_UPDATE);
-        if (feed == null || !feed.isLocalFeed()) {
+        if (!ignoreRSS && (feed == null || !feed.isLocalFeed())) {
             workRequest.setConstraints(new Constraints.Builder()
                     .setRequiredNetworkType(NetworkType.CONNECTED).build());
         }
         Data.Builder builder = new Data.Builder();
         builder.putBoolean(EXTRA_EVEN_ON_MOBILE, true);
         builder.putBoolean(EXTRA_MANUAL, true);
+        builder.putBoolean(EXTRA_IGNORE_RSS, ignoreRSS);
         if (feed != null) {
             builder.putLong(EXTRA_FEED_ID, feed.getId());
             builder.putBoolean(EXTRA_NEXT_PAGE, nextPage);
-            builder.putBoolean(EXTRA_IGNORE_RSS, ignoreRSS);
         }
         workRequest.setInputData(builder.build());
         WorkManager.getInstance(context).enqueueUniqueWork(WORK_ID_FEED_UPDATE_MANUAL,
@@ -161,6 +161,16 @@ public class FeedUpdateManagerImpl extends FeedUpdateManager {
         if (event.getFeedId() != null) {
             Feed feed = DBReader.getFeed(event.getFeedId(), false, 0, 0);
             runOnce(context, feed, false, true);
+        }
+    }
+
+    @Subscribe(threadMode = ThreadMode.BACKGROUND)
+    public void onPlaybackHistoryUpdated(InboxEvent event) {
+        Log.d(TAG, "Inbox event changed: " + event.action);
+
+        // When episode leaves the inbox, refresh inbox with new UNPLAYED episodes
+        if (event.action == InboxEvent.Action.REMOVED) {
+            runOnce(context, null, false, true);
         }
     }
 }

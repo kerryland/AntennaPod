@@ -318,7 +318,8 @@ public class DBWriter {
             adapter.open();
             adapter.setFeedMediaLastPlayedTimeHistory(media);
             adapter.close();
-            EventBus.getDefault().post(PlaybackHistoryEvent.listUpdated());
+            Long feedId = (media.getItem() != null) ? media.getItem().getFeedId() : null;
+            EventBus.getDefault().post(PlaybackHistoryEvent.listUpdated(feedId));
         });
     }
 

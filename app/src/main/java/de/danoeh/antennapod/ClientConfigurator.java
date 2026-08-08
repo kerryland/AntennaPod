@@ -48,7 +48,7 @@ public class ClientConfigurator {
         SslProviderInstaller.install(context);
         NetworkUtils.init(context);
         DownloadServiceInterface.setImpl(new DownloadServiceInterfaceImpl());
-        FeedUpdateManager.setInstance(new FeedUpdateManagerImpl());
+        FeedUpdateManager.setInstance(new FeedUpdateManagerImpl(context));
         AutoDownloadManager.setInstance(new AutoDownloadManagerImpl());
         SynchronizationQueue.setInstance(new SynchronizationQueueImpl(context));
         AntennapodHttpClient.setCacheDirectory(new File(context.getCacheDir(), "okhttp"));

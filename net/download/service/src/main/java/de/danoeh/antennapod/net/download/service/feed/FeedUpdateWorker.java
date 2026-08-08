@@ -72,6 +72,8 @@ public class FeedUpdateWorker extends Worker {
         List<Feed> toUpdateFromDB = new ArrayList<>();
 
         long feedId = getInputData().getLong(FeedUpdateManagerImpl.EXTRA_FEED_ID, -1);
+        boolean ignoreRss = getInputData().getBoolean(FeedUpdateManagerImpl.EXTRA_IGNORE_RSS, false);
+
         boolean allAreLocal = true;
         boolean force = false;
         boolean isAutomaticRefresh = !getInputData().getBoolean(FeedUpdateManagerImpl.EXTRA_MANUAL, false);
@@ -107,7 +109,7 @@ public class FeedUpdateWorker extends Worker {
             List<Feed> feeds = List.of(feed);
             findFeedsToRefresh(feeds, toUpdateExternally, toUpdateFromDB);
             // Still update feed from RSS, even though we have some in the DB and won't put them in the inbox or queue.
-            if (!toUpdateFromDB.isEmpty()) {
+            if (!ignoreRss && !toUpdateFromDB.isEmpty()) {
                 refreshFeeds(toUpdateFromDB, true);
             }
 

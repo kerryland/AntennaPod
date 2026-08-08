@@ -15,13 +15,18 @@ import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import de.danoeh.antennapod.event.FeedUpdateRunningEvent;
+import de.danoeh.antennapod.event.playback.PlaybackHistoryEvent;
+import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.net.common.NetworkUtils;
 import de.danoeh.antennapod.event.MessageEvent;
 import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.net.download.service.R;
 import de.danoeh.antennapod.net.download.serviceinterface.FeedUpdateManager;
+import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.concurrent.TimeUnit;
 
@@ -30,6 +35,7 @@ public class FeedUpdateManagerImpl extends FeedUpdateManager {
     private static final String WORK_ID_FEED_UPDATE = "de.danoeh.antennapod.core.service.FeedUpdateWorker";
     private static final String WORK_ID_FEED_UPDATE_MANUAL = "feedUpdateManual";
     public static final String EXTRA_FEED_ID = "feed_id";
+    public static final String EXTRA_IGNORE_RSS = "ignore_rss";
     public static final String EXTRA_NEXT_PAGE = "next_page";
     public static final String EXTRA_EVEN_ON_MOBILE = "even_on_mobile";
     public static final String EXTRA_MANUAL = "manual";
@@ -37,6 +43,12 @@ public class FeedUpdateManagerImpl extends FeedUpdateManager {
     private static long lastManualRefreshTime = 0;
     private static long lastManualRefreshFeedId = -1;
     private static final long REFRESH_COOLDOWN_MS = 20_000;
+    private final Context context;
+
+    public FeedUpdateManagerImpl(Context context) {
+        this.context = context.getApplicationContext();
+        EventBus.getDefault().register(this);
+    }
 
     /**
      * Start / restart periodic auto feed refresh
@@ -67,6 +79,10 @@ public class FeedUpdateManagerImpl extends FeedUpdateManager {
     }
 
     public void runOnce(Context context, Feed feed, boolean nextPage) {
+        runOnce(context, feed, nextPage, false);
+    }
+
+    private void runOnce(Context context, Feed feed, boolean nextPage, boolean ignoreRSS) {
         lastManualRefreshTime = System.currentTimeMillis();
         lastManualRefreshFeedId = feed != null ? feed.getId() : -1;
         OneTimeWorkRequest.Builder workRequest = new OneTimeWorkRequest.Builder(FeedUpdateWorker.class)
@@ -83,6 +99,7 @@ public class FeedUpdateManagerImpl extends FeedUpdateManager {
         if (feed != null) {
             builder.putLong(EXTRA_FEED_ID, feed.getId());
             builder.putBoolean(EXTRA_NEXT_PAGE, nextPage);
+            builder.putBoolean(EXTRA_IGNORE_RSS, ignoreRSS);
         }
         workRequest.setInputData(builder.build());
         WorkManager.getInstance(context).enqueueUniqueWork(WORK_ID_FEED_UPDATE_MANUAL,
@@ -135,5 +152,17 @@ public class FeedUpdateManagerImpl extends FeedUpdateManager {
             builder.setMessage(R.string.confirm_mobile_feed_refresh_dialog_message);
         }
         builder.show();
+    }
+
+    @Subscribe(threadMode = ThreadMode.BACKGROUND)
+    public void onPlaybackHistoryUpdated(PlaybackHistoryEvent event) {
+        // When podcast is finished, refresh inbox/queue if we have some local "old" episodes in the DB
+        Log.d(TAG, "Podcast finished, refresh inbox/queue " + event.getFeedId());
+        if (event.getFeedId() != null) {
+            Feed feed = DBReader.getFeed(event.getFeedId(), false, 0, 0);
+            if (feed != null && feed.getPreferences().getPlaybackOrder().equals(FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST)) {
+                runOnce(context, feed, false, true);
+            }
+        }
     }
 }

@@ -55,4 +55,12 @@ public class QueueEvent {
     public static QueueEvent moved(FeedItem item, int newPosition) {
         return new QueueEvent(Action.MOVED, item, null, newPosition);
     }
+
+    @Override
+    public String toString() {
+        return "QueueEvent{" +
+                "item=" + item +
+                ", action=" + action +
+                '}';
+    }
 }

@@ -236,7 +236,7 @@ public final class DBReader {
     private static synchronized List<FeedItem> getEpisodes(int offset, int limit,
                                                           FeedItemFilter filter, SortOrder sortOrder,
                                                           boolean useMaxEpisodes) {
-        Log.d(TAG, "getRecentlyPublishedEpisodes() called with: offset=" + offset + ", limit=" + limit);
+        Log.d(TAG, "getEpisodes() called with: " + sortOrder + " offset=" + offset + ", limit=" + limit + " useMaxEpisodes=" + useMaxEpisodes);
         PodDBAdapter adapter = PodDBAdapter.getInstance();
         adapter.open();
         try (FeedItemCursor cursor = new FeedItemCursor(adapter.getEpisodesCursor(offset, limit, filter, sortOrder, useMaxEpisodes))) {

@@ -23,8 +23,8 @@ import de.danoeh.antennapod.playback.service.PlaybackController;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 
 /**
- * When a Bluetooth device connects, we might want to r
- * sume playback.
+ * When a Bluetooth device connects, we might want to
+ * resume playback.
  */
 public class BluetoothReconnectPlayer extends BroadcastReceiver {
     private static final String TAG = "BtReconnectPlayer";
@@ -47,12 +47,14 @@ public class BluetoothReconnectPlayer extends BroadcastReceiver {
         if (intent == null || intent.getAction() == null) {
             return;
         }
+        Log.d(TAG, "Received " + intent.getAction());
         if (UserPreferences.isUnpauseOnBluetoothReconnect() &&
                 BluetoothDevice.ACTION_ACL_CONNECTED.equals(intent.getAction())) {
             waitForBluetoothAudioAndPlay();
 
         } else if (UserPreferences.isPauseOnHeadsetDisconnect() &&
-                BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(intent.getAction())) {
+                BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(intent.getAction()) &&
+                        getConnectedBluetoothAudioDevice() == null) {
             cancelPendingWait();
             // We *shouldn't* need this, but sometimes exoplayer.setHandleAudioBecomingNoisy()
             // does not seem to work.

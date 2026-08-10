@@ -1,5 +1,6 @@
 package de.danoeh.antennapod.ui;
 
+import android.util.Log;
 import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -12,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import de.danoeh.antennapod.R;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -21,7 +23,7 @@ import java.util.List;
 public abstract class SelectableAdapter<T extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<T> {
     public static final int COUNT_AUTOMATICALLY = -1;
     private ActionMode actionMode;
-    private final List<Long> selectedIds = new ArrayList<>();
+    private final HashSet<Long> selectedIds = new HashSet<>();
     private final LinkedHashSet<Integer> selectionOrder = new LinkedHashSet<>();
     private final FragmentActivity activity;
     private OnSelectModeListener onSelectModeListener;

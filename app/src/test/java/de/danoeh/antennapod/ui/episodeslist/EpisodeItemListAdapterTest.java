@@ -71,6 +71,7 @@ public class EpisodeItemListAdapterTest {
         List<FeedItem> selectedItems = adapter.getSelectedItems();
         assertEquals(1, selectedItems.size());
         assertEquals("Episode One", selectedItems.get(0).getTitle());
+        assertEquals(1, adapter.getSelectedCount());
     }
 
     @Test
@@ -107,6 +108,24 @@ public class EpisodeItemListAdapterTest {
         assertEquals("Episode Three", selectedPositions.get(0).getTitle());
         assertEquals("Episode Zero", selectedPositions.get(1).getTitle());
         assertEquals("Episode One", selectedPositions.get(2).getTitle());
+    }
 
+    @Test
+    public void testSelectAllAfterSelectSome() {
+        adapter.updateItems(testData);
+
+        // Select 3 items
+        adapter.setSelected(3, true);
+        adapter.setSelected(2, true);
+        adapter.setSelected(1, true);
+        assertEquals(4, adapter.getItemCount());
+
+        // Select all 4 items
+        adapter.setSelected(0, testData.size(),true);
+
+        // How many are selected?
+        assertEquals(4, adapter.getSelectedCount());
+        assertEquals(4, adapter.getSelectedItems().size());
+        assertEquals(4, adapter.getSelectedFeedItemsInOrder().size());
     }
 }

@@ -130,6 +130,7 @@ public class Media3PlaybackService extends MediaLibraryService {
                         .buildUpon()
                         .remove(Player.COMMAND_SEEK_TO_PREVIOUS)
                         .remove(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
+                        .add(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
                         .build();
             }
 
@@ -702,12 +703,12 @@ public class Media3PlaybackService extends MediaLibraryService {
 
                             currentPlayable = nextMedia;
                             currentPlayable.onPlaybackStart();
-                            PlaybackPreferences.writeMediaPlaying(nextMedia);
                             if (nextMedia.getItem() != null && nextMedia.getItem().getFeed() != null) {
                                 volumeAdaptionFactor = nextMedia.getItem().getFeed()
                                         .getPreferences().getVolumeAdaptionSetting().getAdaptionFactor();
                                 applyVolumeAdaption(1.0f);
                             }
+                            updatePlaybackPreferences();
                             player.setPlayWhenReady(UserPreferences.isFollowQueue());
                             player.setMediaItem(nextMediaItem);
                             player.seekTo(SkipUtils.skipIntroIfNecessary(this, nextMedia));

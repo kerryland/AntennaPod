@@ -187,20 +187,23 @@ public class FeedItemMenuHandler {
         if (menuItemId == R.id.skip_episode_item) {
             context.sendBroadcast(MediaButtonStarter.createIntent(context, KeyEvent.KEYCODE_MEDIA_NEXT));
         } else if (menuItemId == R.id.remove_item) {
+            MenuItemAssistant.skipIfPlaying(context, selectedItem, () ->
             LocalDeleteModal.showLocalFeedDeleteWarningIfNecessary(context, Arrays.asList(selectedItem),
-                    () -> DBWriter.deleteFeedMediaOfItem(context, selectedItem.getMedia()));
+                    () -> DBWriter.deleteFeedMediaOfItem(context, selectedItem.getMedia())));
         } else if (menuItemId == R.id.remove_inbox_item) {
             removeNewFlagWithUndo(fragment, selectedItem);
         } else if (menuItemId == R.id.mark_read_item) {
-            new EpisodeMultiSelectActionHandler(fragment.getActivity(), R.id.mark_read_item)
-                    .handleAction(Collections.singletonList(selectedItem));
+            MenuItemAssistant.skipIfPlaying(context, selectedItem, () ->
+                    new EpisodeMultiSelectActionHandler(fragment.getActivity(), R.id.mark_read_item)
+                            .handleAction(Collections.singletonList(selectedItem)));
         } else if (menuItemId == R.id.mark_unread_item) {
             new EpisodeMultiSelectActionHandler(fragment.getActivity(), R.id.mark_unread_item)
                     .handleAction(Collections.singletonList(selectedItem));
         } else if (menuItemId == R.id.add_to_queue_item) {
             DBWriter.addQueueItem(context, selectedItem);
         } else if (menuItemId == R.id.remove_from_queue_item) {
-            DBWriter.removeQueueItem(context, true, selectedItem);
+            MenuItemAssistant.skipIfPlaying(context, selectedItem, () ->
+                    DBWriter.removeQueueItem(context, true, selectedItem)); // TRUE!!?
         } else if (menuItemId == R.id.add_to_favorites_item) {
             DBWriter.addFavoriteItems(Collections.singletonList(selectedItem));
         } else if (menuItemId == R.id.remove_from_favorites_item) {

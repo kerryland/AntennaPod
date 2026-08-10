@@ -40,21 +40,29 @@ public class EpisodeMultiSelectActionHandler {
         this.actionId = actionId;
     }
 
+    private void skipIfPlaying(List<FeedItem> items, Runnable callback) {
+        for (FeedItem feedItem : items) {
+            MenuItemAssistant.skipIfPlaying(activity, feedItem, callback);
+        }
+    }
     public void handleAction(List<FeedItem> items) {
         if (actionId == R.id.add_to_queue_item) {
             queueChecked(items);
         } else if (actionId == R.id.remove_from_queue_item) {
-            removeFromQueueChecked(items);
+            skipIfPlaying(items, () ->
+                    removeFromQueueChecked(items));
         } else if (actionId == R.id.remove_inbox_item) {
             removeFromInboxChecked(items);
         } else if (actionId == R.id.mark_read_item) {
-            markedCheckedPlayed(items);
+            skipIfPlaying(items, () ->
+                    markedCheckedPlayed(items));
         } else if (actionId == R.id.mark_unread_item) {
             markedCheckedUnplayed(items);
         } else if (actionId == R.id.download_item) {
             downloadChecked(items);
         } else if (actionId == R.id.remove_item) {
-            LocalDeleteModal.showLocalFeedDeleteWarningIfNecessary(activity, items, () -> deleteChecked(items));
+            skipIfPlaying(items, () ->
+                    LocalDeleteModal.showLocalFeedDeleteWarningIfNecessary(activity, items, () -> deleteChecked(items)));
         } else if (actionId == R.id.add_to_favorites_item) {
             addToFavoritesChecked(items);
         } else if (actionId == R.id.remove_from_favorites_item) {

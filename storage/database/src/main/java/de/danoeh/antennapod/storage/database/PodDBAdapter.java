@@ -1097,6 +1097,7 @@ public class PodDBAdapter {
                 + " WHERE Queue.ID > (SELECT Queue.ID FROM Queue WHERE Queue.FeedItem = "
                 +  item.getId()
                 + ")"
+                + " AND " + KEY_READ + "=" + FeedItem.UNPLAYED
                 + " ORDER BY Queue.ID"
                 + " LIMIT 1";
         return db.rawQuery(query, null);

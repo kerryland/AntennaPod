@@ -11,7 +11,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import de.danoeh.antennapod.R;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 /**
  * Used by Recyclerviews that need to provide ability to select items.
@@ -19,7 +21,8 @@ import java.util.HashSet;
 public abstract class SelectableAdapter<T extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<T> {
     public static final int COUNT_AUTOMATICALLY = -1;
     private ActionMode actionMode;
-    private final HashSet<Long> selectedIds = new HashSet<>();
+    private final List<Long> selectedIds = new ArrayList<>();
+    private final LinkedHashSet<Integer> selectionOrder = new LinkedHashSet<>();
     private final FragmentActivity activity;
     private OnSelectModeListener onSelectModeListener;
     protected boolean shouldSelectLazyLoadedItems = false;
@@ -36,7 +39,7 @@ public abstract class SelectableAdapter<T extends RecyclerView.ViewHolder> exten
 
         shouldSelectLazyLoadedItems = false;
         selectedIds.clear();
-        selectedIds.add(getItemId(pos));
+        setSelected(pos, true);
 
         OnBackPressedCallback backPressedCallback = new OnBackPressedCallback(true) {
             @Override
@@ -103,6 +106,7 @@ public abstract class SelectableAdapter<T extends RecyclerView.ViewHolder> exten
                 actionMode = null;
                 shouldSelectLazyLoadedItems = false;
                 selectedIds.clear();
+                selectionOrder.clear();
                 callOnEndSelectMode();
                 notifyDataSetChanged();
                 backPressedCallback.remove();
@@ -141,8 +145,10 @@ public abstract class SelectableAdapter<T extends RecyclerView.ViewHolder> exten
     public void setSelected(int pos, boolean selected) {
         if (selected) {
             selectedIds.add(getItemId(pos));
+            selectionOrder.add(pos);
         } else {
             selectedIds.remove(getItemId(pos));
+            selectionOrder.remove(pos);
         }
         onSelectedItemsUpdated();
     }
@@ -160,6 +166,14 @@ public abstract class SelectableAdapter<T extends RecyclerView.ViewHolder> exten
             setSelected(i, selected);
         }
         notifyItemRangeChanged(startPos, (endPos - startPos));
+    }
+
+    public List<Integer> getSelectedItemsInOrder() {
+        List<Integer> ordered = new ArrayList<>();
+        for (Integer pos : selectionOrder) {
+            ordered.add(pos);
+        }
+        return ordered;
     }
 
     protected void toggleSelection(int pos) {

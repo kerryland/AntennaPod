@@ -225,4 +225,11 @@ public class EpisodeItemListAdapter extends SelectableAdapter<EpisodeItemViewHol
         return items;
     }
 
+    public List<FeedItem> getSelectedFeedItemsInOrder() {
+        List<FeedItem> items = new ArrayList<>();
+        for (Integer pos : super.getSelectedItemsInOrder()) {
+            items.add(getItem(pos));
+        }
+        return items;
+    }
 }

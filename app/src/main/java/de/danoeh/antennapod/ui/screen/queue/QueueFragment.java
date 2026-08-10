@@ -375,30 +375,17 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
         void onCurrentPosition(int position);
     }
     private void findCurrentlyPlayingPosition(final CurrentPositionCallback callback) {
-
         PlaybackController.bindToMedia3Service(getActivity(), controller -> {
             int currently_playing = -1;
-            //controller.
-
-            if (controller.getCurrentMediaItem() != null) {
-                Log.d(TAG, "KJS got inside. currentMediaItem ID=" + controller.getCurrentMediaItem().mediaId);
-            } else {
-                Log.d(TAG, "KJS got inside. currentMediaItem is null");
-            }
-
-            Log.d(TAG, "KJS queue size=" + queue.size());
-
             int element = 0;
             for (FeedItem feedItem : queue) {
                 if (controller.getCurrentMediaItem() != null) {
-
-                    Log.d(TAG, "KJS feeditem: " + feedItem.getId() + ". " + feedItem.getTitle() + " MediaId= " + MediaItemAdapter.fromPlayableStub(feedItem.getMedia()).mediaId);
+                    Log.d(TAG, "feeditem: " + feedItem.getId() + ". " + feedItem.getTitle() + " MediaId= " + MediaItemAdapter.fromPlayableStub(feedItem.getMedia()).mediaId);
                     if (("" + MediaItemAdapter.fromPlayableStub(feedItem.getMedia()).mediaId).equals(controller.getCurrentMediaItem().mediaId)) {
                         currently_playing = element;
-                        Log.d(TAG, "KJS feeditem MATCH on " + currently_playing);
+                        Log.d(TAG, "feeditem MATCH on " + currently_playing);
                         break;
                     }
-
                 }
                 element++;
             }

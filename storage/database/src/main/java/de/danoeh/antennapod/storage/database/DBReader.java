@@ -400,16 +400,18 @@ public final class DBReader {
      */
     @Nullable
     public static synchronized FeedItem getNextInQueue(FeedItem item) {
-        Log.d(TAG, "getNextInQueue() called with: " + "itemId = [" + item.getId() + "]");
+        Log.d(TAG, "getNextInQueue() called with: " + item);
         PodDBAdapter adapter = PodDBAdapter.getInstance();
         adapter.open();
         try (FeedItemCursor cursor = new FeedItemCursor(adapter.getNextInQueue(item))) {
             List<FeedItem> list = extractItemlistFromCursor(cursor);
             if (!list.isEmpty()) {
                 FeedItem nextItem = list.get(0);
+                Log.d(TAG, "getNextInQueue() found next " + nextItem);
                 loadFeedDataOfFeedItemList(list);
                 return nextItem;
             }
+            Log.d(TAG, "getNextInQueue() found nothing next");
             return null;
         } catch (Exception e) {
             return null;

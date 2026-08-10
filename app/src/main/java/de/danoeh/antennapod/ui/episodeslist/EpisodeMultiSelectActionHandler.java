@@ -18,6 +18,7 @@ import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterfa
 import de.danoeh.antennapod.net.sync.serviceinterface.EpisodeAction;
 import de.danoeh.antennapod.net.sync.serviceinterface.SynchronizationQueue;
 import de.danoeh.antennapod.playback.service.PlaybackServiceInterface;
+import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.storage.preferences.PlaybackPreferences;
@@ -26,6 +27,9 @@ import de.danoeh.antennapod.ui.BulkDownloader;
 import de.danoeh.antennapod.ui.common.IntentUtils;
 import de.danoeh.antennapod.ui.share.ShareDialog;
 import de.danoeh.antennapod.ui.view.LocalDeleteModal;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -75,6 +79,14 @@ public class EpisodeMultiSelectActionHandler {
             moveToTopChecked(items);
         } else if (actionId == R.id.move_to_bottom_item) {
             moveToBottomChecked(items);
+        } else if (actionId == R.id.move_to_play_next_item) {
+            Observable.fromCallable(() -> DBReader.getQueue())
+                    .subscribeOn(Schedulers.computation())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(queueItems ->  MenuItemAssistant.findCurrentlyPlayingPosition(activity, queueItems,
+                            position -> movePlayNextChecked(position,
+                                    items)));
+
         } else {
             Log.e(TAG, "Unrecognized speed dial action item. Do nothing. id=" + actionId);
         }
@@ -231,6 +243,12 @@ public class EpisodeMultiSelectActionHandler {
     private void moveToBottomChecked(List<FeedItem> items) {
         DBWriter.moveQueueItemsToBottom(items);
         showMessage(R.plurals.move_to_bottom_message, items.size());
+    }
+
+    private void movePlayNextChecked(int position, List<FeedItem> items) {
+        Log.d(TAG, "movePlayNextChecked moving to " + position);
+        DBWriter.moveQueueItemsToPosition(position + 1, items);
+        showMessage(R.plurals.move_to_play_next_message, items.size());
     }
 
     private void showMessage(@PluralsRes int msgId, int numItems) {

@@ -1,6 +1,7 @@
 package de.danoeh.antennapod.ui.screen.queue;
 
-import android.content.ComponentName;
+import static de.danoeh.antennapod.ui.episodeslist.MenuItemAssistant.findCurrentlyPlayingPosition;
+
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
@@ -21,6 +22,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
 import androidx.fragment.app.Fragment;
+import androidx.media3.common.MediaItem;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.SimpleItemAnimator;
@@ -31,7 +33,6 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import de.danoeh.antennapod.event.MessageEvent;
 import de.danoeh.antennapod.event.playback.SpeedChangedEvent;
-import de.danoeh.antennapod.playback.base.MediaItemAdapter;
 import de.danoeh.antennapod.playback.service.PlaybackController;
 import de.danoeh.antennapod.ui.BulkDownloader;
 import de.danoeh.antennapod.ui.screen.InboxFragment;
@@ -371,28 +372,6 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
         }
     }
 
-    public interface CurrentPositionCallback {
-        void onCurrentPosition(int position);
-    }
-    private void findCurrentlyPlayingPosition(final CurrentPositionCallback callback) {
-        PlaybackController.bindToMedia3Service(getActivity(), controller -> {
-            int currently_playing = -1;
-            int element = 0;
-            for (FeedItem feedItem : queue) {
-                if (controller.getCurrentMediaItem() != null) {
-                    Log.d(TAG, "feeditem: " + feedItem.getId() + ". " + feedItem.getTitle() + " MediaId= " + MediaItemAdapter.fromPlayableStub(feedItem.getMedia()).mediaId);
-                    if (("" + MediaItemAdapter.fromPlayableStub(feedItem.getMedia()).mediaId).equals(controller.getCurrentMediaItem().mediaId)) {
-                        currently_playing = element;
-                        Log.d(TAG, "feeditem MATCH on " + currently_playing);
-                        break;
-                    }
-                }
-                element++;
-            }
-            callback.onCurrentPosition(currently_playing);
-        });
-    }
-
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         Log.d(TAG, "onContextItemSelected() called with: " + "item = [" + item + "]");
@@ -429,16 +408,11 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
                 return true;
 
             } else if (itemId == R.id.move_to_play_next_item) {
-
-                findCurrentlyPlayingPosition(new CurrentPositionCallback() {
-                    @Override
-                    public void onCurrentPosition(int currentlyPlayingPosition) {
-                        if (currentlyPlayingPosition != -1 && currentlyPlayingPosition != position) {
-                            // TODO: Clean up queue and recycler code here and above
-                            queue.add(queue.remove(position));
-                            recyclerAdapter.notifyItemMoved(position, currentlyPlayingPosition + 1);
-                            DBWriter.moveQueueItemsToPosition(currentlyPlayingPosition + 1, Collections.singletonList(selectedItem));
-                        }
+                findCurrentlyPlayingPosition(getContext(), queue, currentlyPlayingPosition -> {
+                    if (currentlyPlayingPosition != position) {
+                        queue.add(queue.remove(position));
+                        recyclerAdapter.notifyItemMoved(position, currentlyPlayingPosition + 1);
+                        DBWriter.moveQueueItemsToPosition(currentlyPlayingPosition + 1, Collections.singletonList(selectedItem));
                     }
                 });
 
@@ -505,6 +479,10 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
                 Pair<Boolean, Boolean> canMove = canMove(queue, selectedItems);
                 menu.findItem(R.id.move_to_top_item).setVisible(canMove.first);
                 menu.findItem(R.id.move_to_bottom_item).setVisible(canMove.second);
+                PlaybackController.bindToMedia3Service(this.getActivity(), controller -> {
+                            MediaItem currentMediaItem = controller.getCurrentMediaItem();
+                    menu.findItem(R.id.move_to_play_next_item).setVisible(currentMediaItem!=null);
+                });
 
                 floatingSelectMenu.updateItemVisibility();
             }
@@ -531,7 +509,7 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
                 return false;
             }
             new EpisodeMultiSelectActionHandler(getActivity(), menuItem.getItemId())
-                    .handleAction(recyclerAdapter.getSelectedItems());
+                    .handleAction(recyclerAdapter.getSelectedFeedItemsInOrder());
             recyclerAdapter.endSelectMode();
             return true;
         });

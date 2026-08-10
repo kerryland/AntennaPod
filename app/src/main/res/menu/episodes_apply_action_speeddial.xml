@@ -74,4 +74,10 @@
         android:title="@string/move_to_bottom_label"
         android:visible="false" />
 
+    <item
+        android:id="@+id/move_to_play_next_item"
+        android:icon="@drawable/ic_shuffle"
+        android:title="@string/move_to_play_next_label"
+        android:visible="false" />
+
 </menu>

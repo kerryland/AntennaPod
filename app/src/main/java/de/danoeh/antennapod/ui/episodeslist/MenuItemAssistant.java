@@ -1,11 +1,12 @@
 package de.danoeh.antennapod.ui.episodeslist;
 
 import android.content.Context;
-import android.util.Log;
 
 import androidx.media3.common.MediaItem;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.playback.base.MediaItemAdapter;
@@ -14,24 +15,51 @@ import de.danoeh.antennapod.playback.service.PlaybackController;
 public class MenuItemAssistant {
     private static String TAG = "MenuItemAssistant";
 
-    public static void skipIfPlaying(Context context, FeedItem selectedItem, Runnable callback) {
+    /**
+     * Do something {@code callback} after we have found a podcast to play if the currently playing one
+     * is in {@code feedItems}
+     */
+    public static void skipIfPlaying(Context context, List<FeedItem> feedItems, Runnable callback) {
         PlaybackController.bindToMedia3Service(context, controller -> {
             MediaItem currentMediaItem = controller.getCurrentMediaItem();
-            if (currentMediaItem != null && selectedItem.getMedia() != null) {
-                String currentMediaId = currentMediaItem.mediaId;
-                String selectedMediaId = Long.toString(selectedItem.getMedia().getId());
-                Log.d(TAG, "Currently playing media: " + currentMediaId + " selected media " + selectedMediaId);
-                if (currentMediaId.equals(selectedMediaId)) {
-                    Log.d(TAG, "Play next track");
-                    controller.seekToNextMediaItem();
-                } else {
-                    Log.d(TAG, "Should not play next track");
+            if (currentMediaItem == null) {
+                return;
+            }
+
+            Set<Long> knownMediaItems = new HashSet<>();
+            for (FeedItem feedItem : feedItems) {
+                if (feedItem.getMedia() != null) {
+                    knownMediaItems.add(feedItem.getMedia().getId());
                 }
             }
-            if (callback != null) {
-                callback.run();
+
+            long prevMediaId = -1L;
+            for (int i = 0; i < knownMediaItems.size(); i++) {
+                try {
+                    long currentMediaId = Long.parseLong(currentMediaItem.mediaId);
+                    if (prevMediaId == currentMediaId) {
+                        break;
+                    }
+
+                    if (knownMediaItems.contains(currentMediaId)) {
+                        controller.seekToNextMediaItem();
+                    }
+                    prevMediaId = currentMediaId;
+
+                } catch (NumberFormatException e) {
+                    break;
+                }
+
+                currentMediaItem = controller.getCurrentMediaItem();
+                if (currentMediaItem == null) {
+                    break;
+                }
             }
         });
+
+        if (callback != null) {
+            callback.run();
+        }
     }
 
     public interface CurrentPositionCallback {

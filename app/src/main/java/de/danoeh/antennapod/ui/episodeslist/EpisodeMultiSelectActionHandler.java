@@ -45,9 +45,7 @@ public class EpisodeMultiSelectActionHandler {
     }
 
     private void skipIfPlaying(List<FeedItem> items, Runnable callback) {
-        for (FeedItem feedItem : items) {
-            MenuItemAssistant.skipIfPlaying(activity, feedItem, callback);
-        }
+        MenuItemAssistant.skipIfPlaying(activity, items, callback);
     }
     public void handleAction(List<FeedItem> items) {
         if (actionId == R.id.add_to_queue_item) {

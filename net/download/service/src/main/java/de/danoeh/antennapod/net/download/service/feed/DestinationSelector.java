@@ -43,8 +43,10 @@ public class DestinationSelector {
                     : SortOrder.DATE_NEW_OLD;
 
             List<FeedItem> feedItems = DBReader.getFeedItemList(
-                    feed, new FeedItemFilter(FeedItemFilter.UNPLAYED, FeedItemFilter.NEW),
-                    sortOrder, 0, feed.getPreferences().getMaxEpisodes()
+                    feed, new FeedItemFilter(FeedItemFilter.UNPLAYED, FeedItemFilter.NEW
+//                            , FeedItemFilter.EXCLUDE_REMOVED
+                    ),
+                    sortOrder, 0, Integer.MAX_VALUE // .getPreferences().getMaxEpisodes()
             );
 
             FeedPreferences.NewEpisodesAction episodeDestination = feed.getPreferences().getNewEpisodesAction();

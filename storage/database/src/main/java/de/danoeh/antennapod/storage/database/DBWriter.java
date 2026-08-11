@@ -985,6 +985,17 @@ public class DBWriter {
         });
     }
 
+    public static Future<?> setFeedItemRemoved(FeedItem feedItem, boolean removed) {
+        return runOnDbThread(() -> {
+            PodDBAdapter adapter = PodDBAdapter.getInstance();
+            adapter.open();
+            adapter.setFeedItemRemoved(feedItem.getId(), removed );
+            adapter.close();
+//            EventBus.getDefault().post(new FeedEvent(FeedEvent.Action.SORT_ORDER_CHANGED, feedItem.getFeedId()));
+        });
+    }
+
+
     /**
      * Reset the statistics in DB
      */

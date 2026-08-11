@@ -75,6 +75,9 @@ public class FeedItemFilterQuery {
         if (filter.showInHistory) {
             statements.add(keyCompletionDate + " > 0 ");
         }
+        if (filter.excludeRemoved) {
+            statements.add(PodDBAdapter.TABLE_NAME_FEED_ITEMS + "." + PodDBAdapter.KEY_REMOVED + " = 0 ");
+        }
         boolean allStatesAllowed = filter.includeSubscribed && filter.includeArchived && filter.includeNotSubscribed;
         if (!allStatesAllowed) {
             List<String> allowedStates = new ArrayList<>();

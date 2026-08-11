@@ -107,12 +107,9 @@ public class FeedUpdateWorker extends Worker {
             if (feed == null) {
                 return Result.success();
             }
-            List<Feed> feeds = List.of(feed);
-            findFeedsToRefresh(feeds, toUpdateExternally, toUpdateFromDB);
-            // Still update feed from RSS, even though we have some in the DB and won't put them in the inbox or queue.
-            if (!ignoreRss && !toUpdateFromDB.isEmpty()) {
-                refreshFeeds(toUpdateFromDB, true);
-            }
+            findFeedsToRefresh(List.of(feed), new ArrayList<>(), toUpdateFromDB);
+            // When user refreshes a specific feed, always update feed from RSS, even though we have "enough" in the DB
+            toUpdateExternally.add(feed);
 
             if (!feed.isLocalFeed()) {
                 allAreLocal = false;
@@ -152,8 +149,8 @@ public class FeedUpdateWorker extends Worker {
                 feedsForRssCheck.add(feed);
 
             } else if (feed.getPreferences().getPlaybackOrder() == FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST) {
-                FeedItemFilter feedItemFilter = new FeedItemFilter(FeedItemFilter.UNPLAYED);
-                feedItemFilter = new FeedItemFilter(feedItemFilter, FeedItemFilter.NEW);
+                // We might already have some old episodes, so we don't need to get more via RSS
+                FeedItemFilter feedItemFilter = new FeedItemFilter(FeedItemFilter.UNPLAYED, FeedItemFilter.NEW, FeedItemFilter.EXCLUDE_REMOVED);
                 int availableEpisodes = DBReader.getFeedItemList(feed, feedItemFilter,
                         SortOrder.PRIORITY_PLAYBACK_DATE, 0, feed.getPreferences().getMaxEpisodes()).size();
 

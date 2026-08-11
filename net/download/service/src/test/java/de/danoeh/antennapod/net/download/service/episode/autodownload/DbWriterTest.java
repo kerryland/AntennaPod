@@ -10,7 +10,9 @@ import androidx.preference.PreferenceManager;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
+import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.model.feed.SortOrder;
+import de.danoeh.antennapod.model.feed.VolumeAdaptionSetting;
 import de.danoeh.antennapod.net.download.serviceinterface.AutoDownloadManager;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterfaceStub;
@@ -31,12 +33,14 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedMedia;
+import de.danoeh.antennapod.storage.database.mapper.FeedItemFilterQuery;
 import de.danoeh.antennapod.storage.preferences.PlaybackPreferences;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 
@@ -863,6 +867,63 @@ public class DbWriterTest {
             assertEquals(expectedId, queue.get(element++).getId());
         }
     }
+
+    @Test
+    public void testSetFeedItemRemoved() throws ExecutionException, InterruptedException {
+        // Generate feed items 1 to 10
+        final int numItems = 10;
+        Feed feed = createTestFeed(numItems);
+        FeedPreferences preferences = new FeedPreferences(0, FeedPreferences.AutoDownloadSetting.DISABLED, FeedPreferences.AutoDeleteAction.ALWAYS, VolumeAdaptionSetting.OFF, FeedPreferences.NewEpisodesAction.ADD_TO_INBOX, "", "");
+        preferences.setPlaybackOrder(FeedPreferences.PlaybackOrderSetting.NEWEST_FIRST);
+        feed.setPreferences(preferences);
+
+        // Make sure we have 10 items in the feed before setting "removed"
+        assertEquals(10, feed.getItems().size());
+
+        FeedItemFilter filter = new FeedItemFilter(FeedItemFilter.EXCLUDE_REMOVED);
+
+        List<FeedItem> loaded = DBReader.getFeedItemList(feed, filter, SortOrder.DATE_NEW_OLD, 0, Integer.MAX_VALUE);
+        assertEquals(10, loaded.size());
+        loaded = DBReader.getFeedItemList(feed, filter, SortOrder.PRIORITY_PLAYBACK_DATE, 0, Integer.MAX_VALUE);
+        assertEquals(10, loaded.size());
+
+        // Remove one item
+        DBWriter.setFeedItemRemoved(feed.getItems().get(0), true).get();
+
+        filter = new FeedItemFilter(FeedItemFilter.DOWNLOADED,
+                FeedItemFilter.INCLUDE_ALL_FEED_STATES,
+                FeedItemFilter.PLAYED,
+                FeedItemFilter.UNPLAYED,
+                FeedItemFilter.NEW
+                );
+
+        System.out.println("Filter A");
+        System.out.println(FeedItemFilterQuery.generateFrom(filter));
+
+        filter = new FeedItemFilter(FeedItemFilter.DOWNLOADED);
+//        filter = new FeedItemFilter(filter, FeedItemFilter.INCLUDE_ALL_FEED_STATES);
+        filter = new FeedItemFilter(filter, FeedItemFilter.EXCLUDE_REMOVED);
+//        filter = new FeedItemFilter(filter, FeedItemFilter.PLAYED); // read = 1
+//        filter = new FeedItemFilter(filter, FeedItemFilter.UNPLAYED); // NOT read = 1
+//        filter = new FeedItemFilter(filter, FeedItemFilter.NEW); // read = -1
+
+        System.out.println("Filter B");
+        System.out.println(FeedItemFilterQuery.generateFrom(filter));
+
+        // Check we now only see 9 items
+        loaded = DBReader.getFeedItemList(feed, filter, SortOrder.DATE_NEW_OLD, 0, Integer.MAX_VALUE);
+        assertEquals(9, loaded.size());
+
+        loaded = DBReader.getFeedItemList(feed, filter, SortOrder.PRIORITY_PLAYBACK_DATE, 0, Integer.MAX_VALUE);
+        assertEquals(9, loaded.size());
+
+
+//        withPodDB(adapter -> {
+//            Cursor c = adapter.getEpisodesCursor(0, Integer.MAX_VALUE, FeedItemFilter.unfiltered(), SortOrder.DATE_OLD_NEW, false);
+//        });
+        DBWriter.setFeedItemRemoved(feed.getItems().get(0), true);
+    }
+
 
     private static Feed createTestFeed(int numItems) {
         Feed feed = new Feed("url", null, "title");

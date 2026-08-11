@@ -26,6 +26,8 @@ public class FeedItemFilter implements Serializable {
     public final boolean includeSubscribed;
     public final boolean includeArchived;
     public final boolean includeNotSubscribed;
+    public final boolean excludeRemoved;
+
     public Long feedId = null;
 
     public static final String PLAYED = "played";
@@ -45,6 +47,7 @@ public class FeedItemFilter implements Serializable {
     public static final String INCLUDE_SUBSCRIBED = "include_subscribed";
     public static final String INCLUDE_ARCHIVED = "include_archived";
     public static final String INCLUDE_NOT_SUBSCRIBED = "include_not_subscribed";
+    public static final String EXCLUDE_REMOVED = "exclude_removed";
     public static final String INCLUDE_ALL_FEED_STATES =
             INCLUDE_SUBSCRIBED + "," + INCLUDE_ARCHIVED + "," + INCLUDE_NOT_SUBSCRIBED;
 
@@ -82,6 +85,7 @@ public class FeedItemFilter implements Serializable {
         includeSubscribed = hasProperty(INCLUDE_SUBSCRIBED);
         includeArchived = hasProperty(INCLUDE_ARCHIVED);
         includeNotSubscribed = hasProperty(INCLUDE_NOT_SUBSCRIBED);
+        excludeRemoved = hasProperty(EXCLUDE_REMOVED);
     }
 
     public FeedItemFilter setFeedId(Long feedId) {

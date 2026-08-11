@@ -57,7 +57,7 @@ public class PodDBAdapter {
 
     private static final String TAG = "PodDBAdapter";
     public static final String DATABASE_NAME = "Antennapod.db";
-    public static final int VERSION = 3120005;
+    public static final int VERSION = 3120006;
 
     /**
      * Maximum number of arguments for IN-operator.
@@ -122,6 +122,7 @@ public class PodDBAdapter {
     public static final String KEY_FEED_PRIORITY = "priority";
     public static final String KEY_PLAYBACK_ORDER = "playback_order";
     public static final String KEY_MAX_EPISODES = "max_episodes";
+    public static final String KEY_REMOVED = "removed";
     public static final String KEY_FEED_SKIP_SILENCE = "feed_skip_silence";
     public static final String KEY_FEED_SKIP_INTRO = "feed_skip_intro";
     public static final String KEY_FEED_SKIP_ENDING = "feed_skip_ending";
@@ -201,7 +202,10 @@ public class PodDBAdapter {
             + KEY_PODCASTINDEX_CHAPTER_URL + " TEXT,"
             + KEY_PODCASTINDEX_TRANSCRIPT_TYPE + " TEXT,"
             + KEY_PODCASTINDEX_TRANSCRIPT_URL + " TEXT,"
-            + KEY_SOCIAL_INTERACT_URL + " TEXT)";
+            + KEY_SOCIAL_INTERACT_URL + " TEXT,"
+            + KEY_FEED_PRIORITY + " INTEGER DEFAULT 5, "
+            + KEY_PLAYBACK_ORDER + " INTEGER DEFAULT 1,"
+            + KEY_REMOVED + " INTEGER DEFAULT 0)";
 
     private static final String CREATE_TABLE_FEED_MEDIA = "CREATE TABLE "
             + TABLE_NAME_FEED_MEDIA + " (" + TABLE_PRIMARY_KEY + KEY_DURATION
@@ -542,6 +546,12 @@ public class PodDBAdapter {
         ContentValues values = new ContentValues();
         values.put(KEY_SORT_ORDER, toCodeString(sortOrder));
         db.update(TABLE_NAME_FEEDS, values, KEY_ID + "=?", new String[]{String.valueOf(feedId)});
+    }
+
+    public void setFeedItemRemoved(long feedItemId, boolean removed) {
+        ContentValues values = new ContentValues();
+        values.put(KEY_REMOVED, removed?  1 : 0);
+        db.update(TABLE_NAME_FEED_ITEMS, values, KEY_ID + "=?", new String[]{String.valueOf(feedItemId)});
     }
 
     /**
@@ -1141,30 +1151,27 @@ public class PodDBAdapter {
             """
             WITH RankedEpisodes AS (
             """ +
-               "SELECT " + KEYS_FEED_ITEM_WITHOUT_DESCRIPTION + ", " + KEYS_FEED_MEDIA +
-                """
-                     ,
-                     feeds.priority,
-                     feeds.max_episodes,
+               "SELECT " + KEYS_FEED_ITEM_WITHOUT_DESCRIPTION + ", " +
+                    KEYS_FEED_MEDIA + "," +
+                    TABLE_NAME_FEEDS + "." + KEY_FEED_PRIORITY +
+            """
                      ROW_NUMBER() OVER (
-                         PARTITION BY FeedItems.feed
-                         ORDER BY CASE WHEN feeds.playback_order = 0 THEN FeedItems.pubDate ELSE -FeedItems.pubDate END ASC
-                     ) AS row_num
-                 FROM FeedItems
-                 INNER JOIN Feeds ON FeedItems.feed = feeds.id
-                 LEFT JOIN FeedMedia ON FeedItems.id=FeedMedia.feeditem
-                 WHERE
-               """ +  FeedItemFilterQuery.generateFrom(filter) +
-           " )" +
+                         PARTITION BY
+            """ + TABLE_NAME_FEED_ITEMS + "." + KEY_FEED +
+            " ORDER BY CASE WHEN " + TABLE_NAME_FEEDS + "." + KEY_FEED_PRIORITY  + " = 0 THEN " +
+                    TABLE_NAME_FEED_ITEMS + "." + KEY_PUBDATE +
+                    " ELSE -" + TABLE_NAME_FEED_ITEMS + "." + KEY_PUBDATE + " END ASC) AS row_num " +
+                 " FROM " + TABLE_NAME_FEED_ITEMS +
+                 " INNER JOIN " + TABLE_NAME_FEEDS + " ON " + TABLE_NAME_FEED_ITEMS + "." + KEY_FEED + " = " + TABLE_NAME_FEEDS + "." + KEY_ID +
+                 " LEFT JOIN " + TABLE_NAME_FEED_MEDIA + " ON " + TABLE_NAME_FEED_ITEMS + "." + KEY_ID + " = " + TABLE_NAME_FEED_MEDIA + "." + KEY_FEEDITEM +
+                 " WHERE " + FeedItemFilterQuery.generateFrom(filter) +
                 """
+                 )
                  SELECT * FROM RankedEpisodes
                 """
-                + (useMaxEpisodes ? " WHERE row_num <= max_episodes ":" ") +
-                """
-                 ORDER BY priority ASC,
-                          feed, row_num ASC
-                 LIMIT
-                 """ + offset + ", " + limit;
+                + (useMaxEpisodes ? " WHERE row_num <= " + KEY_MAX_EPISODES :" ") +
+                " ORDER BY " + KEY_FEED_PRIORITY + " ASC, " + KEY_FEED + ", row_num ASC " +
+                " LIMIT " + offset + ", " + limit;
 
         return db.rawQuery(query, null);
     }

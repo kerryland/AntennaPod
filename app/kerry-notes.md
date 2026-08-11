@@ -81,7 +81,7 @@ MainActivity
 - AllEpisodesFragment
 - CompletedDownloadsFragment
 - PlaybackHistoryFragment
-- EpisodesListFragment -- base class. extended by InboxFragment etc (bu t not QueueFragment)
+- EpisodesListFragment -- base class. extended by InboxFragment etc (but not QueueFragment)
 - FeedItemListFragment -- list episodes in podcast feed
 
 FeedItemMenuHandler
@@ -100,6 +100,10 @@ CompletedDownloadsFragment
 SearchFragment
 
 PlayerWidget extends AppWidgetProvider
+
+# Database
+DBUpgrader -- upgrade database schema. Based on 'oldVersion' and PodDBAdapter.VERSION 
+DBWriter -- write to database
 
 
 ## Tests

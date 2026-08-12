@@ -284,7 +284,9 @@ public class FeedItem implements Serializable {
 
     public void setFeed(Feed feed) {
         this.feed = feed;
-        this.feedId = feed.getId();
+        if (feed != null) {
+            this.feedId = feed.getId();
+        }
     }
 
     public boolean isNew() {

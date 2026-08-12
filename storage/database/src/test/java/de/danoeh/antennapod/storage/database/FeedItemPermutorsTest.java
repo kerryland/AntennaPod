@@ -18,6 +18,7 @@ import de.danoeh.antennapod.storage.preferences.UserPreferences;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Test class for FeedItemPermutors.
@@ -30,8 +31,10 @@ public class FeedItemPermutorsTest {
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();
         UserPreferences.init(context);
         for (SortOrder sortOrder : SortOrder.values()) {
-            assertNotNull("The permutor for SortOrder " + sortOrder + " is unexpectedly null",
-                    FeedItemPermutors.getPermutor(sortOrder));
+            if (!sortOrder.equals(SortOrder.PRIORITY_PLAYBACK_DATE)) {
+                assertNotNull("The permutor for SortOrder " + sortOrder + " is unexpectedly null",
+                        FeedItemPermutors.getPermutor(sortOrder));
+            }
         }
     }
 
@@ -182,6 +185,18 @@ public class FeedItemPermutorsTest {
         assertTrue(checkIdOrder(itemList, 1, 3, 2)); // before sorting
         permutor.reorder(itemList);
         assertTrue(checkIdOrder(itemList, 2, 1, 3)); // after sorting
+    }
+
+    @Test
+    public void testPermutorForRule_PRIORITY_PLAYBACK_DATE_fails() {
+        // This SortOrder cannot be implemented with a permutor
+        // because it works in co-operation with {@code FeedPreferences.getMaxEpisodes}
+        try {
+            Permutor<FeedItem> permutor = FeedItemPermutors.getPermutor(SortOrder.PRIORITY_PLAYBACK_DATE);
+            fail();
+        } catch (IllegalArgumentException e) {
+            // Good
+        }
     }
 
     /**

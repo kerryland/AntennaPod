@@ -16,7 +16,6 @@ import org.greenrobot.eventbus.EventBus;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -84,13 +83,6 @@ public abstract class FeedDatabaseWriter {
             } else {
                 Log.d(TAG, "New feed has a higher page number.");
                 savedFeed.setNextPageLink(newFeed.getNextPageLink());
-            }
-
-            // get the most recent date now, before we start changing the list
-            FeedItem priorMostRecent = savedFeed.getMostRecentItem();
-            Date priorMostRecentDate = new Date();
-            if (priorMostRecent != null) {
-                priorMostRecentDate = priorMostRecent.getPubDate();
             }
 
             // Look for new or updated Items

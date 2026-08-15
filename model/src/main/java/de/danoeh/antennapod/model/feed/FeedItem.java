@@ -46,6 +46,10 @@ public class FeedItem implements Serializable {
     private String podcastIndexTranscriptUrl;
     private String podcastIndexTranscriptType;
     private Transcript transcript;
+    // Item has been manually removed from the inbox.
+    // Such episodes are never automatically returned to the inbox
+    // via DestinationSelector.populateInboxOrQueue
+    private boolean removed;
 
     private int state;
     public static final int NEW = -1; // i.e. in the inbox
@@ -87,7 +91,7 @@ public class FeedItem implements Serializable {
     public FeedItem(long id, String title, String link, Date pubDate, String paymentLink, long feedId,
                     boolean hasChapters, String imageUrl, int state,
                     String itemIdentifier, boolean autoDownloadEnabled, String podcastIndexChapterUrl,
-                    String transcriptType, String transcriptUrl, String socialInteractUrl) {
+                    String transcriptType, String transcriptUrl, String socialInteractUrl, boolean removed) {
         this.id = id;
         this.title = title;
         this.link = link;
@@ -105,6 +109,7 @@ public class FeedItem implements Serializable {
             this.podcastIndexTranscriptUrl = transcriptUrl;
             this.podcastIndexTranscriptType = transcriptType;
         }
+        this.removed = removed;
     }
 
     /**
@@ -484,6 +489,14 @@ public class FeedItem implements Serializable {
 
     public boolean hasTranscript() {
         return (podcastIndexTranscriptUrl != null);
+    }
+
+    public boolean isRemoved() {
+        return removed;
+    }
+
+    public void setRemoved(boolean removed) {
+        this.removed = removed;
     }
 
     @NonNull

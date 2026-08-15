@@ -513,6 +513,7 @@ public class DBWriter {
                 }
                 queue.remove(position);
                 item.removeTag(FeedItem.TAG_QUEUE);
+                item.setRemoved(true);
                 events.add(QueueEvent.removed(item));
                 updatedItems.add(item);
                 queueModified = true;
@@ -521,6 +522,7 @@ public class DBWriter {
             }
         }
         if (queueModified) {
+            adapter.storeFeedItemlist(updatedItems);
             adapter.setQueue(queue);
             for (QueueEvent event : events) {
                 EventBus.getDefault().post(event);
@@ -691,6 +693,7 @@ public class DBWriter {
             }
             if (item.getPlayState() == FeedItem.NEW) {
                 wasInInbox = true;
+                item.setRemoved(true);
             }
             item.setPlayState(played);
         }
@@ -984,17 +987,6 @@ public class DBWriter {
             EventBus.getDefault().post(new FeedEvent(FeedEvent.Action.SORT_ORDER_CHANGED, feedId));
         });
     }
-
-    public static Future<?> setFeedItemRemoved(FeedItem feedItem, boolean removed) {
-        return runOnDbThread(() -> {
-            PodDBAdapter adapter = PodDBAdapter.getInstance();
-            adapter.open();
-            adapter.setFeedItemRemoved(feedItem.getId(), removed );
-            adapter.close();
-//            EventBus.getDefault().post(new FeedEvent(FeedEvent.Action.SORT_ORDER_CHANGED, feedItem.getFeedId()));
-        });
-    }
-
 
     /**
      * Reset the statistics in DB

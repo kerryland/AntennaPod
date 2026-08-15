@@ -44,7 +44,7 @@ public class DestinationSelector {
 
             List<FeedItem> feedItems = DBReader.getFeedItemList(
                     feed, new FeedItemFilter(FeedItemFilter.UNPLAYED, FeedItemFilter.NEW
-//                            , FeedItemFilter.EXCLUDE_REMOVED
+                            , FeedItemFilter.EXCLUDE_REMOVED
                     ),
                     sortOrder, 0, Integer.MAX_VALUE // .getPreferences().getMaxEpisodes()
             );

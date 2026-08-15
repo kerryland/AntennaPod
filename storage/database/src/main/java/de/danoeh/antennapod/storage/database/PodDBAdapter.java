@@ -281,6 +281,7 @@ public class PodDBAdapter {
     public static final String SELECT_KEY_FEED_ID = "feed_id";
     public static final String SELECT_KEY_IS_FAVORITE = "is_favorite";
     public static final String SELECT_KEY_IS_IN_QUEUE = "is_in_queue";
+    public static final String SELECT_KEY_REMOVED = "removed";
 
     private static final String KEYS_FEED_ITEM_WITHOUT_DESCRIPTION =
             TABLE_NAME_FEED_ITEMS + "." + KEY_ID + " AS " + SELECT_KEY_ITEM_ID + ", "
@@ -299,6 +300,7 @@ public class PodDBAdapter {
             + TABLE_NAME_FEED_ITEMS + "." + KEY_SOCIAL_INTERACT_URL + ", "
             + TABLE_NAME_FEED_ITEMS + "." + KEY_PODCASTINDEX_TRANSCRIPT_TYPE + ", "
             + TABLE_NAME_FEED_ITEMS + "." + KEY_PODCASTINDEX_TRANSCRIPT_URL + ", "
+            + TABLE_NAME_FEED_ITEMS + "." + KEY_REMOVED + ", "
             + TABLE_NAME_FEED_ITEMS + "." + KEY_ID + " IN (SELECT " + TABLE_NAME_FAVORITES + "." + KEY_FEEDITEM
             + " FROM " + TABLE_NAME_FAVORITES + ") AS " + SELECT_KEY_IS_FAVORITE + ", "
             + TABLE_NAME_FEED_ITEMS + "." + KEY_ID + " IN (SELECT " + TABLE_NAME_QUEUE + "." + KEY_FEEDITEM
@@ -548,12 +550,6 @@ public class PodDBAdapter {
         db.update(TABLE_NAME_FEEDS, values, KEY_ID + "=?", new String[]{String.valueOf(feedId)});
     }
 
-    public void setFeedItemRemoved(long feedItemId, boolean removed) {
-        ContentValues values = new ContentValues();
-        values.put(KEY_REMOVED, removed?  1 : 0);
-        db.update(TABLE_NAME_FEED_ITEMS, values, KEY_ID + "=?", new String[]{String.valueOf(feedItemId)});
-    }
-
     /**
      * Inserts or updates a media entry
      * Use carefully to avoid overwriting properties with stale data.
@@ -759,6 +755,7 @@ public class PodDBAdapter {
             values.put(KEY_PODCASTINDEX_TRANSCRIPT_TYPE, type);
             values.put(KEY_PODCASTINDEX_TRANSCRIPT_URL, url);
         }
+        values.put(KEY_REMOVED, item.isRemoved() ? 1 : 0);
 
         if (item.getId() == 0) {
             item.setId(db.insert(TABLE_NAME_FEED_ITEMS, null, values));
@@ -777,7 +774,7 @@ public class PodDBAdapter {
     }
 
     /**
-     * Sets the 'read' attribute of the item.
+     * Sets the 'read' and 'removed' attributes of the item.
      *
      * @param played             New read status of items. See @FeedItem
      * @param resetMediaPosition Should the postition of the media item be reset?
@@ -790,6 +787,7 @@ public class PodDBAdapter {
             for (FeedItem item : items) {
                 values.clear();
                 values.put(KEY_READ, played);
+                values.put(KEY_REMOVED, item.isRemoved()?1:0);
                 db.update(TABLE_NAME_FEED_ITEMS, values, KEY_ID + "=?", new String[]{String.valueOf(item.getId())});
 
                 if (resetMediaPosition && item.hasMedia()) {
@@ -935,6 +933,12 @@ public class PodDBAdapter {
     }
 
     public void clearQueue() {
+        // mark queue feeditems as `removed`
+        db.execSQL(
+                "UPDATE " + TABLE_NAME_FEED_ITEMS + " SET " + KEY_REMOVED + " = 1 " +
+                        " WHERE " + KEY_ID + " IN (SELECT " + TABLE_NAME_QUEUE + "." + KEY_FEEDITEM +
+                        " FROM " + TABLE_NAME_QUEUE + ")"
+        );
         db.delete(TABLE_NAME_QUEUE, null, null);
     }
 
@@ -1040,13 +1044,6 @@ public class PodDBAdapter {
         if (sortOrder == SortOrder.GLOBAL_DEFAULT) {
             sortOrder = UserPreferences.getPrefGlobalSortedOrder();
         }
-        if (sortOrder == SortOrder.PRIORITY_PLAYBACK_DATE) {
-            if (feed.getPreferences().getPlaybackOrder() == FeedPreferences.PlaybackOrderSetting.NEWEST_FIRST) {
-                sortOrder = SortOrder.DATE_NEW_OLD;
-            } else {
-                sortOrder = SortOrder.DATE_OLD_NEW;
-            }
-        }
         filter = new FeedItemFilter(filter, FeedItemFilter.INCLUDE_ALL_FEED_STATES).setFeedId(feed.getId());
         return getEpisodesCursor(offset, limit, filter, sortOrder, false);
     }
@@ -1129,12 +1126,11 @@ public class PodDBAdapter {
         return db.rawQuery(query, null);
     }
 
-    public void setFeedItems(int oldState, int newState) {
-        setFeedItems(oldState, newState, 0);
-    }
-
     public void setFeedItems(int oldState, int newState, long feedId) {
         String sql = "UPDATE " + TABLE_NAME_FEED_ITEMS + " SET " + KEY_READ + "=" + newState;
+        if (oldState == FeedItem.NEW) {
+            sql += ", " + KEY_REMOVED + " = 1";
+        }
         if (feedId > 0) {
             sql += " WHERE " + KEY_FEED + "=" + feedId;
         }
@@ -1155,7 +1151,7 @@ public class PodDBAdapter {
                     KEYS_FEED_MEDIA + "," +
                     TABLE_NAME_FEEDS + "." + KEY_FEED_PRIORITY +
             """
-                     ROW_NUMBER() OVER (
+                    , ROW_NUMBER() OVER (
                          PARTITION BY
             """ + TABLE_NAME_FEED_ITEMS + "." + KEY_FEED +
             " ORDER BY CASE WHEN " + TABLE_NAME_FEEDS + "." + KEY_FEED_PRIORITY  + " = 0 THEN " +

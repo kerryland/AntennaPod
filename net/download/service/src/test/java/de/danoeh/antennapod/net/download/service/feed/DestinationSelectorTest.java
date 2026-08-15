@@ -78,10 +78,12 @@ public class DestinationSelectorTest {
 
     @Test
     public void testQueuePopulated_Newest_First_Max_3_Episodes_Into_Inbox() {
-        UserPreferences.setEnqueueLocation(UserPreferences.EnqueueLocation.PRIORITY);
 
         List<FeedItem> feedItems = new ArrayList<>();
         List<FeedItem> queueItems = new ArrayList<>();
+
+        // Given some episodes, and a user who wants PRIORITY order
+        UserPreferences.setEnqueueLocation(UserPreferences.EnqueueLocation.PRIORITY);
 
         feedItems.add(makeTestFeedItem(17, FeedItemLocation.QUEUE_UNPLAYED, queueItems));
         feedItems.add(makeTestFeedItem(18, FeedItemLocation.UNPLAYED, queueItems));
@@ -94,19 +96,17 @@ public class DestinationSelectorTest {
 
         FeedDatabaseWriter.updateFeed(context, feed, false);
 
-        //----------------------------------------------------------------------
+        // When we update the inbox
         DestinationSelector.populateInboxOrQueue(context, Collections.singletonList(feed));
-        //----------------------------------------------------------------------
-
         DBWriter.waitForDatabase(); // Make sure the database is updated
 
-        // Check inbox
+        // Then check inbox
         List<FeedItem> inbox = DBReader.getFeedItemList(feed, new FeedItemFilter(FeedItemFilter.NEW), SortOrder.DATE_NEW_OLD, 0, Integer.MAX_VALUE);
         assertEquals(2, inbox.size());
         assertEquals("EPISODE 20", inbox.get(0).getTitle());
         assertEquals("EPISODE 18", inbox.get(1).getTitle());
 
-        // Check queue
+        // and check the queue
         List<FeedItem> queue = DBReader.getQueue();
         assertEquals(1, queue.size());
         assertEquals("EPISODE 17", queue.get(0).getTitle());
@@ -219,6 +219,78 @@ public class DestinationSelectorTest {
         assertEquals("EPISODE 21", queue.get(2).getTitle());
     }
 
+    @Test
+    // Make sure the feed items that are 'removed' via 'remove from inbox' are not added back into the inbox
+    public void testInboxPopulated_Oldest_First_Ignores_Unplayed_Removed() {
+        List<FeedItem> feedItems = new ArrayList<>();
+        List<FeedItem> queueItems = new ArrayList<>();
+
+        // Given we have items (20 and 22) that were explicitly removed from the inbox
+        feedItems.add(makeTestFeedItem(17, FeedItemLocation.PLAYED, queueItems));
+        feedItems.add(makeTestFeedItem(18, FeedItemLocation.UNPLAYED, queueItems));
+        feedItems.add(makeTestFeedItem(19, FeedItemLocation.PLAYED, queueItems));
+        FeedItem episode20 = makeTestFeedItem(20, FeedItemLocation.UNPLAYED, queueItems);
+        episode20.setRemoved(true);
+        feedItems.add(episode20);
+        feedItems.add(makeTestFeedItem(21, FeedItemLocation.UNPLAYED, queueItems));
+        FeedItem episode22 = makeTestFeedItem(22, FeedItemLocation.UNPLAYED, queueItems);
+        episode22.setRemoved(true);
+        feedItems.add(episode22);
+        feedItems.add(makeTestFeedItem(23, FeedItemLocation.UNPLAYED, queueItems));
+
+        Feed feed = prepareTestData(FeedPreferences.NewEpisodesAction.ADD_TO_INBOX,
+                FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST,
+                2, feedItems, queueItems);
+
+        // When we refresh the feed
+        FeedDatabaseWriter.updateFeed(context, feed, false);
+        DestinationSelector.populateInboxOrQueue(context, Collections.singletonList(feed));
+
+        DBWriter.waitForDatabase(); // Make sure the database is updated
+
+        // Then we should see episode 20 and 21 have been ignored, and only 21 added to the inbox
+        List<FeedItem> inbox = DBReader.getFeedItemList(feed, new FeedItemFilter(FeedItemFilter.NEW), SortOrder.DATE_OLD_NEW, 0, Integer.MAX_VALUE);
+        assertEquals(2, inbox.size());
+        assertEquals("EPISODE 18", inbox.get(0).getTitle());
+        assertEquals("EPISODE 21", inbox.get(1).getTitle());
+    }
+
+    @Test
+    // Make sure the feed items that are 'removed' via 'remove from inbox' are not added back into the inbox
+    public void testInboxPopulated_Newest_First_Ignores_Unplayed_Removed() {
+        List<FeedItem> feedItems = new ArrayList<>();
+        List<FeedItem> queueItems = new ArrayList<>();
+
+        // Given we have items (20 and 22) that were explicitly removed from the inbox
+        feedItems.add(makeTestFeedItem(17, FeedItemLocation.PLAYED, queueItems));
+        feedItems.add(makeTestFeedItem(18, FeedItemLocation.UNPLAYED, queueItems));
+        feedItems.add(makeTestFeedItem(19, FeedItemLocation.PLAYED, queueItems));
+        FeedItem episode20 = makeTestFeedItem(20, FeedItemLocation.UNPLAYED, queueItems);
+        episode20.setRemoved(true);
+        feedItems.add(episode20);
+        feedItems.add(makeTestFeedItem(21, FeedItemLocation.UNPLAYED, queueItems));
+        FeedItem episode22 = makeTestFeedItem(22, FeedItemLocation.UNPLAYED, queueItems);
+        episode22.setRemoved(true);
+        feedItems.add(episode22);
+        feedItems.add(makeTestFeedItem(23, FeedItemLocation.UNPLAYED, queueItems));
+
+
+        Feed feed = prepareTestData(FeedPreferences.NewEpisodesAction.ADD_TO_INBOX,
+                FeedPreferences.PlaybackOrderSetting.NEWEST_FIRST,
+                2, feedItems, queueItems);
+
+        // When we refresh the feed
+        FeedDatabaseWriter.updateFeed(context, feed, false);
+        DestinationSelector.populateInboxOrQueue(context, Collections.singletonList(feed));
+
+        DBWriter.waitForDatabase(); // Make sure the database is updated
+
+        // Then we should see episode 20 and 21 have been ignored, and only 21 added to the inbox
+        List<FeedItem> inbox = DBReader.getFeedItemList(feed, new FeedItemFilter(FeedItemFilter.NEW), SortOrder.DATE_OLD_NEW, 0, Integer.MAX_VALUE);
+        assertEquals(2, inbox.size());
+        assertEquals("EPISODE 21", inbox.get(0).getTitle());
+        assertEquals("EPISODE 23", inbox.get(1).getTitle());
+    }
 
     private Feed prepareTestData(FeedPreferences.NewEpisodesAction newEpisodesAction,
                                  FeedPreferences.PlaybackOrderSetting playbackOrderSetting,

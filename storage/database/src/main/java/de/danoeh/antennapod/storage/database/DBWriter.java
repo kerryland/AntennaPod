@@ -447,12 +447,8 @@ public class DBWriter {
             // do not shuffle the list on every change
             return;
         }
-        if (sortOrder == PRIORITY_PLAYBACK_DATE) {
-            queue = ItemEnqueuePositionCalculator.sortFeedItemsByPriority(queue);
-        } else {
-            Permutor<FeedItem> permutor = FeedItemPermutors.getPermutor(sortOrder);
-            permutor.reorder(queue);
-        }
+        Permutor<FeedItem> permutor = FeedItemPermutors.getPermutor(sortOrder);
+        permutor.reorder(queue);
 
         // Replace ADDED events by a single SORTED event
         events.clear();
@@ -941,12 +937,8 @@ public class DBWriter {
             adapter.open();
             List<FeedItem> queue = DBReader.getQueue();
 
-            if (sortOrder == PRIORITY_PLAYBACK_DATE) {
-                queue = ItemEnqueuePositionCalculator.sortFeedItemsByPriority(queue);
-            } else {
-                final Permutor<FeedItem> permutor = FeedItemPermutors.getPermutor(sortOrder);
-                permutor.reorder(queue);
-            }
+            final Permutor<FeedItem> permutor = FeedItemPermutors.getPermutor(sortOrder);
+            permutor.reorder(queue);
 
             adapter.setQueue(queue);
             if (broadcastUpdate) {

@@ -2,6 +2,8 @@ package de.danoeh.antennapod.storage.database;
 
 import android.content.Context;
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.model.feed.SortOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -14,6 +16,7 @@ import java.util.List;
 import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedMedia;
+import de.danoeh.antennapod.model.feed.VolumeAdaptionSetting;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 
 import static org.junit.Assert.assertNotNull;
@@ -187,16 +190,29 @@ public class FeedItemPermutorsTest {
         assertTrue(checkIdOrder(itemList, 2, 1, 3)); // after sorting
     }
 
+    private void setPriority(FeedItem feedItem, int priority) {
+        FeedPreferences preferences = new FeedPreferences(feedItem.getFeedId(), FeedPreferences.AutoDownloadSetting.DISABLED, FeedPreferences.AutoDeleteAction.ALWAYS, VolumeAdaptionSetting.OFF, FeedPreferences.NewEpisodesAction.ADD_TO_INBOX, "", "");
+        preferences.setPlaybackOrder(FeedPreferences.PlaybackOrderSetting.NEWEST_FIRST);
+        preferences.setPriority(priority);
+        feedItem.getFeed().setPreferences(preferences);
+    }
+
     @Test
-    public void testPermutorForRule_PRIORITY_PLAYBACK_DATE_fails() {
-        // This SortOrder cannot be implemented with a permutor
-        // because it works in co-operation with {@code FeedPreferences.getMaxEpisodes}
-        try {
-            Permutor<FeedItem> permutor = FeedItemPermutors.getPermutor(SortOrder.PRIORITY_PLAYBACK_DATE);
-            fail();
-        } catch (IllegalArgumentException e) {
-            // Good
-        }
+    public void testPermutorForRule_PRIORITY_PLAYBACK_DATE() {
+        Permutor<FeedItem> permutor = FeedItemPermutors.getPermutor(SortOrder.PRIORITY_PLAYBACK_DATE);
+
+        List<FeedItem> itemList = getTestList();
+
+        setPriority(itemList.get(0), 30);
+        setPriority(itemList.get(1), 10);
+        setPriority(itemList.get(2), 20);
+
+        assertTrue(checkIdOrder(itemList, 1, 3, 2)); // before sorting
+
+        // when we reorder it
+        permutor.reorder(itemList);
+
+        assertTrue(checkIdOrder(itemList, 3, 2, 1)); // after sorting
     }
 
     /**

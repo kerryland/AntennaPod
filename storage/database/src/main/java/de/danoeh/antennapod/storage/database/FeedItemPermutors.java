@@ -14,6 +14,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import de.danoeh.antennapod.model.feed.FeedItem;
+import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.model.feed.SortOrder;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 
@@ -88,7 +89,26 @@ public class FeedItemPermutors {
                         .compareTo(f1.getMedia().getLastPlayedTimeHistory());
                 break;
             case PRIORITY_PLAYBACK_DATE:
-                throw new IllegalArgumentException("Use ItemEnqueuePositionCalculator.sortFeedItemsByPriority");
+                comparator = Comparator
+                        .comparingInt((FeedItem item) -> item.getFeed().getPreferences().getPriority())
+                        .thenComparing(
+                                item -> item.getFeed().getTitle(),
+                                Comparator.nullsLast(Comparator.naturalOrder())
+                        )
+                        .thenComparingLong(item -> item.getFeed().getId())
+                        .thenComparing((o1, o2) -> {
+                            if (o1.getPubDate() == null || o2.getPubDate() == null) {
+                                return 0;
+                            }
+
+                            if (o1.getFeed().getPreferences().getPlaybackOrder() ==
+                                    FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST) {
+                                return o1.getPubDate().compareTo(o2.getPubDate());
+                            } else {
+                                return o2.getPubDate().compareTo(o1.getPubDate());
+                            }
+                        });
+                break;
             default:
                 throw new IllegalArgumentException("Permutor not implemented");
         }

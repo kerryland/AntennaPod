@@ -4,11 +4,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.model.feed.FeedItem;
@@ -28,36 +26,6 @@ public class ItemEnqueuePositionCalculator {
 
     public ItemEnqueuePositionCalculator(@NonNull EnqueueLocation enqueueLocation) {
         this.enqueueLocation = enqueueLocation;
-    }
-
-    public static List<FeedItem> sortFeedItemsByPriority(List<FeedItem> input) {
-        if (input == null || input.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        Comparator<FeedItem> feedItemComparator = Comparator
-                .comparingInt((FeedItem item) -> item.getFeed().getPreferences().getPriority())
-                .thenComparing(
-                        item -> item.getFeed().getTitle(),
-                        Comparator.nullsLast(Comparator.naturalOrder())
-                )
-                .thenComparingLong(item -> item.getFeed().getId())
-                .thenComparing((o1, o2) -> {
-                    if (o1.getPubDate() == null || o2.getPubDate() == null) {
-                        return 0;
-                    }
-
-                   if (o1.getFeed().getPreferences().getPlaybackOrder() ==
-                           FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST) {
-                        return o1.getPubDate().compareTo(o2.getPubDate());
-                    } else {
-                        return o2.getPubDate().compareTo(o1.getPubDate());
-                    }
-                });
-
-        return input.stream()
-                .sorted(feedItemComparator)
-                .collect(Collectors.toList());
     }
 
     /**

@@ -20,7 +20,9 @@ PlaybackServiceStarter
 PlaybackStatus
 
 ## Feed Updates
-FeedUpdateWorker.doWork and DestinationSelector.populateInboxOrQueue are good places to start looking
+FeedUpdateWorker
+    FeedUpdateManagerImpl.runOnce implicitly calls FeedUpdateWorker.doWork and 
+    DestinationSelector.populateInboxOrQueue are good places to start looking
 
 ```
 OpmlImportActivity.doImport
@@ -84,7 +86,10 @@ MainActivity
 - EpisodesListFragment -- base class. extended by InboxFragment etc (but not QueueFragment)
 - FeedItemListFragment -- list episodes in podcast feed
 
+### Menus
 FeedItemMenuHandler
+EpisodeMultiSelectActionHandler
+
 
 HomeFragment loads:
 - QueueSection

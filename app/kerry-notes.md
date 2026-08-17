@@ -23,6 +23,7 @@ PlaybackStatus
 FeedUpdateWorker
     FeedUpdateManagerImpl.runOnce implicitly calls FeedUpdateWorker.doWork and 
     DestinationSelector.populateInboxOrQueue are good places to start looking
+    DestinationSelectorTest
 
 ```
 OpmlImportActivity.doImport
@@ -48,14 +49,7 @@ SyncService.syncSubscriptions
 
 ## Queue updates
 
-When something is removed from the queue we need to repopulate it to maintain maxEpisodes (ideally). Could just wait for refresh
-
 See `DBWriter.removeQueueItemSynchronous`
-
-## Inbox Updates
-
-When something is removed from the queue we need to repopulate it to maintain maxEpisodes (ideally). Could just wait for refresh
-
 
 ## Downloads
 
@@ -107,8 +101,43 @@ SearchFragment
 PlayerWidget extends AppWidgetProvider
 
 # Database
+DBPodAdapter -- create database
 DBUpgrader -- upgrade database schema. Based on 'oldVersion' and PodDBAdapter.VERSION 
 DBWriter -- write to database
+
+# Sorting
+What controls the order we see things in AntennaPod?
+## On Screen Sorting
+"Episode Lists" (Inbox etc, but not Queue) are sorted based on the following:
+
+| Location                                | Setting                                                  | Meaning                                            |
+|-----------------------------------------|----------------------------------------------------------|----------------------------------------------------|
+| Global. Episode lists                   | Default sort order                                       | Sort order for display when nothing else specified |
+| Each 'List' screen menu, except 'Queue' | 'Sort' menu item                                         | Specific sort order for list                       |
+
+Available Global Sort Orders:
+- Episode title
+- Duration
+- Date
+- Priority. See below
+
+## Download/Inbox addition order
+Episodes are added to the inbox (or automatically downloaded) based
+on the podcast-specific settings:
+
+| Setting                | Values                     | Meaning                              |
+|------------------------|----------------------------|--------------------------------------|
+| Priority               | 1 (high) to 5 (low)        | How important this podcast is to you |
+| Episode Download Order | Newest First, Oldest First | Do you want old or new episodes?     |
+
+## Queue Order
+Queue order is determined by the order in which items are added to the queue .
+Items added automatically use the default "Enqueue Location":
+
+_Global Setting. Playback. Queue. Enqueue Location_
+- Back, Front, After current episode, Random, Priority
+
+The Inbox menu also allows adhoc selection of each of these options
 
 
 ## Tests

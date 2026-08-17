@@ -137,6 +137,7 @@ public class FeedPreferences implements Serializable {
     private VolumeAdaptionSetting volumeAdaptionSetting;
     private NewEpisodesAction newEpisodesAction;
     private int priority;
+    // The order in which we download and play episodes
     private PlaybackOrderSetting playbackOrder;
     private int maxEpisodes;
     private String username;

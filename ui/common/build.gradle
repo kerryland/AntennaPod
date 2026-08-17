@@ -24,4 +24,5 @@ dependencies {
     implementation libs.commons.io
 
     testImplementation libs.junit
+    testImplementation libs.robolectric
 }

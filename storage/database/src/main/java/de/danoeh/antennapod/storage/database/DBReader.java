@@ -333,10 +333,12 @@ public final class DBReader {
     }
 
     /**
-     * Loads a specific Feed from the database.
+     * Loads a specific Feed and FeedItems from the database.
      *
      * @param feedId The ID of the Feed
      * @param filtered <code>true</code> if only the visible items should be loaded according to the feed filter.
+     * @param offset The first feeditem that should be loaded
+     * @param limit The maximum number of feedItems to load
      * @return The Feed or null if the Feed could not be found. The Feeds FeedItems will also be loaded from the
      *         database and the items-attribute will be set correctly.
      */
@@ -420,6 +422,9 @@ public final class DBReader {
         }
     }
 
+    /**
+     * Get feeditems that have recently been partially played
+     */
     @NonNull
     public static synchronized List<FeedItem> getPausedQueue(int limit) {
         PodDBAdapter adapter = PodDBAdapter.getInstance();

@@ -110,18 +110,18 @@ What controls the order we see things in AntennaPod?
 ## On Screen Sorting
 "Episode Lists" (Inbox etc, but not Queue) are sorted based on the following:
 
-| Location                                | Setting                                                  | Meaning                                            |
-|-----------------------------------------|----------------------------------------------------------|----------------------------------------------------|
-| Global. Episode lists                   | Default sort order                                       | Sort order for display when nothing else specified |
-| Each 'List' screen menu, except 'Queue' | 'Sort' menu item                                         | Specific sort order for list                       |
+| Location                                | Setting                                                         | Meaning                                            |
+|-----------------------------------------|-----------------------------------------------------------------|----------------------------------------------------|
+| Global. Episode lists                   | Default sort order (UserPreferences.getPrefGlobalSortedOrder()) | Sort order for display when nothing else specified |
+| Each 'List' screen menu, except 'Queue' | 'Sort' menu item  (Feed.getSortOrder)                           | Specific sort order for list                       |
 
 Available Global Sort Orders:
-- Episode title
-- Duration
-- Date
-- Priority. See below
+- Episode title (asc + desc)
+- Duration (asc + desc)
+- Date (asc + desc)
+- Priority (asc) and Date (asc or desc depending on "Episode Download Order"). See below
 
-## Download/Inbox addition order
+## Download/Inbox addition order (Priority)
 Episodes are added to the inbox (or automatically downloaded) based
 on the podcast-specific settings:
 

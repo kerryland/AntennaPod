@@ -59,12 +59,12 @@ public class DestinationSelector {
 
             for (FeedItem feedItem : feedItems) {
                 if (feedItem.isTagged(FeedItem.TAG_QUEUE_PERMANENT)) {
-                    addCount++;
+                    maxEpisodes--;
                 }
             }
 
             for (FeedItem feedItem : feedItems) {
-                if (feedItem.isPlayed()) { // should never happen
+                if (feedItem.isTagged(FeedItem.TAG_QUEUE_PERMANENT)) {
                     continue;
                 }
 

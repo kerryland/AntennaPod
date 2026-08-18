@@ -261,6 +261,15 @@ public class DestinationSelectorTest {
         assertEquals("EPISODE 19", queue.get(1).getTitle());
         assertEquals("EPISODE 20", queue.get(2).getTitle());
 
+        // Now run it again to make sure nothing changes
+        DestinationSelector.populateInboxOrQueue(context, Collections.singletonList(feed));
+        DBWriter.waitForDatabase(); // Make sure the database is updated
+
+        inbox = DBReader.getFeedItemList(feed, new FeedItemFilter(FeedItemFilter.NEW), SortOrder.DATE_OLD_NEW, 0, Integer.MAX_VALUE);
+        assertEquals(0, inbox.size());
+        queue = DBReader.getQueue();
+        assertEquals(3, queue.size());
+
     }
 
     private FeedItem getFeedItem(List<FeedItem> feedItems, int day) {

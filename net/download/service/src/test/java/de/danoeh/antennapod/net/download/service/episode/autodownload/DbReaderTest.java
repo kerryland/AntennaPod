@@ -166,6 +166,29 @@ public class DbReaderTest {
             }
         }
 
+        @Test
+        public void testGetEpisodesByPriority() {
+            final int numFeeds = 1;
+            final int numItems = 10;
+
+            // given a feed with 10 episodes
+            Feed feed = saveFeedlist(numFeeds, numItems, false).get(0);
+            List<FeedItem> items = feed.getItems();
+            feed.setItems(null);
+            Collections.sort(items, (o1, o2) ->
+                    Long.compare(o2.getPubDate().getTime(), o1.getPubDate().getTime()));
+
+            // when we get the episodes
+            List<FeedItem> savedItems = DBReader.getEpisodes(0, Integer.MAX_VALUE,
+                    FeedItemFilter.unfiltered(), SortOrder.PRIORITY_PLAYBACK_DATE);
+            assertNotNull(savedItems);
+
+            assertEquals(10, savedItems.size());
+            for (int i = 0; i < savedItems.size(); i++) {
+                assertEquals(savedItems.get(i).getId(), items.get(i).getId());
+            }
+        }
+
         @SuppressWarnings("SameParameterValue")
         private List<FeedItem> saveQueue(int numItems) {
             if (numItems <= 0) {

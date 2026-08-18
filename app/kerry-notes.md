@@ -97,6 +97,7 @@ HomeSection
 ItemPagerFragment
 CompletedDownloadsFragment
 SearchFragment
+SubscriptionFragment
 
 PlayerWidget extends AppWidgetProvider
 

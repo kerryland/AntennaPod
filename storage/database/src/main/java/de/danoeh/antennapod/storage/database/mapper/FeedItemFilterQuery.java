@@ -1,5 +1,7 @@
 package de.danoeh.antennapod.storage.database.mapper;
 
+import static de.danoeh.antennapod.storage.database.PodDBAdapter.KEY_PERMANENT;
+
 import android.text.TextUtils;
 import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
@@ -53,6 +55,10 @@ public class FeedItemFilterQuery {
             statements.add(keyItemId + " IN (SELECT " + keyFeedItem + " FROM " + tableQueue + ") ");
         } else if (filter.showNotQueued) {
             statements.add(keyItemId + " NOT IN (SELECT " + keyFeedItem + " FROM " + tableQueue + ") ");
+        }
+        if (filter.excludePermanent) {
+            statements.add(keyItemId + " NOT IN (SELECT " + keyFeedItem + " FROM " + tableQueue +
+                    " WHERE " + KEY_PERMANENT + " = 1) ");
         }
         String localFeedCondition = keyFeedId + " IN (SELECT " + PodDBAdapter.KEY_ID
                 + " FROM " + PodDBAdapter.TABLE_NAME_FEEDS

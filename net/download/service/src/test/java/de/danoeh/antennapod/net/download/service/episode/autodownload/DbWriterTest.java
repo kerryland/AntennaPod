@@ -34,14 +34,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedMedia;
-import de.danoeh.antennapod.storage.database.mapper.FeedItemFilterQuery;
 import de.danoeh.antennapod.storage.preferences.PlaybackPreferences;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 
@@ -711,7 +709,6 @@ public class DbWriterTest {
         DBWriter.removeQueueItem(context, false,
                 itemIds[2], -1L).get(TIMEOUT, TimeUnit.SECONDS);
         assertQueueByItemIds("Boundary case - invalid itemIds ignored"); // the queue is empty
-
     }
 
     @Test
@@ -870,16 +867,16 @@ public class DbWriterTest {
     }
 
     @Test
-    public void testSetFeedItemRemoved() throws ExecutionException, InterruptedException {
+    public void testSetFeedItemRemoved() {
         Feed feed = createTenFeedItems();
 
         FeedItem feedItem = feed.getItems().get(0);
 
-        // Remove one item
+        // when we remove one item
         feedItem.setRemoved(true);
         withPodDB(adapter -> adapter.setSingleFeedItem(feedItem));
 
-        // Check we now only see 9 items when we use EXCLUDE_REMOVED filter
+        // then we now only see 9 items when we use EXCLUDE_REMOVED filter
         FeedItemFilter filter = new FeedItemFilter(FeedItemFilter.EXCLUDE_REMOVED);
         List<FeedItem> loaded = DBReader.getFeedItemList(feed, filter, SortOrder.DATE_NEW_OLD, 0, Integer.MAX_VALUE);
         assertEquals(9, loaded.size());
@@ -890,7 +887,7 @@ public class DbWriterTest {
 
 
     // This test is redundant, because we NEVER setRemoved(false)
-    public void testSetFeedItemUnremoved() throws ExecutionException, InterruptedException {
+    public void testSetFeedItemUnremoved() {
         // First remove one item
         Feed feed = createTenFeedItems();
         FeedItem feedItem = feed.getItems().get(0);
@@ -909,9 +906,38 @@ public class DbWriterTest {
 
         loaded = DBReader.getFeedItemList(feed, filter, SortOrder.PRIORITY_PLAYBACK_DATE, 0, Integer.MAX_VALUE);
         assertEquals(10, loaded.size());
-
     }
 
+    @Test
+    public void testAddQueueItemPermanent() {
+        // given we have 5 items in the queue
+        final int numItems = 5;
+        final int numInQueue = numItems - 1; // the last one not in queue for boundary condition
+        Feed feed = createTestFeed(numItems);
+        assertEquals(5, feed.getItems().size());
+
+        // one of which is permanent
+        feed.getItems().get(0).addTag(FeedItem.TAG_QUEUE_PERMANENT);
+
+        // When we add them all to the queue
+        for (FeedItem item : feed.getItems()) {
+            DBWriter.addQueueItem(context, item);
+        }
+        DBWriter.waitForDatabase();
+
+        // then a search with EXCLUDE_REMOVED shouldn't include the permanent item
+        FeedItemFilter filter = new FeedItemFilter(FeedItemFilter.EXCLUDE_PERMANENT);
+        List<FeedItem> loaded = DBReader.getFeedItemList(feed, filter, SortOrder.DATE_NEW_OLD,0, Integer.MAX_VALUE);
+        assertEquals(4, loaded.size());
+
+        // SortOrder.PRIORITY_PLAYBACK_DATE uses a different search mechanism
+        loaded = DBReader.getFeedItemList(feed, filter, SortOrder.PRIORITY_PLAYBACK_DATE,0, Integer.MAX_VALUE);
+        assertEquals(4, loaded.size());
+
+        // and a search without EXCLUDE_REMOVED should include the permanent item
+        loaded = DBReader.getFeedItemList(feed, FeedItemFilter.unfiltered(), SortOrder.DATE_NEW_OLD,0, Integer.MAX_VALUE);
+        assertEquals(5, loaded.size());
+    }
 
     @NonNull
     private static Feed createTenFeedItems() {

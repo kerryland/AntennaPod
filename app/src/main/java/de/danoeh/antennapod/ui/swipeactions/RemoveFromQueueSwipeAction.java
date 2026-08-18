@@ -54,7 +54,7 @@ public class RemoveFromQueueSwipeAction implements SwipeAction {
                     if (willRemove(filter, item)) {
                         EventBus.getDefault().post(new MessageEvent(
                                 fragment.getResources().getQuantityString(R.plurals.removed_from_queue_message, 1, 1),
-                                context -> DBWriter.addQueueItemAt(activity, item.getId(), position),
+                                context -> DBWriter.addQueueItemAt(activity, false, item.getId(), position),
                                 fragment.getString(R.string.undo)));
                     }
                 }, throwable -> Log.e(TAG, "Failed to get queue position", throwable));

@@ -26,6 +26,7 @@ import de.danoeh.antennapod.playback.service.PlaybackServiceInterface;
 import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.ui.common.IntentUtils;
 import de.danoeh.antennapod.playback.service.PlaybackStatus;
+import de.danoeh.antennapod.ui.screen.InboxFragment;
 import de.danoeh.antennapod.ui.share.ShareUtils;
 import de.danoeh.antennapod.ui.share.ShareDialog;
 import de.danoeh.antennapod.model.feed.FeedItem;
@@ -200,7 +201,10 @@ public class FeedItemMenuHandler {
             new EpisodeMultiSelectActionHandler(fragment.getActivity(), R.id.mark_unread_item)
                     .handleAction(Collections.singletonList(selectedItem));
         } else if (menuItemId == R.id.add_to_queue_item) {
-            DBWriter.addQueueItem(context, selectedItem);
+            if (!(fragment instanceof InboxFragment)) {
+                selectedItem.addTag(FeedItem.TAG_QUEUE_PERMANENT);
+            }
+            DBWriter.addQueueItem(context, false, selectedItem);
         } else if (menuItemId == R.id.remove_from_queue_item) {
             MenuItemAssistant.skipIfPlaying(context, Collections.singletonList(selectedItem), () ->
                     DBWriter.removeQueueItem(context, true, selectedItem)); // TRUE!!?

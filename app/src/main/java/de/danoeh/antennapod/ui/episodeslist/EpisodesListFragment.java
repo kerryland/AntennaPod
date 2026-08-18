@@ -241,6 +241,7 @@ public abstract class EpisodesListFragment extends Fragment
 
     private void performMultiSelectAction(int actionItemId) {
         EpisodeMultiSelectActionHandler handler = new EpisodeMultiSelectActionHandler(getActivity(), actionItemId);
+        customiseEpisodeMultiSelectActionHandler(handler);
         Completable.fromAction(
                 () -> {
                     handler.handleAction(listAdapter.getSelectedItems());
@@ -258,6 +259,10 @@ public abstract class EpisodesListFragment extends Fragment
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(() -> listAdapter.endSelectMode(),
                         error -> Log.e(TAG, Log.getStackTraceString(error)));
+    }
+
+    protected void customiseEpisodeMultiSelectActionHandler(EpisodeMultiSelectActionHandler handler) {
+
     }
 
     private void setupLoadMoreScrollListener() {

@@ -31,6 +31,7 @@ public class FeedItemCursor extends CursorWrapper {
     private final int indexPodcastIndexTranscriptUrl;
     private final int indexIsFavorite;
     private final int indexIsInQueue;
+    private final int indexIsPermanent;
     private final int indexRemoved;
 
     public FeedItemCursor(Cursor cursor) {
@@ -54,6 +55,7 @@ public class FeedItemCursor extends CursorWrapper {
         indexPodcastIndexTranscriptUrl = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_PODCASTINDEX_TRANSCRIPT_URL);
         indexIsFavorite = cursor.getColumnIndexOrThrow(PodDBAdapter.SELECT_KEY_IS_FAVORITE);
         indexIsInQueue = cursor.getColumnIndexOrThrow(PodDBAdapter.SELECT_KEY_IS_IN_QUEUE);
+        indexIsPermanent = cursor.getColumnIndexOrThrow(PodDBAdapter.SELECT_KEY_IS_PERMANENT);
         indexRemoved = cursor.getColumnIndexOrThrow(PodDBAdapter.SELECT_KEY_REMOVED);
     }
 
@@ -88,6 +90,10 @@ public class FeedItemCursor extends CursorWrapper {
         if (getInt(indexIsInQueue) > 0) {
             item.addTag(FeedItem.TAG_QUEUE);
         }
+        if (getInt(indexIsPermanent) > 0) {
+            item.addTag(FeedItem.TAG_QUEUE_PERMANENT);
+        }
+
         return item;
     }
 }

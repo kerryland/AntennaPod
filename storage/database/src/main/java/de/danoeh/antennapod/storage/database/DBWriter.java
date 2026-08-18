@@ -1,7 +1,5 @@
 package de.danoeh.antennapod.storage.database;
 
-import static de.danoeh.antennapod.model.feed.SortOrder.PRIORITY_PLAYBACK_DATE;
-
 import android.app.backup.BackupManager;
 import android.content.Context;
 import android.database.Cursor;
@@ -349,7 +347,7 @@ public class DBWriter {
      * @param index               Destination index. Must be in range 0..queue.size()
      * @throws IndexOutOfBoundsException if index < 0 || index >= queue.size()
      */
-    public static Future<?> addQueueItemAt(final Context context, final long itemId, final int index) {
+    public static Future<?> addQueueItemAt(final Context context, boolean permanent, final long itemId, final int index) {
         return runOnDbThread(() -> {
             final PodDBAdapter adapter = PodDBAdapter.getInstance();
             adapter.open();
@@ -359,6 +357,9 @@ public class DBWriter {
                 FeedItem item = DBReader.getFeedItem(itemId);
                 if (item != null) {
                     queue.add(index, item);
+                    if (permanent) {
+                        item.addTag(FeedItem.TAG_QUEUE_PERMANENT);
+                    }
                     adapter.setQueue(queue);
                     item.addTag(FeedItem.TAG_QUEUE);
                     EventBus.getDefault().post(QueueEvent.added(item, index));
@@ -382,6 +383,10 @@ public class DBWriter {
      * @param items    FeedItem objects that should be added to the queue.
      */
     public static Future<?> addQueueItem(final Context context, final FeedItem... items) {
+        return addQueueItem(context, false, items);
+    }
+
+    public static Future<?> addQueueItem(final Context context, boolean permanent, final FeedItem... items) {
         return runOnDbThread(() -> {
             if (items.length < 1) {
                 return;
@@ -409,6 +414,9 @@ public class DBWriter {
                 events.add(QueueEvent.added(item, insertPosition));
 
                 item.addTag(FeedItem.TAG_QUEUE);
+                if (permanent) {
+                    item.addTag(FeedItem.TAG_QUEUE_PERMANENT);
+                }
                 updatedItems.add(item);
                 if (item.isNew()) {
                     markAsUnplayed.add(item);

@@ -21,6 +21,11 @@ public class FeedItem implements Serializable {
 
     /** tag that indicates this item is in the queue */
     public static final String TAG_QUEUE = "Queue";
+    /**
+     * indicates the user manually tagged this as "permanent" in the queue.
+     * also requires TAG_QUEUE to be set.
+     */
+    public static final String TAG_QUEUE_PERMANENT = "QueuePermanent";
     /** tag that indicates this item is in favorites */
     public static final String TAG_FAVORITE = "Favorite";
 

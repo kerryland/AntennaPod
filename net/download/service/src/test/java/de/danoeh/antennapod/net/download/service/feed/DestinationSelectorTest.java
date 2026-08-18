@@ -220,7 +220,61 @@ public class DestinationSelectorTest {
     }
 
     @Test
-    // Make sure the feed items that are 'removed' via 'remove from inbox' are not added back into the inbox
+    // "permanent" items in the queue should not be removed when counting "max episodes"
+    public void testQueuePopulated_Oldest_First_Max_2_Episodes_Into_Queue_Ignores_Permanent() {
+        List<FeedItem> feedItems = new ArrayList<>();
+        List<FeedItem> queueItems = new ArrayList<>();
+
+        // When we have 6 unplayed podcasts
+        feedItems.add(makeTestFeedItem(17, FeedItemLocation.UNPLAYED, queueItems));
+        feedItems.add(makeTestFeedItem(18, FeedItemLocation.QUEUE_UNPLAYED, queueItems));
+        feedItems.add(makeTestFeedItem(19, FeedItemLocation.QUEUE_UNPLAYED, queueItems));
+        feedItems.add(makeTestFeedItem(20, FeedItemLocation.QUEUE_UNPLAYED, queueItems));
+        feedItems.add(makeTestFeedItem(21, FeedItemLocation.UNPLAYED, queueItems));
+        feedItems.add(makeTestFeedItem(22, FeedItemLocation.INBOX, queueItems));
+
+        // And three of the podcasts are already "permanent" in the queue
+        getFeedItem(feedItems, 18).addTag(FeedItem.TAG_QUEUE_PERMANENT);
+        getFeedItem(feedItems, 19).addTag(FeedItem.TAG_QUEUE_PERMANENT);
+        getFeedItem(feedItems, 20).addTag(FeedItem.TAG_QUEUE_PERMANENT);
+
+        Feed feed = prepareTestData(FeedPreferences.NewEpisodesAction.ADD_TO_QUEUE,
+                FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST,
+                2, feedItems, queueItems);
+
+        FeedDatabaseWriter.updateFeed(context, feed, false);
+
+        // When we populate the queue or inbox with "max 2" episodes
+        //----------------------------------------------------------------------
+        DestinationSelector.populateInboxOrQueue(context, Collections.singletonList(feed));
+        //----------------------------------------------------------------------
+        DBWriter.waitForDatabase(); // Make sure the database is updated
+
+        // Then the inbox should have no episodes
+        List<FeedItem> inbox = DBReader.getFeedItemList(feed, new FeedItemFilter(FeedItemFilter.NEW), SortOrder.DATE_OLD_NEW, 0, Integer.MAX_VALUE);
+        assertEquals(0, inbox.size());
+
+        // and the queue should still have THREE episodes (ignoring max 2)
+        List<FeedItem> queue = DBReader.getQueue();
+        assertEquals(3, queue.size());
+        assertEquals("EPISODE 18", queue.get(0).getTitle());
+        assertEquals("EPISODE 19", queue.get(1).getTitle());
+        assertEquals("EPISODE 20", queue.get(2).getTitle());
+
+    }
+
+    private FeedItem getFeedItem(List<FeedItem> feedItems, int day) {
+        for (FeedItem feedItem : feedItems) {
+            LocalDate date = feedItem.getPubDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            if (date.getDayOfMonth() == day) {
+                return feedItem;
+            }
+        }
+        throw new IllegalArgumentException("No feeditem with day " + day + " found");
+    }
+
+    @Test
+    // Make sure "OLDEST_FIRST" feed items that are 'removed' via 'remove from inbox' are not added back into the inbox
     public void testInboxPopulated_Oldest_First_Ignores_Unplayed_Removed() {
         List<FeedItem> feedItems = new ArrayList<>();
         List<FeedItem> queueItems = new ArrayList<>();
@@ -229,14 +283,13 @@ public class DestinationSelectorTest {
         feedItems.add(makeTestFeedItem(17, FeedItemLocation.PLAYED, queueItems));
         feedItems.add(makeTestFeedItem(18, FeedItemLocation.UNPLAYED, queueItems));
         feedItems.add(makeTestFeedItem(19, FeedItemLocation.PLAYED, queueItems));
-        FeedItem episode20 = makeTestFeedItem(20, FeedItemLocation.UNPLAYED, queueItems);
-        episode20.setRemoved(true);
-        feedItems.add(episode20);
+        feedItems.add(makeTestFeedItem(20, FeedItemLocation.UNPLAYED, queueItems));
         feedItems.add(makeTestFeedItem(21, FeedItemLocation.UNPLAYED, queueItems));
-        FeedItem episode22 = makeTestFeedItem(22, FeedItemLocation.UNPLAYED, queueItems);
-        episode22.setRemoved(true);
-        feedItems.add(episode22);
+        feedItems.add(makeTestFeedItem(22, FeedItemLocation.UNPLAYED, queueItems));
         feedItems.add(makeTestFeedItem(23, FeedItemLocation.UNPLAYED, queueItems));
+
+        getFeedItem(feedItems, 20).setRemoved(true);
+        getFeedItem(feedItems, 22).setRemoved(true);
 
         Feed feed = prepareTestData(FeedPreferences.NewEpisodesAction.ADD_TO_INBOX,
                 FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST,
@@ -256,7 +309,7 @@ public class DestinationSelectorTest {
     }
 
     @Test
-    // Make sure the feed items that are 'removed' via 'remove from inbox' are not added back into the inbox
+    // Make sure "NEWEST_FIRST" feed items that are 'removed' via 'remove from inbox' are not added back into the inbox
     public void testInboxPopulated_Newest_First_Ignores_Unplayed_Removed() {
         List<FeedItem> feedItems = new ArrayList<>();
         List<FeedItem> queueItems = new ArrayList<>();
@@ -322,14 +375,8 @@ public class DestinationSelectorTest {
         PodDBAdapter adapter = PodDBAdapter.getInstance();
         adapter.open();
         adapter.setCompleteFeed(feed);
+        adapter.setQueue(queueItems);
         adapter.close();
-
-        try {
-            Future<?> future = DBWriter.addQueueItem(context, queueItems.toArray(new FeedItem[0]));
-            future.get(); // Wait for data to write on the database thread
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
         return feed;
     }
 
@@ -350,6 +397,7 @@ public class DestinationSelectorTest {
             feedItem.setPlayed(true);
         }
         if (location == FeedItemLocation.QUEUE_PLAYED || location == FeedItemLocation.QUEUE_UNPLAYED) {
+            feedItem.addTag(FeedItem.TAG_QUEUE);
             queueItems.add(feedItem);
         }
         return feedItem;

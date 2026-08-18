@@ -39,9 +39,15 @@ public class EpisodeMultiSelectActionHandler {
     private final int actionId;
     private int totalNumItems = 0;
 
+    private boolean queueAdditionsArePermanent = true;
+
     public EpisodeMultiSelectActionHandler(Activity activity, int actionId) {
         this.activity = activity;
         this.actionId = actionId;
+    }
+
+    public void setQueueAdditionsArePermanent(boolean queueAdditionsArePermanent) {
+        this.queueAdditionsArePermanent = queueAdditionsArePermanent;
     }
 
     private void skipIfPlaying(List<FeedItem> items, Runnable callback) {
@@ -49,7 +55,7 @@ public class EpisodeMultiSelectActionHandler {
     }
     public void handleAction(List<FeedItem> items) {
         if (actionId == R.id.add_to_queue_item) {
-            queueChecked(items);
+            queueChecked(items, queueAdditionsArePermanent);
         } else if (actionId == R.id.remove_from_queue_item) {
             skipIfPlaying(items, () ->
                     removeFromQueueChecked(items));
@@ -81,7 +87,7 @@ public class EpisodeMultiSelectActionHandler {
             Observable.fromCallable(() -> DBReader.getQueue())
                     .subscribeOn(Schedulers.computation())
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(queueItems ->  MenuItemAssistant.findCurrentlyPlayingPosition(activity, queueItems,
+                    .subscribe(queueItems -> MenuItemAssistant.findCurrentlyPlayingPosition(activity, queueItems,
                             position -> movePlayNextChecked(position,
                                     items)));
 
@@ -90,7 +96,7 @@ public class EpisodeMultiSelectActionHandler {
         }
     }
 
-    private void queueChecked(List<FeedItem> items) {
+    private void queueChecked(List<FeedItem> items, boolean permanent) {
         // Count here to give accurate number in snackbar
         List<FeedItem> toQueue = new ArrayList<>();
         for (FeedItem episode : items) {
@@ -98,7 +104,7 @@ public class EpisodeMultiSelectActionHandler {
                 toQueue.add(episode);
             }
         }
-        DBWriter.addQueueItem(activity, toQueue.toArray(new FeedItem[0]));
+        DBWriter.addQueueItem(activity, permanent, toQueue.toArray(new FeedItem[0]));
         showMessage(R.plurals.added_to_queue_message, toQueue.size());
     }
 

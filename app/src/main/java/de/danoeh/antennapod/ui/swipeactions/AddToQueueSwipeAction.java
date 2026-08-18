@@ -9,6 +9,8 @@ import de.danoeh.antennapod.event.MessageEvent;
 import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
+import de.danoeh.antennapod.ui.screen.InboxFragment;
+
 import org.greenrobot.eventbus.EventBus;
 
 public class AddToQueueSwipeAction implements SwipeAction {
@@ -40,7 +42,10 @@ public class AddToQueueSwipeAction implements SwipeAction {
         } else if (item.getMedia() == null) {
             EventBus.getDefault().post(new MessageEvent(fragment.getString(R.string.no_media_label)));
         } else {
-            DBWriter.addQueueItem(fragment.requireContext(), item);
+            if (!(fragment instanceof InboxFragment)) {
+                item.addTag(FeedItem.TAG_QUEUE_PERMANENT);
+            }
+            DBWriter.addQueueItem(fragment.requireContext(), false, item);
         }
     }
 

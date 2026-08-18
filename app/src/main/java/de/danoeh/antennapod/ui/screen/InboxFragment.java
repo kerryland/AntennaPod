@@ -15,15 +15,20 @@ import androidx.core.util.Pair;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.event.MessageEvent;
+import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.SortOrder;
+import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.ui.BulkDownloader;
+import de.danoeh.antennapod.ui.episodeslist.EpisodeMultiSelectActionHandler;
 import de.danoeh.antennapod.ui.screen.feed.ItemSortDialog;
 import de.danoeh.antennapod.event.FeedListUpdateEvent;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.episodeslist.EpisodesListFragment;
 import org.greenrobot.eventbus.EventBus;
+
+import java.util.List;
 
 /**
  * Like 'EpisodesFragment' except that it only shows new episodes and
@@ -60,9 +65,22 @@ public class InboxFragment extends EpisodesListFragment {
         return UserPreferences.getInboxSortedOrder();
     }
 
+    @NonNull
+    @Override
+    protected List<FeedItem> loadMoreData(int page) {
+        return DBReader.getEpisodesForInbox((page - 1) * EPISODES_PER_PAGE, EPISODES_PER_PAGE, getFilter(),
+                getSortOrder());
+    }
+
     @Override
     protected String getFragmentTag() {
         return TAG;
+    }
+
+    @Override
+    // When we add items to the queue from the inbox, they should not be permanent
+    protected void customiseEpisodeMultiSelectActionHandler(EpisodeMultiSelectActionHandler handler) {
+       handler.setQueueAdditionsArePermanent(false);
     }
 
     @Override

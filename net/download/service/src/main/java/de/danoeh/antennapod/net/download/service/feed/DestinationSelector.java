@@ -58,6 +58,12 @@ public class DestinationSelector {
             int addCount = 0;
 
             for (FeedItem feedItem : feedItems) {
+                if (feedItem.isTagged(FeedItem.TAG_QUEUE_PERMANENT)) {
+                    addCount++;
+                }
+            }
+
+            for (FeedItem feedItem : feedItems) {
                 if (feedItem.isPlayed()) { // should never happen
                     continue;
                 }

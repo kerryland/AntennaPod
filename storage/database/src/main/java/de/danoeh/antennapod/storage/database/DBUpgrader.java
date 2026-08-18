@@ -377,6 +377,11 @@ class DBUpgrader {
                     + " ADD COLUMN " + PodDBAdapter.KEY_REMOVED + " INTEGER DEFAULT 0");
         }
 
+        if (oldVersion < 3120007) {
+            db.execSQL("ALTER TABLE " + PodDBAdapter.TABLE_NAME_QUEUE
+                    + " ADD COLUMN " + PodDBAdapter.KEY_PERMANENT + " INTEGER DEFAULT 0");
+        }
+
     }
 
 }

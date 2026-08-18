@@ -301,7 +301,7 @@ public class OnlineFeedViewActivity extends AppCompatActivity {
             feed.setState(Feed.STATE_NOT_SUBSCRIBED);
             feed.setLastRefreshAttempt(System.currentTimeMillis());
             FeedDatabaseWriter.updateFeed(this, feed, false);
-            Feed feedFromDb = DBReader.getFeed(feed.getId(), false, 0, Integer.MAX_VALUE);
+            Feed feedFromDb = DBReader.getFeed(feed.getId(), false, 0, Integer.MAX_VALUE); // TODO: sb 0, not MAX_VALUE
             feedFromDb.getPreferences().setKeepUpdated(false);
             if (username != null && password != null) {
                 feedFromDb.getPreferences().setUsername(username);

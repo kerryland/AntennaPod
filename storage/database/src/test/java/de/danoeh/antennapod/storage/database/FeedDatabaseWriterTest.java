@@ -180,6 +180,7 @@ public class FeedDatabaseWriterTest {
         final int numItemsOld = 10;
         final int numItemsNew = 10;
 
+        // Given a feed with 10 PLAYED feed items
         final Feed feed = createFeed();
         for (int i = 0; i < numItemsOld; i++) {
             feed.getItems().add(new FeedItem(0, "item " + i, "id " + i, "link " + i,
@@ -201,6 +202,7 @@ public class FeedDatabaseWriterTest {
             item.setId(0);
         }
 
+        // When we update the feed to have 10 UNPLAYED feed items
         for (int i = numItemsOld; i < numItemsNew + numItemsOld; i++) {
             feed.getItems().add(0, new FeedItem(0, "item " + i, "id " + i, "link " + i,
                     new Date(i), FeedItem.UNPLAYED, feed));
@@ -209,8 +211,10 @@ public class FeedDatabaseWriterTest {
         final Feed newFeed = FeedDatabaseWriter.updateFeed(context, feed, false);
         assertNotSame(newFeed, feed);
 
+        // Then the updated feed should have 10 UNPLAYED feed items
         updatedFeedTest(newFeed, feedID, itemIDs, numItemsOld, numItemsNew);
 
+        // And DBReader.getFeed should agree (10 UNPLAYED feed items)
         final Feed feedFromDB = DBReader.getFeed(newFeed.getId(), false, 0, Integer.MAX_VALUE);
         assertNotNull(feedFromDB);
         assertEquals(newFeed.getId(), feedFromDB.getId());
@@ -331,7 +335,8 @@ public class FeedDatabaseWriterTest {
                 false, FeedPreferences.NewEpisodesAction.GLOBAL, 0,
                 FeedPreferences.PlaybackOrderSetting.NEWEST_FIRST, 3, new HashSet<>()));
 
-        feed.getPreferences().setPlaybackOrder(FeedPreferences.PlaybackOrderSetting.NEWEST_FIRST);
+      //  feed.getPreferences().setPlaybackOrder(FeedPreferences.PlaybackOrderSetting.NEWEST_FIRST);
+        feed.setSortOrder(SortOrder.DATE_NEW_OLD);
         feed.setItems(new ArrayList<>());
         return feed;
     }

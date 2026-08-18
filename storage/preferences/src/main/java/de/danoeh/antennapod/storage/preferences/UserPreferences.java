@@ -903,7 +903,7 @@ public abstract class UserPreferences {
 
     public static SortOrder getPrefGlobalSortedOrder() {
         return SortOrder.fromCodeString(prefs.getString(PREF_GLOBAL_DEFAULT_SORTED_ORDER,
-                "" + SortOrder.DATE_NEW_OLD.code));
+                "" + SortOrder.PRIORITY_PLAYBACK_DATE.code));
     }
 
     public static void setAllEpisodesSortOrder(SortOrder s) {

@@ -265,7 +265,7 @@ public class Media3VideoPlayerActivity extends AppCompatActivity implements Tool
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(media -> {
                     currentMedia = media;
-                    FeedItemMenuHandler.onPrepareMenu(viewBinding.controlsView.getToolbar().getMenu(),
+                    FeedItemMenuHandler.onPrepareMenu(this, viewBinding.controlsView.getToolbar().getMenu(),
                              Collections.singletonList(currentMedia.getItem()));
                 });
     }

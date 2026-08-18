@@ -760,7 +760,7 @@ public class FeedItemlistFragment extends Fragment implements AdapterView.OnItem
         @Override
         protected void onSelectedItemsUpdated() {
             super.onSelectedItemsUpdated();
-            FeedItemMenuHandler.onPrepareMenu(viewBinding.floatingSelectMenu.getMenu(), getSelectedItems());
+            FeedItemMenuHandler.onPrepareMenu(getContext(), viewBinding.floatingSelectMenu.getMenu(), getSelectedItems());
             viewBinding.floatingSelectMenu.updateItemVisibility();
         }
     }

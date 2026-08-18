@@ -486,7 +486,7 @@ public class AudioPlayerFragment extends Fragment implements
 
     public void setupOptionsMenu() {
         toolbar.getMenu().findItem(R.id.open_feed_item).setVisible(true);
-        FeedItemMenuHandler.onPrepareMenu(toolbar.getMenu(),
+        FeedItemMenuHandler.onPrepareMenu(getContext(), toolbar.getMenu(),
                 Collections.singletonList(currentMedia.getItem()));
         ((CastEnabledActivity) getActivity()).requestCastButton(toolbar.getMenu());
     }

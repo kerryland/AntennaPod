@@ -190,7 +190,7 @@ public abstract class EpisodesListFragment extends Fragment
             @Override
             protected void onSelectedItemsUpdated() {
                 super.onSelectedItemsUpdated();
-                FeedItemMenuHandler.onPrepareMenu(floatingSelectMenu.getMenu(), getSelectedItems());
+                FeedItemMenuHandler.onPrepareMenu(getContext(), floatingSelectMenu.getMenu(), getSelectedItems());
                 floatingSelectMenu.updateItemVisibility();
             }
         };

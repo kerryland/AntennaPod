@@ -1,6 +1,7 @@
 package de.danoeh.antennapod.ui.episodeslist;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.os.Handler;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -9,13 +10,16 @@ import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.collection.ArrayMap;
 import androidx.fragment.app.Fragment;
+import androidx.preference.ListPreference;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.event.MessageEvent;
@@ -55,7 +59,7 @@ public class FeedItemMenuHandler {
      * @param excludeIds Menu item that should be excluded
      * @return Returns true if selectedItem is not null.
      */
-    public static boolean onPrepareMenu(Menu menu, List<FeedItem> selectedItems, int... excludeIds) {
+    public static boolean onPrepareMenu(Context context, Menu menu, List<FeedItem> selectedItems, int... excludeIds) {
         if (menu == null || selectedItems == null || selectedItems.isEmpty() || selectedItems.get(0) == null) {
             return false;
         }
@@ -124,6 +128,25 @@ public class FeedItemMenuHandler {
         } else {
             setItemTitle(menu, R.id.mark_read_item, R.string.mark_as_played_label);
             setItemTitle(menu, R.id.mark_unread_item, R.string.mark_as_unplayed_label);
+        }
+
+        // Show where 'Add to Queue' will be adding
+        if (canAddToQueue && context != null) {
+            final Resources res = context.getResources();
+            UserPreferences.EnqueueLocation enqueueLocation = UserPreferences.getEnqueueLocation();
+            {
+
+                String[] keys = res.getStringArray(R.array.enqueue_location_values);
+                for (int i = 0; i < keys.length; i++) {
+                    if (keys[i].equals(enqueueLocation.name())) {
+                        String[] options = res.getStringArray(R.array.enqueue_location_options);
+                        String label = res.getString(R.string.add_to_queue_label) + " (" + options[i] + ")";
+                        MenuItem item = menu.findItem(R.id.add_to_queue_item);
+                        item.setTitle(label);
+                        break;
+                    }
+                }
+            }
         }
 
         setItemVisibility(menu, R.id.add_to_favorites_item, canAddFavorite);

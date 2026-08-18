@@ -432,7 +432,7 @@ public class VideoplayerActivity extends CastEnabledActivity
         Menu menu = toolbar.getMenu();
         menu.findItem(R.id.open_feed_item).setVisible(isFeedMedia); // FeedMedia implies it belongs to a Feed
         if (isFeedMedia) {
-            FeedItemMenuHandler.onPrepareMenu(menu, Collections.singletonList(((FeedMedia) media).getItem()));
+            FeedItemMenuHandler.onPrepareMenu(this, menu, Collections.singletonList(((FeedMedia) media).getItem()));
         }
 
         if (controller != null) {

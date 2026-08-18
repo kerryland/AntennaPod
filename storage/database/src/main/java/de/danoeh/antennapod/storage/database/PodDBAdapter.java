@@ -57,7 +57,7 @@ public class PodDBAdapter {
 
     private static final String TAG = "PodDBAdapter";
     public static final String DATABASE_NAME = "Antennapod.db";
-    public static final int VERSION = 3120006;
+    public static final int VERSION = 3120007;
 
     /**
      * Maximum number of arguments for IN-operator.
@@ -122,6 +122,7 @@ public class PodDBAdapter {
     public static final String KEY_FEED_PRIORITY = "priority";
     public static final String KEY_PLAYBACK_ORDER = "playback_order";
     public static final String KEY_MAX_EPISODES = "max_episodes";
+    public static final String KEY_PERMANENT = "permanent";
     public static final String KEY_REMOVED = "removed";
     public static final String KEY_FEED_SKIP_SILENCE = "feed_skip_silence";
     public static final String KEY_FEED_SKIP_INTRO = "feed_skip_intro";
@@ -227,7 +228,7 @@ public class PodDBAdapter {
 
     private static final String CREATE_TABLE_QUEUE = "CREATE TABLE "
             + TABLE_NAME_QUEUE + "(" + KEY_ID + " INTEGER PRIMARY KEY,"
-            + KEY_FEEDITEM + " INTEGER," + KEY_FEED + " INTEGER)";
+            + KEY_FEEDITEM + " INTEGER," + KEY_FEED + " INTEGER, " + KEY_PERMANENT + " INTEGER DEFAULT 0)";
 
     private static final String CREATE_TABLE_SIMPLECHAPTERS = "CREATE TABLE "
             + TABLE_NAME_SIMPLECHAPTERS + " (" + TABLE_PRIMARY_KEY + KEY_TITLE
@@ -281,6 +282,7 @@ public class PodDBAdapter {
     public static final String SELECT_KEY_FEED_ID = "feed_id";
     public static final String SELECT_KEY_IS_FAVORITE = "is_favorite";
     public static final String SELECT_KEY_IS_IN_QUEUE = "is_in_queue";
+    public static final String SELECT_KEY_IS_PERMANENT = "permanent";
     public static final String SELECT_KEY_REMOVED = "removed";
 
     private static final String KEYS_FEED_ITEM_WITHOUT_DESCRIPTION =
@@ -301,10 +303,12 @@ public class PodDBAdapter {
             + TABLE_NAME_FEED_ITEMS + "." + KEY_PODCASTINDEX_TRANSCRIPT_TYPE + ", "
             + TABLE_NAME_FEED_ITEMS + "." + KEY_PODCASTINDEX_TRANSCRIPT_URL + ", "
             + TABLE_NAME_FEED_ITEMS + "." + KEY_REMOVED + ", "
-            + TABLE_NAME_FEED_ITEMS + "." + KEY_ID + " IN (SELECT " + TABLE_NAME_FAVORITES + "." + KEY_FEEDITEM
-            + " FROM " + TABLE_NAME_FAVORITES + ") AS " + SELECT_KEY_IS_FAVORITE + ", "
-            + TABLE_NAME_FEED_ITEMS + "." + KEY_ID + " IN (SELECT " + TABLE_NAME_QUEUE + "." + KEY_FEEDITEM
-            + " FROM " + TABLE_NAME_QUEUE + ") AS " + SELECT_KEY_IS_IN_QUEUE;
+            + TABLE_NAME_FEED_ITEMS + "." + KEY_ID
+                    +" IN (SELECT " + TABLE_NAME_FAVORITES + "." + KEY_FEEDITEM
+                    + " FROM " + TABLE_NAME_FAVORITES + ") AS " + SELECT_KEY_IS_FAVORITE + ", "
+
+            + TABLE_NAME_QUEUE + "." + KEY_ID + " IS NOT NULL AS " + SELECT_KEY_IS_IN_QUEUE + ", "
+            + TABLE_NAME_QUEUE + "." + KEY_PERMANENT + " AS " + SELECT_KEY_IS_PERMANENT;
 
     private static final String KEYS_FEED_MEDIA =
             TABLE_NAME_FEED_MEDIA + "." + KEY_ID + " AS " + SELECT_KEY_MEDIA_ID + ", "
@@ -320,6 +324,9 @@ public class PodDBAdapter {
             + TABLE_NAME_FEED_MEDIA + "." + KEY_PLAYED_DURATION + ", "
             + TABLE_NAME_FEED_MEDIA + "." + KEY_HAS_EMBEDDED_PICTURE + ", "
             + TABLE_NAME_FEED_MEDIA + "." + KEY_LAST_PLAYED_TIME_STATISTICS;
+
+    private static final String STANDARD_FEEDITEM_COLUMNS = KEYS_FEED_ITEM_WITHOUT_DESCRIPTION
+            + ", " + KEYS_FEED_MEDIA;
 
     private static final String KEYS_FEED =
             TABLE_NAME_FEEDS + "." + KEY_ID + " AS " + SELECT_KEY_FEED_ID + ", "
@@ -367,15 +374,20 @@ public class PodDBAdapter {
     private static final String JOIN_FEED_ITEM_AND_MEDIA = " LEFT JOIN " + TABLE_NAME_FEED_MEDIA
             + " ON " + TABLE_NAME_FEED_ITEMS + "." + KEY_ID + "=" + TABLE_NAME_FEED_MEDIA + "." + KEY_FEEDITEM + " ";
 
+    private static final String STANDARD_FEEDITEM_JOIN =
+            JOIN_FEED_ITEM_AND_MEDIA +
+            " LEFT JOIN " + TABLE_NAME_QUEUE + " ON " + TABLE_NAME_FEED_ITEMS + "." + KEY_ID + "=" + TABLE_NAME_QUEUE + "." + KEY_FEEDITEM + " ";
+
+
     private static final String SELECT_FEED_ITEMS_AND_MEDIA_WITH_DESCRIPTION =
-            "SELECT " + KEYS_FEED_ITEM_WITHOUT_DESCRIPTION + ", " + KEYS_FEED_MEDIA + ", "
+            "SELECT " + STANDARD_FEEDITEM_COLUMNS + ", "
                     + TABLE_NAME_FEED_ITEMS + "." + KEY_DESCRIPTION
             + " FROM " + TABLE_NAME_FEED_ITEMS
-            + JOIN_FEED_ITEM_AND_MEDIA;
+            + STANDARD_FEEDITEM_JOIN;
     private static final String SELECT_FEED_ITEMS_AND_MEDIA =
-            "SELECT " + KEYS_FEED_ITEM_WITHOUT_DESCRIPTION + ", " + KEYS_FEED_MEDIA
+            "SELECT " + STANDARD_FEEDITEM_COLUMNS
             + " FROM " + TABLE_NAME_FEED_ITEMS
-            + JOIN_FEED_ITEM_AND_MEDIA;
+            + STANDARD_FEEDITEM_JOIN;
     private static final String SELECT_WHERE_FEED_IS_SUBSCRIBED = TABLE_NAME_FEED_ITEMS + "." + KEY_FEED
             + " IN (SELECT " + KEY_ID + " FROM " + TABLE_NAME_FEEDS
             + " WHERE " + KEY_STATE + "=" + Feed.STATE_SUBSCRIBED + ")";
@@ -916,12 +928,13 @@ public class PodDBAdapter {
         ContentValues values = new ContentValues();
         try {
             db.beginTransactionNonExclusive();
-            db.delete(TABLE_NAME_QUEUE, null, null);
+            db.delete(TABLE_NAME_QUEUE, KEY_PERMANENT + " = 0", null);
             for (int i = 0; i < queue.size(); i++) {
                 FeedItem item = queue.get(i);
                 values.put(KEY_ID, i);
                 values.put(KEY_FEEDITEM, item.getId());
                 values.put(KEY_FEED, item.getFeed().getId());
+                values.put(KEY_PERMANENT, item.isTagged(FeedItem.TAG_QUEUE_PERMANENT) ? 1 : 0);
                 db.insertWithOnConflict(TABLE_NAME_QUEUE, null, values, SQLiteDatabase.CONFLICT_REPLACE);
             }
             db.setTransactionSuccessful();
@@ -1041,7 +1054,7 @@ public class PodDBAdapter {
     public final Cursor getItemsOfFeedCursor(final Feed feed, FeedItemFilter filter, SortOrder sortOrder,
                                              int offset, int limit) {
 
-        if (sortOrder == SortOrder.GLOBAL_DEFAULT) {
+        if (sortOrder == null || sortOrder == SortOrder.GLOBAL_DEFAULT) {
             sortOrder = UserPreferences.getPrefGlobalSortedOrder();
         }
         filter = new FeedItemFilter(filter, FeedItemFilter.INCLUDE_ALL_FEED_STATES).setFeedId(feed.getId());
@@ -1082,7 +1095,7 @@ public class PodDBAdapter {
      * cursor uses the FEEDITEM_SEL_FI_SMALL selection.
      */
     public final Cursor getQueueCursor() {
-        final String query = "SELECT " + KEYS_FEED_ITEM_WITHOUT_DESCRIPTION + ", " + KEYS_FEED_MEDIA
+        final String query = "SELECT " + STANDARD_FEEDITEM_COLUMNS
                 + " FROM " + TABLE_NAME_QUEUE
                 + " INNER JOIN " + TABLE_NAME_FEED_ITEMS
                 + " ON " + SELECT_KEY_ITEM_ID + " = " + TABLE_NAME_QUEUE + "." + KEY_FEEDITEM
@@ -1096,11 +1109,11 @@ public class PodDBAdapter {
     }
 
     public Cursor getNextInQueue(final FeedItem item) {
-        final String query = "SELECT " + KEYS_FEED_ITEM_WITHOUT_DESCRIPTION + ", " + KEYS_FEED_MEDIA
+        final String query = "SELECT " + STANDARD_FEEDITEM_COLUMNS
                 + " FROM " + TABLE_NAME_QUEUE
                 + " INNER JOIN " + TABLE_NAME_FEED_ITEMS
                 + " ON " + SELECT_KEY_ITEM_ID + " = " + TABLE_NAME_QUEUE + "." + KEY_FEEDITEM
-                +  JOIN_FEED_ITEM_AND_MEDIA
+                +  STANDARD_FEEDITEM_JOIN
                 + " WHERE Queue.ID > (SELECT Queue.ID FROM Queue WHERE Queue.FeedItem = "
                 +  item.getId()
                 + ")"
@@ -1114,7 +1127,7 @@ public class PodDBAdapter {
         final String hasPositionOrRecentlyPlayed = TABLE_NAME_FEED_MEDIA + "."  + KEY_POSITION + " >= 1000"
                 + " OR " + TABLE_NAME_FEED_MEDIA + "." + KEY_LAST_PLAYED_TIME_STATISTICS
                 + " >= " + (System.currentTimeMillis() - 30000);
-        final String query = "SELECT " + KEYS_FEED_ITEM_WITHOUT_DESCRIPTION + ", " + KEYS_FEED_MEDIA
+        final String query = "SELECT " + STANDARD_FEEDITEM_COLUMNS
                 + " FROM " + TABLE_NAME_QUEUE
                 + " INNER JOIN " + TABLE_NAME_FEED_ITEMS
                 + " ON " + SELECT_KEY_ITEM_ID + " = " + TABLE_NAME_QUEUE + "." + KEY_FEEDITEM
@@ -1147,9 +1160,9 @@ public class PodDBAdapter {
             """
             WITH RankedEpisodes AS (
             """ +
-               "SELECT " + KEYS_FEED_ITEM_WITHOUT_DESCRIPTION + ", " +
-                    KEYS_FEED_MEDIA + "," +
-                    TABLE_NAME_FEEDS + "." + KEY_FEED_PRIORITY +
+               "SELECT " + STANDARD_FEEDITEM_COLUMNS + "," +
+                    TABLE_NAME_FEEDS + "." + KEY_FEED_PRIORITY + "," +
+                    TABLE_NAME_FEEDS + "." + KEY_MAX_EPISODES +
             """
                     , ROW_NUMBER() OVER (
                          PARTITION BY
@@ -1159,7 +1172,7 @@ public class PodDBAdapter {
                     " ELSE -" + TABLE_NAME_FEED_ITEMS + "." + KEY_PUBDATE + " END ASC) AS row_num " +
                  " FROM " + TABLE_NAME_FEED_ITEMS +
                  " INNER JOIN " + TABLE_NAME_FEEDS + " ON " + TABLE_NAME_FEED_ITEMS + "." + KEY_FEED + " = " + TABLE_NAME_FEEDS + "." + KEY_ID +
-                 " LEFT JOIN " + TABLE_NAME_FEED_MEDIA + " ON " + TABLE_NAME_FEED_ITEMS + "." + KEY_ID + " = " + TABLE_NAME_FEED_MEDIA + "." + KEY_FEEDITEM +
+                    STANDARD_FEEDITEM_JOIN +
                  " WHERE " + FeedItemFilterQuery.generateFrom(filter) +
                 """
                  )

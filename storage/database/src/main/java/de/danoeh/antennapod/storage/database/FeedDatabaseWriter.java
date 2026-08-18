@@ -34,7 +34,7 @@ public abstract class FeedDatabaseWriter {
             for (Feed f : feeds) {
                 if (f.getIdentifyingValue().equals(feed.getIdentifyingValue())) {
                     f.setItems(DBReader.getFeedItemList(f, FeedItemFilter.unfiltered(),
-                            SortOrder.DATE_NEW_OLD, 0, Integer.MAX_VALUE));
+                            f.getSortOrder(), 0, Integer.MAX_VALUE));
                     return f;
                 }
             }

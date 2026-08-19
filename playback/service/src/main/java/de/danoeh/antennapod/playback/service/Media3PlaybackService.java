@@ -98,6 +98,7 @@ public class Media3PlaybackService extends MediaLibraryService {
     @Nullable
     private LoudnessEnhancer loudnessEnhancer = null;
     private float volumeAdaptionFactor = 1.0f;
+    private boolean isReleased = false;
 
     @UnstableApi
     @Override
@@ -159,6 +160,9 @@ public class Media3PlaybackService extends MediaLibraryService {
 
             @Override
             public void play() {
+                if (isReleased) {
+                    return;
+                }
                 if (warnBecauseMuted()) {
                     return;
                 }
@@ -183,6 +187,9 @@ public class Media3PlaybackService extends MediaLibraryService {
 
             @Override
             public void setPlaybackSpeed(float speed) {
+                if (isReleased) {
+                    return;
+                }
                 super.setPlaybackSpeed(speed);
                 PlaybackPreferences.setCurrentlyPlayingTemporaryPlaybackSpeed(speed);
                 EventBus.getDefault().post(new SpeedChangedEvent(speed));
@@ -190,16 +197,25 @@ public class Media3PlaybackService extends MediaLibraryService {
 
             @Override
             public void seekBack() {
+                if (isReleased) {
+                    return;
+                }
                 seekTo(Math.max(0, getCurrentPosition() - UserPreferences.getRewindSecs() * 1000L));
             }
 
             @Override
             public void seekForward() {
+                if (isReleased) {
+                    return;
+                }
                 seekTo(Math.min(getDuration(), getCurrentPosition() + UserPreferences.getFastForwardSecs() * 1000L));
             }
 
             @Override
             public void seekToNextMediaItem() {
+                if (isReleased) {
+                    return;
+                }
                 if (currentPlayable != null) {
                     startNextInQueue(currentPlayable.getItem());
                 }
@@ -207,6 +223,9 @@ public class Media3PlaybackService extends MediaLibraryService {
 
             @Override
             public void seekTo(long positionMs) {
+                if (isReleased) {
+                    return;
+                }
                 super.seekTo(positionMs);
                 EventBus.getDefault().post(
                         new PlaybackPositionEvent((int) player.getCurrentPosition(), (int) player.getDuration()));
@@ -378,6 +397,7 @@ public class Media3PlaybackService extends MediaLibraryService {
     @UnstableApi
     @Override
     public void onDestroy() {
+        isReleased = true;
         PlaybackService.isRunning = false;
         if (bluetoothReconnectPlayer != null) {
             bluetoothReconnectPlayer.unregister();

@@ -194,7 +194,7 @@ public class DbReaderTest {
             if (numItems <= 0) {
                 throw new IllegalArgumentException("numItems<=0");
             }
-            List<Feed> feeds = saveFeedlist(numItems, numItems, false);
+            List<Feed> feeds = saveFeedlist(numItems, numItems, false, false, 0, FeedItem.UNPLAYED);
             List<FeedItem> allItems = new ArrayList<>();
             for (Feed f : feeds) {
                 allItems.addAll(f.getItems());
@@ -239,6 +239,33 @@ public class DbReaderTest {
                 assertTrue(savedQueue.get(i).getId() != 0);
                 assertEquals(savedQueue.get(i).getId(), queue.get(i).getId());
             }
+        }
+
+        @Test
+        public void testGetNextInQueue() {
+            // Given we have 10 items in a queue
+            final int numItems = 10;
+            List<FeedItem> queue = saveQueue(numItems);
+            List<FeedItem> savedQueue = DBReader.getQueue();
+            assertEquals(10, savedQueue.size());
+
+            for (int i = 0; i < savedQueue.size(); i++) {
+                System.out.println(i + " QUEUE ID: " + savedQueue.get(i).getId());
+            }
+
+            int successes = 0;
+            // When we iterate through the queue, we should get the correct 'next' item
+            for (int i = 0; i < savedQueue.size(); i++) {
+                FeedItem nextInQueue = DBReader.getNextInQueue(savedQueue.get(i));
+
+                // Then each queue id should be one more than the previous
+                if (nextInQueue != null && i != savedQueue.size()) {
+                    assertEquals(savedQueue.get(i + 1).getId(), nextInQueue.getId());
+                    successes++;
+                }
+            }
+            // 9 items, not 10, because the last item in the queue does not have a 'next'
+            assertEquals(9, successes);
         }
 
         @SuppressWarnings("SameParameterValue")
@@ -405,7 +432,7 @@ public class DbReaderTest {
 
         @Test
         public void testGetFeedItemlistCheckChaptersFalse() {
-            List<Feed> feeds = DbTestUtils.saveFeedlist(10, 10, false, false, 0);
+            List<Feed> feeds = DbTestUtils.saveFeedlist(10, 10, false, false, 0, FeedItem.PLAYED);
             for (Feed feed : feeds) {
                 for (FeedItem item : feed.getItems()) {
                     assertFalse(item.hasChapters());
@@ -415,7 +442,7 @@ public class DbReaderTest {
 
         @Test
         public void testGetFeedItemlistCheckChaptersTrue() {
-            List<Feed> feeds = saveFeedlist(10, 10, false, true, 10);
+            List<Feed> feeds = saveFeedlist(10, 10, false, true, 10, FeedItem.PLAYED);
             for (Feed feed : feeds) {
                 for (FeedItem item : feed.getItems()) {
                     assertTrue(item.hasChapters());
@@ -425,8 +452,8 @@ public class DbReaderTest {
 
         @Test
         public void testLoadChaptersOfFeedItemNoChapters() {
-            List<Feed> feeds = saveFeedlist(1, 3, false, false, 0);
-            saveFeedlist(1, 3, false, true, 3);
+            List<Feed> feeds = saveFeedlist(1, 3, false, false, 0, FeedItem.PLAYED);
+            saveFeedlist(1, 3, false, true, 3, FeedItem.PLAYED);
             for (Feed feed : feeds) {
                 for (FeedItem item : feed.getItems()) {
                     assertFalse(item.hasChapters());
@@ -440,8 +467,8 @@ public class DbReaderTest {
         @Test
         public void testLoadChaptersOfFeedItemWithChapters() {
             final int numChapters = 3;
-            DbTestUtils.saveFeedlist(1, 3, false, false, 0);
-            List<Feed> feeds = saveFeedlist(1, 3, false, true, numChapters);
+            DbTestUtils.saveFeedlist(1, 3, false, false, 0, FeedItem.PLAYED);
+            List<Feed> feeds = saveFeedlist(1, 3, false, true, numChapters, FeedItem.PLAYED);
             for (Feed feed : feeds) {
                 for (FeedItem item : feed.getItems()) {
                     assertTrue(item.hasChapters());
@@ -456,7 +483,7 @@ public class DbReaderTest {
         @Test
         public void testGetItemWithChapters() {
             final int numChapters = 3;
-            List<Feed> feeds = saveFeedlist(1, 1, false, true, numChapters);
+            List<Feed> feeds = saveFeedlist(1, 1, false, true, numChapters, FeedItem.PLAYED);
             FeedItem item1 = feeds.get(0).getItems().get(0);
             FeedItem item2 = DBReader.getFeedItem(item1.getId());
             item2.setChapters(DBReader.loadChaptersOfFeedItem(item2));

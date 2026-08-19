@@ -1113,7 +1113,7 @@ public class PodDBAdapter {
                 + " FROM " + TABLE_NAME_QUEUE
                 + " INNER JOIN " + TABLE_NAME_FEED_ITEMS
                 + " ON " + SELECT_KEY_ITEM_ID + " = " + TABLE_NAME_QUEUE + "." + KEY_FEEDITEM
-                +  STANDARD_FEEDITEM_JOIN
+                +  JOIN_FEED_ITEM_AND_MEDIA
                 + " WHERE Queue.ID > (SELECT Queue.ID FROM Queue WHERE Queue.FeedItem = "
                 +  item.getId()
                 + ")"

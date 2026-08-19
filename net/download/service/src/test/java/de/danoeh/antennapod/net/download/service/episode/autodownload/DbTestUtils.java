@@ -21,14 +21,14 @@ abstract class DbTestUtils {
      * Use this method when tests don't involve chapters.
      */
     public static List<Feed> saveFeedlist(int numFeeds, int numItems, boolean withMedia) {
-        return saveFeedlist(numFeeds, numItems, withMedia, false, 0);
+        return saveFeedlist(numFeeds, numItems, withMedia, false, 0, FeedItem.PLAYED);
     }
 
     /**
      * Use this method when tests involve chapters.
      */
     public static List<Feed> saveFeedlist(int numFeeds, int numItems, boolean withMedia,
-                                          boolean withChapters, int numChapters) {
+                                          boolean withChapters, int numChapters, int playState) {
         if (numFeeds <= 0) {
             throw new IllegalArgumentException("numFeeds<=0");
         }
@@ -46,7 +46,7 @@ abstract class DbTestUtils {
             long itemDate = new Date().getTime();
             for (int j = 0; j < numItems; j++) {
                 FeedItem item = new FeedItem(0, "item " + j, "id" + j, "link" + j, new Date(itemDate),
-                        FeedItem.PLAYED, f, withChapters);
+                        playState, f, withChapters);
                 itemDate += 24L * 60 * 60 * 1000;
                 if (withMedia) {
                     FeedMedia media = new FeedMedia(item, "url" + j, 1, "audio/mp3");

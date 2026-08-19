@@ -1,10 +1,13 @@
 package de.danoeh.antennapod.activity;
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.media.AudioManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -20,6 +23,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StyleRes;
 import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
@@ -612,6 +617,12 @@ public class MainActivity extends CastEnabledActivity implements NavigationToolb
     protected void onResume() {
         super.onResume();
         handleNavIntent();
+
+        if (Build.VERSION.SDK_INT >= 31 && ContextCompat.checkSelfPermission(this,
+                Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 0);
+        }
 
         boolean hasBottomNavigation = bottomNavigation != null;
         if (lastTheme != ThemeSwitcher.getNoTitleTheme(this)

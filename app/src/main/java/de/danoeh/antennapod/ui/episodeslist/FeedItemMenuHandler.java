@@ -130,8 +130,9 @@ public class FeedItemMenuHandler {
             setItemTitle(menu, R.id.mark_unread_item, R.string.mark_as_unplayed_label);
         }
 
-        // Show where 'Add to Queue' will be adding
-        if (canAddToQueue && context != null) {
+        // Show which enqueue location will be used when adding to queue.
+        MenuItem addToQueueMenuItem = menu.findItem(R.id.add_to_queue_item);
+        if (addToQueueMenuItem != null && canAddToQueue && context != null) {
             final Resources res = context.getResources();
             UserPreferences.EnqueueLocation enqueueLocation = UserPreferences.getEnqueueLocation();
             {
@@ -141,8 +142,7 @@ public class FeedItemMenuHandler {
                     if (keys[i].equals(enqueueLocation.name())) {
                         String[] options = res.getStringArray(R.array.enqueue_location_options);
                         String label = res.getString(R.string.add_to_queue_label) + " (" + options[i] + ")";
-                        MenuItem item = menu.findItem(R.id.add_to_queue_item);
-                        item.setTitle(label);
+                        addToQueueMenuItem.setTitle(label);
                         break;
                     }
                 }

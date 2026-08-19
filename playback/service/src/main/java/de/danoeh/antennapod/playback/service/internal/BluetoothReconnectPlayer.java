@@ -20,6 +20,7 @@ import android.util.Log;
 import androidx.media3.session.MediaController;
 
 import de.danoeh.antennapod.playback.service.PlaybackController;
+import de.danoeh.antennapod.playback.service.PlaybackService;
 import de.danoeh.antennapod.storage.preferences.PlaybackPreferences;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 
@@ -39,15 +40,18 @@ public class BluetoothReconnectPlayer extends BroadcastReceiver {
         public void onAudioDevicesAdded(AudioDeviceInfo[] addedDevices) {
             Log.d(TAG, "onAudioDevicesAdded");
             if (!UserPreferences.isUnpauseOnBluetoothReconnect()) {
+                Log.d(TAG, "isUnpauseOnBluetoothReconnect == false");
                 return;
             }
             for (AudioDeviceInfo device : addedDevices) {
                 if (isBluetoothAudioDevice(device)) {
-                    Log.d(TAG, "Bluetooth audio output added: " + device.getProductName());
+                    Log.d(TAG, "Bluetooth audio output added: " + device.getProductName() + ". Resume!");
                     // mainHandler.post ensures the audio service has the chance to finish
                     // internal routing to BT, avoiding audio leaking out the phone speaker
                     mainHandler.post(() -> resumePlayback(device));
                     return;
+                } else {
+                    Log.d(TAG, device.getProductName() + " is not a Bluetooth audio device");
                 }
             }
         }
@@ -85,7 +89,13 @@ public class BluetoothReconnectPlayer extends BroadcastReceiver {
     }
 
     private void resumePlayback(AudioDeviceInfo device) {
+        Log.d(TAG, "Inside resumePlayback");
         if (PlaybackPreferences.getCurrentPlayerStatus() == PlaybackPreferences.PLAYER_STATUS_PLAYING) {
+            Log.d(TAG, "App thinks it's playing, nothing to do.");
+            Log.d(TAG, "But PlaybackService says" + PlaybackService.isRunning);
+            PlaybackController.bindToMedia3Service(context, mediaController -> {
+                Log.d(TAG, "And MediaController says " +  mediaController.isPlaying());
+            });
             return;
         }
 

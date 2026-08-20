@@ -516,6 +516,20 @@ public abstract class PlaybackController {
     }
 
     public static void bindToMedia3Service(Context context, Consumer<MediaController> consumer) {
+        bindToMedia3Service(context, consumer, true);
+    }
+
+    /**
+     * Like {@link #bindToMedia3Service(Context, Consumer)} but keeps the connection alive after the
+     * callback returns, so the callback can observe asynchronous state changes such as media item
+     * transitions. The callback is responsible for calling {@link MediaController#release()}.
+     */
+    public static void bindToMedia3ServiceKeepAlive(Context context, Consumer<MediaController> consumer) {
+        bindToMedia3Service(context, consumer, false);
+    }
+
+    private static void bindToMedia3Service(Context context, Consumer<MediaController> consumer,
+                                            boolean releaseAfterCallback) {
         SessionToken sessionToken = new SessionToken(context,
                 new ComponentName(context, Media3PlaybackService.class));
         ListenableFuture<MediaController> controllerFuture =
@@ -524,7 +538,9 @@ public abstract class PlaybackController {
             try {
                 MediaController controller = controllerFuture.get();
                 consumer.accept(controller);
-                controller.release();
+                if (releaseAfterCallback) {
+                    controller.release();
+                }
             } catch (ExecutionException | InterruptedException e) {
                 e.printStackTrace();
             }

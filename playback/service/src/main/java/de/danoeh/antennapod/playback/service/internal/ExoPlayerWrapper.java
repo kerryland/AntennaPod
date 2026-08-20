@@ -78,6 +78,7 @@ public class ExoPlayerWrapper {
     private PlaybackParameters playbackParameters;
     private DefaultTrackSelector trackSelector;
     private SimpleCache simpleCache;
+    private StandaloneDatabaseProvider databaseProvider;
     @Nullable
     private LoudnessEnhancer loudnessEnhancer = null;
 
@@ -158,8 +159,9 @@ public class ExoPlayerWrapper {
                 initLoudnessEnhancer(audioSessionId);
             }
         });
+        databaseProvider = new StandaloneDatabaseProvider(context.getApplicationContext());
         simpleCache = new SimpleCache(new File(context.getCacheDir(), "streaming"),
-                new LeastRecentlyUsedCacheEvictor(100 * 1024 * 1024), new StandaloneDatabaseProvider(context));
+                new LeastRecentlyUsedCacheEvictor(100 * 1024 * 1024), databaseProvider);
         initLoudnessEnhancer(exoPlayer.getAudioSessionId());
     }
 
@@ -204,6 +206,10 @@ public class ExoPlayerWrapper {
             simpleCache.release();
             simpleCache = null;
         }
+        if (databaseProvider != null) {
+            databaseProvider.close();
+            databaseProvider = null;
+        }
         audioSeekCompleteListener = null;
         audioCompletionListener = null;
         audioErrorListener = null;
@@ -211,10 +217,17 @@ public class ExoPlayerWrapper {
     }
 
     public void reset() {
-        exoPlayer.release();
+        if (exoPlayer != null) {
+            exoPlayer.release();
+            exoPlayer = null;
+        }
         if (simpleCache != null) {
             simpleCache.release();
             simpleCache = null;
+        }
+        if (databaseProvider != null) {
+            databaseProvider.close();
+            databaseProvider = null;
         }
         createPlayer();
     }

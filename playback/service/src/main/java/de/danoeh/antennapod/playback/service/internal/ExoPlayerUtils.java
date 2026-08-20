@@ -42,13 +42,17 @@ import java.util.concurrent.TimeUnit;
 @OptIn(markerClass = UnstableApi.class)
 public class ExoPlayerUtils {
     private static volatile SimpleCache simpleCache;
+    private static volatile StandaloneDatabaseProvider databaseProvider;
 
     @OptIn(markerClass = UnstableApi.class)
     public static ExoPlayer buildPlayer(Context context) {
+        if (databaseProvider == null) {
+            databaseProvider = new StandaloneDatabaseProvider(context.getApplicationContext());
+        }
         if (simpleCache == null) {
             simpleCache = new SimpleCache(new File(context.getCacheDir(), "streaming"),
                     new LeastRecentlyUsedCacheEvictor(100 * 1024 * 1024),
-                    new StandaloneDatabaseProvider(context));
+                    databaseProvider);
         }
         return new ExoPlayer.Builder(context)
                 .setLoadControl(new DefaultLoadControl.Builder()
@@ -73,6 +77,10 @@ public class ExoPlayerUtils {
         if (simpleCache != null) {
             simpleCache.release();
             simpleCache = null;
+        }
+        if (databaseProvider != null) {
+            databaseProvider.close();
+            databaseProvider = null;
         }
     }
 

@@ -703,6 +703,14 @@ public class Media3PlaybackService extends MediaLibraryService {
         }
         queueLoaderDisposable = Maybe.fromCallable(() -> {
             FeedItem nextItem = DBReader.getNextInQueue(item);
+
+            if (nextItem == null || nextItem.getMedia() == null) {
+                List<FeedItem> fallback = DBReader.getQueue();
+                if (!fallback.isEmpty()) {
+                    nextItem = fallback.get(0);
+                }
+            }
+
             if (nextItem != null && nextItem.getMedia() != null) {
                 return new Pair<>(nextItem.getMedia(), MediaItemAdapter.fromPlayable(Media3PlaybackService.this, nextItem.getMedia(), false));
             }

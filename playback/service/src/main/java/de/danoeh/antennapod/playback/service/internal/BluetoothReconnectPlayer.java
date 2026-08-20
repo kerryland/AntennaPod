@@ -1,5 +1,6 @@
 package de.danoeh.antennapod.playback.service.internal;
 
+import android.bluetooth.BluetoothA2dp;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -17,11 +18,10 @@ import android.os.Vibrator;
 import android.os.VibratorManager;
 import android.util.Log;
 
+import androidx.core.content.ContextCompat;
 import androidx.media3.session.MediaController;
 
 import de.danoeh.antennapod.playback.service.PlaybackController;
-import de.danoeh.antennapod.playback.service.PlaybackService;
-import de.danoeh.antennapod.storage.preferences.PlaybackPreferences;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 
 /**
@@ -38,9 +38,8 @@ public class BluetoothReconnectPlayer extends BroadcastReceiver {
     private final AudioDeviceCallback audioDeviceCallback = new AudioDeviceCallback() {
         @Override
         public void onAudioDevicesAdded(AudioDeviceInfo[] addedDevices) {
-            Log.d(TAG, "onAudioDevicesAdded");
+            Log.d(TAG, "onAudioDevicesAdded: " + addedDevices.length + " devices");
             if (!UserPreferences.isUnpauseOnBluetoothReconnect()) {
-                Log.d(TAG, "isUnpauseOnBluetoothReconnect == false");
                 return;
             }
             for (AudioDeviceInfo device : addedDevices) {
@@ -48,10 +47,8 @@ public class BluetoothReconnectPlayer extends BroadcastReceiver {
                     Log.d(TAG, "Bluetooth audio output added: " + device.getProductName() + ". Resume!");
                     // mainHandler.post ensures the audio service has the chance to finish
                     // internal routing to BT, avoiding audio leaking out the phone speaker
-                    mainHandler.post(() -> resumePlayback(device));
+                    mainHandler.post(() -> resumePlayback());
                     return;
-                } else {
-                    Log.d(TAG, device.getProductName() + " is not a Bluetooth audio device");
                 }
             }
         }
@@ -67,40 +64,34 @@ public class BluetoothReconnectPlayer extends BroadcastReceiver {
         if (intent == null || intent.getAction() == null) {
             return;
         }
-        Log.d(TAG, "Received " + intent.getAction());
-        if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(intent.getAction())) {
+        Log.d(TAG, "onReceive: " + intent.getAction());
+        String action = intent.getAction();
+
+        if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)
+                || (BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED.equals(action)
+                    && intent.getIntExtra(BluetoothA2dp.EXTRA_STATE, -1) == BluetoothA2dp.STATE_CONNECTED)) {
+
             if (UserPreferences.isUnpauseOnBluetoothReconnect()) {
-                // Resume instantly if already connected to Bluetooth device
-                AudioDeviceInfo connectedDevice = getConnectedBluetoothAudioDevice();
-                if (connectedDevice != null) {
-                    Log.d(TAG, "Bluetooth audio already routed. Resuming immediately.");
-                    resumePlayback(connectedDevice);
-                }
+                Log.d(TAG, "Bluetooth connection confirmed. Triggering callback.");
+                // mainHandler.post ensures the audio service has the chance to finish
+                // internal routing to BT, avoiding audio leaking out the phone speaker
+                mainHandler.post(() -> resumePlayback());
             }
 
-        } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(intent.getAction())) {
-            if (UserPreferences.isPauseOnHeadsetDisconnect() && getConnectedBluetoothAudioDevice() == null) {
-                Log.d(TAG, "Bluetooth disconnected, pausing playback.");
-                // We *shouldn't* need this, but sometimes exoplayer.setHandleAudioBecomingNoisy()
-                // does not seem to work.
-                PlaybackController.bindToMedia3Service(context, MediaController::pause);
+        } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)
+                || (BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED.equals(action)
+                    && intent.getIntExtra(BluetoothA2dp.EXTRA_STATE, -1) == BluetoothA2dp.STATE_DISCONNECTED)) {
+
+            if (UserPreferences.isPauseOnHeadsetDisconnect()) { //  && getConnectedBluetoothAudioDevice() == null) {
+                Log.d(TAG, "Bluetooth disconnected. Triggering callback.");
+                pausePlayback();
             }
         }
     }
 
-    private void resumePlayback(AudioDeviceInfo device) {
+    private void resumePlayback() {
         Log.d(TAG, "Inside resumePlayback");
-        if (PlaybackPreferences.getCurrentPlayerStatus() == PlaybackPreferences.PLAYER_STATUS_PLAYING) {
-            Log.d(TAG, "App thinks it's playing, nothing to do.");
-            Log.d(TAG, "But PlaybackService says" + PlaybackService.isRunning);
-            PlaybackController.bindToMedia3Service(context, mediaController -> {
-                Log.d(TAG, "And MediaController says " +  mediaController.isPlaying());
-            });
-            return;
-        }
-
         tellUserPlaybackResumed(context);
-        Log.d(TAG, "Resume playback on device: " + device.getProductName());
         PlaybackController.bindToMedia3Service(context, MediaController::play);
     }
 
@@ -161,19 +152,26 @@ public class BluetoothReconnectPlayer extends BroadcastReceiver {
         }
     }
 
+    private void pausePlayback() {
+        PlaybackController.bindToMedia3Service(context, MediaController::pause);
+    }
+
     public void register() {
+        Log.d(TAG, "Registering BluetoothReconnectPlayer");
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
         filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
-        try {
-            context.registerReceiver(this, filter);
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to register receiver", e);
-        }
+        filter.addAction(BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED);
+
+        // System broadcasts like Bluetooth connection state don't strictly require flags,
+        // but modern Android versions prefer explicit exported status.
+        ContextCompat.registerReceiver(context, this, filter, ContextCompat.RECEIVER_EXPORTED);
+
         audioManager.registerAudioDeviceCallback(audioDeviceCallback, mainHandler);
     }
 
     public void unregister() {
+        Log.d(TAG, "Unregistering BluetoothReconnectPlayer");
         try {
             context.unregisterReceiver(this);
         } catch (IllegalArgumentException ignored) {

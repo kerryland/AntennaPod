@@ -19,6 +19,9 @@ PlaybackServiceStarter
     .start 
 PlaybackStatus
 
+MediaLibrarySessionCallback is the integration with media3
+that delivers episodes to play
+
 ## Feed Updates
 FeedUpdateWorker
     FeedUpdateManagerImpl.runOnce implicitly calls FeedUpdateWorker.doWork and 

@@ -11,6 +11,9 @@ import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedPreferences;
 
 import static de.danoeh.antennapod.model.feed.FeedPreferences.SPEED_USE_GLOBAL;
+import static de.danoeh.antennapod.storage.database.PodDBAdapter.CREATE_INDEX_QUEUE_FEEDITEM;
+import static de.danoeh.antennapod.storage.database.PodDBAdapter.KEY_FEEDITEM;
+import static de.danoeh.antennapod.storage.database.PodDBAdapter.TABLE_NAME_QUEUE;
 
 class DBUpgrader {
     /**
@@ -55,7 +58,7 @@ class DBUpgrader {
 
             // Add feeditem column to feedmedia table
             db.execSQL("ALTER TABLE " + PodDBAdapter.TABLE_NAME_FEED_MEDIA
-                    + " ADD COLUMN " + PodDBAdapter.KEY_FEEDITEM
+                    + " ADD COLUMN " + KEY_FEEDITEM
                     + " INTEGER");
             Cursor feeditemCursor = db.query(PodDBAdapter.TABLE_NAME_FEED_ITEMS,
                     new String[]{PodDBAdapter.KEY_ID, PodDBAdapter.KEY_MEDIA}, "? > 0",
@@ -65,7 +68,7 @@ class DBUpgrader {
                 ContentValues contentValues = new ContentValues();
                 do {
                     long mediaId = feeditemCursor.getLong(KEY_MEDIA_POSITION);
-                    contentValues.put(PodDBAdapter.KEY_FEEDITEM, feeditemCursor.getLong(KEY_ID_POSITION));
+                    contentValues.put(KEY_FEEDITEM, feeditemCursor.getLong(KEY_ID_POSITION));
                     db.update(PodDBAdapter.TABLE_NAME_FEED_MEDIA, contentValues, PodDBAdapter.KEY_ID + "=?", new String[]{String.valueOf(mediaId)});
                     contentValues.clear();
                 } while (feeditemCursor.moveToNext());
@@ -118,7 +121,7 @@ class DBUpgrader {
                     PodDBAdapter.TABLE_NAME_SIMPLECHAPTERS,
                     PodDBAdapter.KEY_TITLE,
                     PodDBAdapter.KEY_START,
-                    PodDBAdapter.KEY_FEEDITEM,
+                    KEY_FEEDITEM,
                     PodDBAdapter.KEY_LINK,
                     "type"));
         }
@@ -141,7 +144,7 @@ class DBUpgrader {
             // create indexes
             db.execSQL(PodDBAdapter.CREATE_INDEX_FEEDITEMS_FEED);
             db.execSQL(PodDBAdapter.CREATE_INDEX_FEEDMEDIA_FEEDITEM);
-            db.execSQL(PodDBAdapter.CREATE_INDEX_QUEUE_FEEDITEM);
+            db.execSQL(CREATE_INDEX_QUEUE_FEEDITEM);
             db.execSQL(PodDBAdapter.CREATE_INDEX_SIMPLECHAPTERS_FEEDITEM);
         }
         if (oldVersion <= 15) {
@@ -182,15 +185,15 @@ class DBUpgrader {
                     + " FROM " + PodDBAdapter.TABLE_NAME_FEED_ITEMS
                     + " INNER JOIN " + PodDBAdapter.TABLE_NAME_FEED_MEDIA + " ON "
                     + PodDBAdapter.TABLE_NAME_FEED_ITEMS + "." + PodDBAdapter.KEY_ID + "="
-                    + PodDBAdapter.TABLE_NAME_FEED_MEDIA + "." + PodDBAdapter.KEY_FEEDITEM
-                    + " LEFT OUTER JOIN " + PodDBAdapter.TABLE_NAME_QUEUE + " ON "
+                    + PodDBAdapter.TABLE_NAME_FEED_MEDIA + "." + KEY_FEEDITEM
+                    + " LEFT OUTER JOIN " + TABLE_NAME_QUEUE + " ON "
                     + PodDBAdapter.TABLE_NAME_FEED_ITEMS + "." + PodDBAdapter.KEY_ID + "="
-                    + PodDBAdapter.TABLE_NAME_QUEUE + "." + PodDBAdapter.KEY_FEEDITEM
+                    + TABLE_NAME_QUEUE + "." + KEY_FEEDITEM
                     + " WHERE "
                     + PodDBAdapter.TABLE_NAME_FEED_ITEMS + "." + PodDBAdapter.KEY_READ + " = 0 AND " // unplayed
                     + PodDBAdapter.TABLE_NAME_FEED_MEDIA + "." + PodDBAdapter.KEY_DOWNLOAD_DATE + " = 0 AND " // undownloaded
                     + PodDBAdapter.TABLE_NAME_FEED_MEDIA + "." + PodDBAdapter.KEY_POSITION + " = 0 AND " // not partially played
-                    + PodDBAdapter.TABLE_NAME_QUEUE + "." + PodDBAdapter.KEY_ID + " IS NULL"; // not in queue
+                    + TABLE_NAME_QUEUE + "." + PodDBAdapter.KEY_ID + " IS NULL"; // not in queue
             String sql = "UPDATE " + PodDBAdapter.TABLE_NAME_FEED_ITEMS
                     + " SET " + PodDBAdapter.KEY_READ + "=" + FeedItem.NEW
                     + " WHERE " + PodDBAdapter.KEY_ID + " IN (" + selectNew + ")";
@@ -353,7 +356,7 @@ class DBUpgrader {
         if (oldVersion < 3080000) {
             db.execSQL("ALTER TABLE " + PodDBAdapter.TABLE_NAME_FEED_ITEMS
                     + " ADD COLUMN " + PodDBAdapter.KEY_SOCIAL_INTERACT_URL + " TEXT");
-            db.execSQL("DELETE FROM " + PodDBAdapter.TABLE_NAME_FAVORITES + " WHERE " + PodDBAdapter.KEY_FEEDITEM
+            db.execSQL("DELETE FROM " + PodDBAdapter.TABLE_NAME_FAVORITES + " WHERE " + KEY_FEEDITEM
                     + " NOT IN (SELECT " + PodDBAdapter.KEY_ID + " FROM " + PodDBAdapter.TABLE_NAME_FEED_ITEMS + ")");
         }
 
@@ -382,6 +385,21 @@ class DBUpgrader {
                     + " ADD COLUMN " + PodDBAdapter.KEY_PERMANENT + " INTEGER DEFAULT 0");
         }
 
+        if (oldVersion < 3120008) {
+            // Remove corrupt data (there shouldn't be any really)
+            db.execSQL(
+                    """
+                    DELETE FROM Queue
+                        WHERE id NOT IN (
+                                SELECT MIN(id)
+                                FROM Queue
+                                GROUP BY feeditem
+                        )
+                    """
+            );
+            db.execSQL("DROP INDEX " + TABLE_NAME_QUEUE + "_" + KEY_FEEDITEM);
+            db.execSQL(CREATE_INDEX_QUEUE_FEEDITEM);
+        }
     }
 
 }

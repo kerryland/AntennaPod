@@ -855,15 +855,18 @@ public class PlaybackService extends MediaBrowserServiceCompat {
                 currentMediaType = MediaType.UNKNOWN;
             }
 
+            Log.d(TAG, "PlaybackService playerstatus: " + newInfo.getPlayerStatus());
             updateMediaSession(newInfo.getPlayerStatus());
             switch (newInfo.getPlayerStatus()) {
                 case INITIALIZED:
                     if (mediaPlayer.getPSMPInfo().getPlayable() != null) {
+                        Log.d(TAG, "PlaybackService initialized");
                         PlaybackPreferences.writeMediaPlaying(mediaPlayer.getPSMPInfo().getPlayable());
                     }
                     updateNotificationAndMediaSession(newInfo.getPlayable());
                     break;
                 case PREPARED:
+                    Log.d(TAG, "PlaybackService prepared");
                     if (mediaPlayer.getPSMPInfo().getPlayable() != null) {
                         PlaybackPreferences.writeMediaPlaying(mediaPlayer.getPSMPInfo().getPlayable());
                     }

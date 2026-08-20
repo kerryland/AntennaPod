@@ -14,6 +14,7 @@ public class PodcastApp extends Application {
 
     @Override
     public void onCreate() {
+        Log.d(TAG, "PodcastApp.onCreate()");
         super.onCreate();
         Thread.setDefaultUncaughtExceptionHandler(new CrashReportExceptionHandler());
         RxJavaErrorHandlerSetup.setupRxJavaErrorHandler();

@@ -262,6 +262,7 @@ public class MediaLibrarySessionCallback implements MediaLibraryService.MediaLib
             @NonNull MediaSession mediaSession, @NonNull MediaSession.ControllerInfo controller,
             @NonNull List<MediaItem> mediaItems, int startIndex, long startPositionMs) {
         int index = startIndex == C.INDEX_UNSET ? 0 : startIndex;
+        Log.d(TAG, "onSetMediaItems: " + index + " " + startPositionMs + " " + mediaItems.size());
         if (mediaItems.isEmpty()) {
             return Futures.immediateFuture(new MediaSession.MediaItemsWithStartPosition(
                     mediaItems, index, startPositionMs));
@@ -292,6 +293,7 @@ public class MediaLibrarySessionCallback implements MediaLibraryService.MediaLib
     public ListenableFuture<List<MediaItem>> onAddMediaItems(@NonNull MediaSession mediaSession,
             @NonNull MediaSession.ControllerInfo controller, @NonNull List<MediaItem> mediaItems) {
 
+        Log.d(TAG, "onAddMediaItems: " + mediaItems.size());
         if (mediaItems.isEmpty()) {
             return Futures.immediateFuture(Collections.emptyList());
         }
@@ -313,14 +315,17 @@ public class MediaLibrarySessionCallback implements MediaLibraryService.MediaLib
     @Override
     @NonNull
     public ListenableFuture<MediaSession.MediaItemsWithStartPosition> onPlaybackResumption(
-            @NonNull MediaSession mediaSession, @NonNull MediaSession.ControllerInfo controller) {
+            @NonNull MediaSession mediaSession, @NonNull MediaSession.ControllerInfo controller, boolean isForPlayback) {
+        Log.d(TAG, "onPlaybackResumption. isForPlayback=" + isForPlayback);
         SettableFuture<MediaSession.MediaItemsWithStartPosition> future = SettableFuture.create();
         disposables.add(Single.fromCallable(() -> {
             FeedMedia media = DBReader.getFeedMedia(PlaybackPreferences.getCurrentlyPlayingFeedMediaId());
+            Log.d(TAG, "'currently playing' is " + (media == null ? "nothing" : media.getEpisodeTitle()));
             // If there is no media to resume, media3 crashes. So instead of crashing, just play something random.
             if (media == null) {
                 List<FeedItem> recentQueue = DBReader.getPausedQueue(1);
                 if (!recentQueue.isEmpty()) {
+                    Log.d(TAG, "Play fallback paused media " + media);
                     media = recentQueue.get(0).getMedia();
                 }
             }
@@ -328,6 +333,7 @@ public class MediaLibrarySessionCallback implements MediaLibraryService.MediaLib
                 List<FeedItem> items = DBReader.getEpisodes(0, 1, FeedItemFilter.unfiltered(), SortOrder.DATE_NEW_OLD);
                 if (!items.isEmpty()) {
                     media = items.get(0).getMedia();
+                    Log.d(TAG, "Play first media " + media);
                 }
             }
             return media;

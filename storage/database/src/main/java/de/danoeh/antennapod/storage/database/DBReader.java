@@ -395,7 +395,7 @@ public final class DBReader {
     }
 
     /**
-     * Get next feed item in queue following a particular feeditem
+     * Get next unplayed feed item in queue following a particular feeditem
      *
      * @param item The FeedItem
      * @return The FeedItem next in queue or null if the FeedItem could not be found.
@@ -407,13 +407,13 @@ public final class DBReader {
         adapter.open();
         try (FeedItemCursor cursor = new FeedItemCursor(adapter.getNextInQueue(item))) {
             List<FeedItem> list = extractItemlistFromCursor(cursor);
-            if (!list.isEmpty()) {
-                FeedItem nextItem = list.get(0);
-                Log.d(TAG, "getNextInQueue() found next " + nextItem);
-                loadFeedDataOfFeedItemList(list);
-                return nextItem;
+            for (FeedItem nextItem : list) {
+                if (!nextItem.isPlayed()) {
+                    loadFeedDataOfFeedItemList(list);
+                    Log.d(TAG, "Should play next: " + nextItem);
+                    return nextItem;
+                }
             }
-            Log.d(TAG, "getNextInQueue() found nothing next");
             return null;
         } catch (Exception e) {
             return null;

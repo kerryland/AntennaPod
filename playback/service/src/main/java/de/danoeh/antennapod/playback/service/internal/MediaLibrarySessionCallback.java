@@ -325,15 +325,16 @@ public class MediaLibrarySessionCallback implements MediaLibraryService.MediaLib
             if (media == null) {
                 List<FeedItem> recentQueue = DBReader.getPausedQueue(1);
                 if (!recentQueue.isEmpty()) {
-                    Log.d(TAG, "Play fallback paused media " + media);
                     media = recentQueue.get(0).getMedia();
+                    Log.d(TAG, "Play fallback paused media " + media.getEpisodeTitle());
                 }
             }
             if (media == null) {
-                List<FeedItem> items = DBReader.getEpisodes(0, 1, FeedItemFilter.unfiltered(), SortOrder.DATE_NEW_OLD);
+                List<FeedItem> items = DBReader.getEpisodes(0, 1,
+                        FeedItemFilter.unfiltered(), UserPreferences.getPrefGlobalSortedOrder());
                 if (!items.isEmpty()) {
                     media = items.get(0).getMedia();
-                    Log.d(TAG, "Play first media " + media);
+                    Log.d(TAG, "Play first media " + media.getEpisodeTitle());
                 }
             }
             return media;

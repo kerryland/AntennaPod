@@ -131,7 +131,7 @@ public class EpisodeMultiSelectActionHandler {
             item.setRemoved(true);
         }
         DBWriter.markItemsPlayed(FeedItem.PLAYED, true, items);
-       // DBWriter.removeQueueItem(activity, true,  getSelectedIds(items));
+        DBWriter.removeQueueItem(activity, true,  getSelectedIds(items));
 
         for (FeedItem item : items) {
             if (!item.getFeed().isLocalFeed() && item.getFeed().getState() != Feed.STATE_NOT_SUBSCRIBED

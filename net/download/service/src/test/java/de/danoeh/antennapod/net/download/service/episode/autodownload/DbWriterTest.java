@@ -824,10 +824,6 @@ public class DbWriterTest {
 
         final List<FeedItem> queue = DBReader.getQueue();
 
-        for (FeedItem feedItem : queue) {
-            System.out.println(feedItem.getId() + " " + feedItem.getTitle());
-        }
-
         int[] expectedIds = { 1, 2, 3, 6, 7, 8, 9, 10, 4, 5 };
         assertEquals(expectedIds.length, queue.size());
 

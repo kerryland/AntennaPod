@@ -249,10 +249,6 @@ public class DbReaderTest {
             List<FeedItem> savedQueue = DBReader.getQueue();
             assertEquals(10, savedQueue.size());
 
-            for (int i = 0; i < savedQueue.size(); i++) {
-                System.out.println(i + " QUEUE ID: " + savedQueue.get(i).getId());
-            }
-
             int successes = 0;
             // When we iterate through the queue, we should get the correct 'next' item
             for (int i = 0; i < savedQueue.size(); i++) {

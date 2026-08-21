@@ -176,11 +176,6 @@ public class ItemEnqueuePositionCalculatorTest {
 
         queue.add(posActual, itemToAdd);
         assertEquals(message, idsExpected.size(), queue.size());
-        System.out.println("QUEUE: " );
-        for (FeedItem feedItem : queue) {
-            System.out.print(feedItem.getId() + " ");
-        }
-        System.out.println();
         for (int i = 0; i < idsExpected.size(); i++) {
             assertEquals(message + " row " + i + " of " + idsExpected.size(), (long) idsExpected.get(i), queue.get(i).getId());
         }

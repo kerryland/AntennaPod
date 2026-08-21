@@ -282,6 +282,7 @@ public class FeedItemMenuHandler {
 
         // we're marking it as [un]played since the user didn't actually play it
         // but they don't want it considered 'NEW' anymore
+        item.setRemoved(true);
         DBWriter.markItemsPlayed(playState, false, Collections.singletonList(item));
 
         Context context = fragment.requireContext();
@@ -324,9 +325,7 @@ public class FeedItemMenuHandler {
         if (showSnackbar) {
             EventBus.getDefault().post(new MessageEvent(message,
                     ctx -> {
-                        if (itemOldState == FeedItem.NEW) {
-                            item.setRemoved(false);
-                        }
+                        item.setRemoved(false);
                         DBWriter.markItemsPlayed(item.getPlayState(), false, Collections.singletonList(item));
                         // don't forget to cancel the thing that's going to remove the media
                         h.removeCallbacks(r);

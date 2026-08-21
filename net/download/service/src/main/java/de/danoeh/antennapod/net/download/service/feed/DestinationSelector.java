@@ -38,7 +38,8 @@ public class DestinationSelector {
                 continue;
             }
 
-            SortOrder sortOrder = (feed.getPreferences().getPlaybackOrder() == FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST)
+            boolean feedIsOldestFirst = feed.getPreferences().getPlaybackOrder() == FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST;
+            SortOrder sortOrder = feedIsOldestFirst
                     ? SortOrder.DATE_OLD_NEW
                     : SortOrder.DATE_NEW_OLD;
 
@@ -57,9 +58,11 @@ public class DestinationSelector {
             int maxEpisodes = feed.getPreferences().getMaxEpisodes();
             int addCount = 0;
 
-            for (FeedItem feedItem : feedItems) {
-                if (feedItem.isTagged(FeedItem.TAG_QUEUE_PERMANENT)) {
-                    maxEpisodes--;
+            if (feedIsOldestFirst) {
+                for (FeedItem feedItem : feedItems) {
+                    if (feedItem.isTagged(FeedItem.TAG_QUEUE_PERMANENT)) {
+                        maxEpisodes--;
+                    }
                 }
             }
 

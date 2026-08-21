@@ -131,7 +131,9 @@ public class FeedItemFilter implements Serializable {
             return false;
         } else if (showNotQueued && item.isTagged(FeedItem.TAG_QUEUE)) {
             return false;
-        } else if (excludeRemoved && !item.isTagged(FeedItem.TAG_QUEUE_PERMANENT)) {
+        } else if (excludePermanent && item.isTagged(FeedItem.TAG_QUEUE_PERMANENT)) {
+            return false;
+        } else if (excludeRemoved && item.isRemoved()) {
             return false;
         } else if (showDownloaded && !item.isDownloaded()) {
             return false;

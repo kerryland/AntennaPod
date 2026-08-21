@@ -51,8 +51,8 @@ public class FeedItem implements Serializable {
     private String podcastIndexTranscriptUrl;
     private String podcastIndexTranscriptType;
     private Transcript transcript;
-    // Item has been manually removed from the inbox.
-    // Such episodes are never automatically returned to the inbox
+    // Item has been manually removed from the inbox or queue.
+    // Such episodes are never automatically returned to the inbox or queue
     // via DestinationSelector.populateInboxOrQueue
     private boolean removed;
 

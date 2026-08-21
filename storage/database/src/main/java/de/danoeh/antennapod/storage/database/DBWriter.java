@@ -697,7 +697,6 @@ public class DBWriter {
             }
             if (item.getPlayState() == FeedItem.NEW) {
                 wasInInbox = true;
-                item.setRemoved(true);
             }
             item.setPlayState(played);
         }

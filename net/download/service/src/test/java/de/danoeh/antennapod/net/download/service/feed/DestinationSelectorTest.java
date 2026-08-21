@@ -269,8 +269,87 @@ public class DestinationSelectorTest {
         assertEquals(0, inbox.size());
         queue = DBReader.getQueue();
         assertEquals(3, queue.size());
+    }
+
+    @Test
+    // "permanent" items in the queue should not be removed when counting "max episodes"
+    // but new ones should be added for NEWEST_FIRST
+    public void testQueuePopulated_Newest_First_Max_2_Episodes_Into_Queue_Ignores_Permanent() {
+        List<FeedItem> feedItems = new ArrayList<>();
+        List<FeedItem> queueItems = new ArrayList<>();
+
+        // When we have 6 unplayed podcasts
+        feedItems.add(makeTestFeedItem(17, FeedItemLocation.UNPLAYED, queueItems));
+        feedItems.add(makeTestFeedItem(18, FeedItemLocation.QUEUE_UNPLAYED, queueItems));
+        feedItems.add(makeTestFeedItem(19, FeedItemLocation.QUEUE_UNPLAYED, queueItems));
+        feedItems.add(makeTestFeedItem(20, FeedItemLocation.QUEUE_UNPLAYED, queueItems));
+        feedItems.add(makeTestFeedItem(21, FeedItemLocation.UNPLAYED, queueItems));
+        feedItems.add(makeTestFeedItem(22, FeedItemLocation.INBOX, queueItems));
+
+        // And three of the podcasts are already "permanent" in the queue
+        getFeedItem(feedItems, 18).addTag(FeedItem.TAG_QUEUE_PERMANENT);
+        getFeedItem(feedItems, 19).addTag(FeedItem.TAG_QUEUE_PERMANENT);
+        getFeedItem(feedItems, 20).addTag(FeedItem.TAG_QUEUE_PERMANENT);
+
+        Feed feed = prepareTestData(FeedPreferences.NewEpisodesAction.ADD_TO_QUEUE,
+                FeedPreferences.PlaybackOrderSetting.NEWEST_FIRST,
+                1, feedItems, queueItems);
+
+        FeedDatabaseWriter.updateFeed(context, feed, false);
+
+        // When we populate the queue or inbox with "max 2" episodes
+        //----------------------------------------------------------------------
+        DestinationSelector.populateInboxOrQueue(context, Collections.singletonList(feed));
+        //----------------------------------------------------------------------
+        DBWriter.waitForDatabase(); // Make sure the database is updated
+
+        // Then the inbox should have no episodes
+        List<FeedItem> inbox = DBReader.getFeedItemList(feed, new FeedItemFilter(FeedItemFilter.NEW), SortOrder.DATE_OLD_NEW, 0, Integer.MAX_VALUE);
+        assertEquals(0, inbox.size());
+
+        // and the queue should still have and extra episodes (ignoring max 1)
+        List<FeedItem> queue = DBReader.getQueue();
+        assertEquals(4, queue.size());
+        assertEquals("EPISODE 18", queue.get(0).getTitle());
+        assertEquals("EPISODE 19", queue.get(1).getTitle());
+        assertEquals("EPISODE 20", queue.get(2).getTitle());
+        assertEquals("EPISODE 22", queue.get(3).getTitle()); // was in inbox
+
+        // Now run it again to make sure nothing changes
+        DestinationSelector.populateInboxOrQueue(context, Collections.singletonList(feed));
+        DBWriter.waitForDatabase(); // Make sure the database is updated
+
+        inbox = DBReader.getFeedItemList(feed, new FeedItemFilter(FeedItemFilter.NEW), SortOrder.DATE_OLD_NEW, 0, Integer.MAX_VALUE);
+        assertEquals(0, inbox.size());
+        queue = DBReader.getQueue();
+
+        for (FeedItem feedItem : queue) {
+            System.out.println(feedItem.getTitle());
+        }
+
+        assertEquals(4, queue.size());
+
+        // When an even newer item, and it should replace the previous "most new" item
+        feed = DBReader.getFeed(feed.getId(), false, 0, Integer.MAX_VALUE);
+        feed.getItems().add(makeTestFeedItem(23, FeedItemLocation.INBOX, queueItems));
+        FeedDatabaseWriter.updateFeed(context, feed, false);
+
+        // and repopulate
+        DestinationSelector.populateInboxOrQueue(context, Collections.singletonList(feed));
+        DBWriter.waitForDatabase(); // Make sure the database is updated
+
+        // Then episode 22 should be replaced by episode 23
+        inbox = DBReader.getFeedItemList(feed, new FeedItemFilter(FeedItemFilter.NEW), SortOrder.DATE_OLD_NEW, 0, Integer.MAX_VALUE);
+        assertEquals(0, inbox.size());
+        queue = DBReader.getQueue();
+        assertEquals(4, queue.size());
+        assertEquals("EPISODE 18", queue.get(0).getTitle());
+        assertEquals("EPISODE 19", queue.get(1).getTitle());
+        assertEquals("EPISODE 20", queue.get(2).getTitle());
+        assertEquals("EPISODE 23", queue.get(3).getTitle());
 
     }
+
 
     private FeedItem getFeedItem(List<FeedItem> feedItems, int day) {
         for (FeedItem feedItem : feedItems) {

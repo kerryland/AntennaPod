@@ -114,6 +114,14 @@
                     app:srcCompat="@drawable/ic_videocam" />
 
                 <ImageView
+                    android:id="@+id/isPermanent"
+                    android:layout_width="12sp"
+                    android:layout_height="12sp"
+                    android:contentDescription="@string/is_permanent_label"
+                    app:tint="?attr/colorOnSurfaceVariant"
+                    app:srcCompat="@drawable/ic_push_pin" />
+
+                <ImageView
                     android:id="@+id/isFavorite"
                     android:layout_width="12sp"
                     android:layout_height="12sp"

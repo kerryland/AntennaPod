@@ -51,6 +51,7 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
     private final TextView size;
     public final ImageView isInbox;
     public final ImageView isInQueue;
+    private final ImageView isPermanent;
     private final ImageView isVideo;
     public final ImageView isFavorite;
     private final ProgressBar progressBar;
@@ -79,6 +80,7 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
         duration = itemView.findViewById(R.id.txtvDuration);
         progressBar = itemView.findViewById(R.id.progressBar);
         isInQueue = itemView.findViewById(R.id.ivInPlaylist);
+        isPermanent = itemView.findViewById(R.id.isPermanent);
         isVideo = itemView.findViewById(R.id.ivIsVideo);
         isInbox = itemView.findViewById(R.id.statusInbox);
         isFavorite = itemView.findViewById(R.id.isFavorite);
@@ -107,6 +109,8 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
         isInbox.setVisibility(item.isNew() ? View.VISIBLE : View.GONE);
         isFavorite.setVisibility(item.isTagged(FeedItem.TAG_FAVORITE) ? View.VISIBLE : View.GONE);
         isInQueue.setVisibility(item.isTagged(FeedItem.TAG_QUEUE) ? View.VISIBLE : View.GONE);
+        isPermanent.setVisibility(item.isTagged(FeedItem.TAG_QUEUE_PERMANENT) ? View.VISIBLE : View.GONE);
+
         container.setAlpha(item.isPlayed() ? 0.5f : 1.0f);
 
         ItemActionButton actionButton = ItemActionButton.forItem(item);
@@ -119,6 +123,7 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
             secondaryActionProgress.setPercentage(0, item);
             secondaryActionProgress.setIndeterminate(false);
             isVideo.setVisibility(View.GONE);
+            isPermanent.setVisibility(View.GONE);
             progressBar.setVisibility(View.GONE);
             duration.setVisibility(View.GONE);
             position.setVisibility(View.GONE);
@@ -205,6 +210,7 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
         isVideo.setVisibility(View.GONE);
         isFavorite.setVisibility(View.GONE);
         isInQueue.setVisibility(View.GONE);
+        isPermanent.setVisibility(View.GONE);
         title.setText("███████");
         feedTitle.setText("");
         pubDate.setText("████");
@@ -267,6 +273,7 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
     public void hideSeparatorIfNecessary() {
         boolean hasIcons = isInbox.getVisibility() == View.VISIBLE
                 || isInQueue.getVisibility() == View.VISIBLE
+                || isPermanent.getVisibility() == View.VISIBLE
                 || isVideo.getVisibility() == View.VISIBLE
                 || isFavorite.getVisibility() == View.VISIBLE
                 || isInbox.getVisibility() == View.VISIBLE;

@@ -82,8 +82,8 @@ public class BluetoothReconnectPlayer extends BroadcastReceiver {
                 || (BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED.equals(action)
                     && intent.getIntExtra(BluetoothA2dp.EXTRA_STATE, -1) == BluetoothA2dp.STATE_DISCONNECTED)) {
 
-            if (UserPreferences.isPauseOnHeadsetDisconnect()) { //  && getConnectedBluetoothAudioDevice() == null) {
-                Log.d(TAG, "Bluetooth disconnected. Triggering callback.");
+            if (UserPreferences.isPauseOnHeadsetDisconnect() && getConnectedBluetoothAudioDevice() == null) {
+                Log.d(TAG, "Bluetooth disconnected. Pausing");
                 pausePlayback();
             }
         }

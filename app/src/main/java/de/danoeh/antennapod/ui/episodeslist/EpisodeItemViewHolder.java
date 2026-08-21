@@ -144,7 +144,7 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
         isVideo.setVisibility(media.getMediaType() == MediaType.VIDEO ? View.VISIBLE : View.GONE);
         duration.setVisibility(media.getDuration() > 0 ? View.VISIBLE : View.GONE);
 
-        itemView.setActivated(PlaybackStatus.isCurrentlyPlaying(media));
+        itemView.setActivated(PlaybackStatus.isPlaying(media));
 
         if (DownloadServiceInterface.get().isDownloadingEpisode(media.getDownloadUrl())) {
             float percent = 0.01f * DownloadServiceInterface.get().getProgress(media.getDownloadUrl());

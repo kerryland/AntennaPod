@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -167,4 +168,28 @@ public abstract class DateUtils {
         }
         return result;
     }
+
+    public static boolean isToday(final Date date) {
+        if (date == null) {
+            return false;
+        }
+        Calendar now = Calendar.getInstance();
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        return now.get(Calendar.YEAR) == cal.get(Calendar.YEAR)
+                && now.get(Calendar.DAY_OF_YEAR) == cal.get(Calendar.DAY_OF_YEAR);
+    }
+
+    public static boolean isYesterday(final Date date) {
+        if (date == null) {
+            return false;
+        }
+        Calendar yesterday = Calendar.getInstance();
+        yesterday.add(Calendar.DAY_OF_YEAR, -1);
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        return yesterday.get(Calendar.YEAR) == cal.get(Calendar.YEAR)
+                && yesterday.get(Calendar.DAY_OF_YEAR) == cal.get(Calendar.DAY_OF_YEAR);
+    }
+
 }

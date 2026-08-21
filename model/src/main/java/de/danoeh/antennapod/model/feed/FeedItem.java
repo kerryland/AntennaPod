@@ -81,6 +81,11 @@ public class FeedItem implements Serializable {
     private boolean autoDownloadEnabled = true;
 
     /**
+     * The date this item was added to the inbox or queue. Write-once: never overwritten once set.
+     */
+    private Date addedToInboxOrQueue;
+
+    /**
      * Any tags assigned to this item
      */
     private final Set<String> tags = new HashSet<>();
@@ -502,6 +507,24 @@ public class FeedItem implements Serializable {
 
     public void setRemoved(boolean removed) {
         this.removed = removed;
+    }
+
+    /**
+     * Returns the date this item was added to the inbox or queue, or null if it never was.
+     */
+    @Nullable
+    public Date getAddedToInboxOrQueue() {
+        return addedToInboxOrQueue == null ? null : (Date) addedToInboxOrQueue.clone();
+    }
+
+    /**
+     * Sets the date this item was added to the inbox or queue.
+     * This is a write-once property and is ignored if it has already been set.
+     */
+    public void setAddedToInboxOrQueue(Date date) {
+        if (date != null && addedToInboxOrQueue == null) {
+            this.addedToInboxOrQueue = (Date) date.clone();
+        }
     }
 
     @NonNull

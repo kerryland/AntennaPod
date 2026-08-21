@@ -57,7 +57,7 @@ public class PodDBAdapter {
 
     private static final String TAG = "PodDBAdapter";
     public static final String DATABASE_NAME = "Antennapod.db";
-    public static final int VERSION = 3120008;
+    public static final int VERSION = 3120009;
 
     /**
      * Maximum number of arguments for IN-operator.
@@ -135,6 +135,7 @@ public class PodDBAdapter {
     public static final String KEY_STATE = "state";
     public static final String KEY_PODCASTINDEX_TRANSCRIPT_URL = "podcastindex_transcript_url";
     public static final String KEY_PODCASTINDEX_TRANSCRIPT_TYPE = "podcastindex_transcript_type";
+    public static final String KEY_ADDED_TO_INBOX_OR_QUEUE = "added_to_inbox_or_queue";
 
     // Table names
     public static final String TABLE_NAME_FEEDS = "Feeds";
@@ -206,7 +207,8 @@ public class PodDBAdapter {
             + KEY_SOCIAL_INTERACT_URL + " TEXT,"
             + KEY_FEED_PRIORITY + " INTEGER DEFAULT 5, "
             + KEY_PLAYBACK_ORDER + " INTEGER DEFAULT 1,"
-            + KEY_REMOVED + " INTEGER DEFAULT 0)";
+            + KEY_REMOVED + " INTEGER DEFAULT 0,"
+            + KEY_ADDED_TO_INBOX_OR_QUEUE + " INTEGER DEFAULT 0)";
 
     private static final String CREATE_TABLE_FEED_MEDIA = "CREATE TABLE "
             + TABLE_NAME_FEED_MEDIA + " (" + TABLE_PRIMARY_KEY + KEY_DURATION
@@ -303,6 +305,7 @@ public class PodDBAdapter {
             + TABLE_NAME_FEED_ITEMS + "." + KEY_PODCASTINDEX_TRANSCRIPT_TYPE + ", "
             + TABLE_NAME_FEED_ITEMS + "." + KEY_PODCASTINDEX_TRANSCRIPT_URL + ", "
             + TABLE_NAME_FEED_ITEMS + "." + KEY_REMOVED + ", "
+            + TABLE_NAME_FEED_ITEMS + "." + KEY_ADDED_TO_INBOX_OR_QUEUE + ", "
             + TABLE_NAME_FEED_ITEMS + "." + KEY_ID
                     +" IN (SELECT " + TABLE_NAME_FAVORITES + "." + KEY_FEEDITEM
                     + " FROM " + TABLE_NAME_FAVORITES + ") AS " + SELECT_KEY_IS_FAVORITE + ", "
@@ -768,6 +771,9 @@ public class PodDBAdapter {
             values.put(KEY_PODCASTINDEX_TRANSCRIPT_URL, url);
         }
         values.put(KEY_REMOVED, item.isRemoved() ? 1 : 0);
+        if (item.getAddedToInboxOrQueue() != null) {
+            values.put(KEY_ADDED_TO_INBOX_OR_QUEUE, item.getAddedToInboxOrQueue().getTime());
+        }
 
         if (item.getId() == 0) {
             item.setId(db.insert(TABLE_NAME_FEED_ITEMS, null, values));

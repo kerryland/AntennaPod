@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -83,9 +84,11 @@ public class DestinationSelector {
                     if (episodeDestination == FeedPreferences.NewEpisodesAction.ADD_TO_INBOX) {
                         if (!feedItem.isNew()) {
                             feedItem.setNew();
+                            feedItem.setAddedToInboxOrQueue(new Date());
                             inboxStateChanges.add(feedItem);
                         }
                     } else if (episodeDestination == FeedPreferences.NewEpisodesAction.ADD_TO_QUEUE) {
+                        feedItem.setAddedToInboxOrQueue(new Date());
                         queueAdditions.add(feedItem);
                     }
                 } else { // Limit exceeded
@@ -103,6 +106,9 @@ public class DestinationSelector {
 
         if (!inboxStateChanges.isEmpty()) {
             DBWriter.setItemList(inboxStateChanges);
+        }
+        if (!queueAdditions.isEmpty()) {
+            DBWriter.setItemList(queueAdditions);
         }
 
         long[] removeFromQueueItemIds = new long[queueRemovals.size()];

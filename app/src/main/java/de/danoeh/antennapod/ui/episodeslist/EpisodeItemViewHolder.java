@@ -1,6 +1,8 @@
 package de.danoeh.antennapod.ui.episodeslist;
 
 import android.app.Activity;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.text.Layout;
 import android.text.format.Formatter;
 import android.util.Log;
@@ -12,16 +14,24 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.cardview.widget.CardView;
+import androidx.core.graphics.ColorUtils;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.InsetDrawable;
+import android.graphics.drawable.RippleDrawable;
+import android.graphics.drawable.StateListDrawable;
 
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.model.feed.Feed;
+import de.danoeh.antennapod.parser.feed.util.DateUtils;
 import de.danoeh.antennapod.ui.CoverLoader;
 import de.danoeh.antennapod.actionbutton.ItemActionButton;
 import de.danoeh.antennapod.playback.service.PlaybackStatus;
 import de.danoeh.antennapod.event.playback.PlaybackPositionEvent;
 import de.danoeh.antennapod.ui.common.DateFormatter;
+import de.danoeh.antennapod.ui.common.ThemeUtils;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedMedia;
 import de.danoeh.antennapod.model.playback.MediaType;
@@ -32,6 +42,8 @@ import de.danoeh.antennapod.net.common.NetworkUtils;
 import de.danoeh.antennapod.model.playback.Playable;
 import de.danoeh.antennapod.ui.common.CircularProgressBar;
 import de.danoeh.antennapod.ui.episodes.ImageResourceUtils;
+
+import java.util.Date;
 
 /**
  * Holds the view which shows FeedItems.
@@ -112,6 +124,7 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
         isPermanent.setVisibility(item.isTagged(FeedItem.TAG_QUEUE_PERMANENT) ? View.VISIBLE : View.GONE);
 
         container.setAlpha(item.isPlayed() ? 0.5f : 1.0f);
+        setFreshBackground();
 
         ItemActionButton actionButton = ItemActionButton.forItem(item);
         actionButton.configure(secondaryActionButton, secondaryActionIcon, activity);
@@ -230,6 +243,57 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
                     .withCoverView(cover)
                     .load();
         }
+    }
+
+    /**
+     * Highlights items that were added to the inbox or queue today (or yesterday, in a lighter
+     * shade). The background is built programmatically so no drawable resources are duplicated.
+     */
+    private void setFreshBackground() {
+        Date added = item.getAddedToInboxOrQueue();
+        if (added == null) {
+            container.setBackgroundResource(R.drawable.bg_episode_list_item);
+            return;
+        }
+        int color = ThemeUtils.getColorFromAttr(activity, R.attr.colorBackgroundFloating);
+        color = ColorUtils.blendARGB(color, Color.WHITE, 0.8f);
+
+        if (DateUtils.isToday(added)) {
+            container.setBackground(buildFreshBackground(ColorUtils.setAlphaComponent(color, 20)));
+        } else if (DateUtils.isYesterday(added)) {
+            container.setBackground(buildFreshBackground(ColorUtils.setAlphaComponent(color, 10)));
+        } else {
+            container.setBackgroundResource(R.drawable.bg_episode_list_item);
+        }
+    }
+
+    private Drawable buildFreshBackground(int color) {
+        float density = activity.getResources().getDisplayMetrics().density;
+        int cornerRadius = (int) (12 * density);
+        int insetH = (int) (4 * density);
+        int insetV = (int) (2 * density);
+
+        GradientDrawable normalShape = new GradientDrawable();
+        normalShape.setCornerRadius(cornerRadius);
+        normalShape.setColor(color);
+
+        GradientDrawable selectedShape = new GradientDrawable();
+        selectedShape.setCornerRadius(cornerRadius);
+        selectedShape.setColor(ThemeUtils.getColorFromAttr(activity, R.attr.colorSecondaryContainer));
+
+        StateListDrawable content = new StateListDrawable();
+        content.addState(new int[]{android.R.attr.state_activated}, selectedShape);
+        content.addState(new int[]{android.R.attr.state_selected}, selectedShape);
+        content.addState(new int[]{}, normalShape);
+
+        GradientDrawable mask = new GradientDrawable();
+        mask.setCornerRadius(cornerRadius);
+        mask.setColor(0xFF000000);
+
+        RippleDrawable ripple = new RippleDrawable(
+                ColorStateList.valueOf(ThemeUtils.getColorFromAttr(activity, R.attr.colorControlHighlight)),
+                content, mask);
+        return new InsetDrawable(ripple, insetH, insetV, insetH, insetV);
     }
 
     private void updateDuration(PlaybackPositionEvent event) {

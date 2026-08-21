@@ -400,6 +400,11 @@ class DBUpgrader {
             db.execSQL("DROP INDEX " + TABLE_NAME_QUEUE + "_" + KEY_FEEDITEM);
             db.execSQL(CREATE_INDEX_QUEUE_FEEDITEM);
         }
+
+        if (oldVersion < 3120009) {
+            db.execSQL("ALTER TABLE " + PodDBAdapter.TABLE_NAME_FEED_ITEMS
+                    + " ADD COLUMN " + PodDBAdapter.KEY_ADDED_TO_INBOX_OR_QUEUE + " INTEGER DEFAULT 0");
+        }
     }
 
 }

@@ -118,7 +118,7 @@ public class MenuItemAssistant {
             for (int element = 0; element < queue.size(); element++) {
                 FeedItem feedItem = queue.get(element);
                 if (controller.getCurrentMediaItem() != null) {
-                    if ((MediaItemAdapter.fromPlayableStub(feedItem.getMedia()).mediaId).equals(controller.getCurrentMediaItem().mediaId)) {
+                    if (MediaItemAdapter.fromMediaIdStub(feedItem.getMedia().getId()).mediaId.equals(controller.getCurrentMediaItem().mediaId)) {
                         callback.onCurrentPosition(element);
                         break;
                     }

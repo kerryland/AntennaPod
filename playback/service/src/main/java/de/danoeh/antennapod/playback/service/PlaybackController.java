@@ -535,14 +535,19 @@ public abstract class PlaybackController {
         ListenableFuture<MediaController> controllerFuture =
                 new MediaController.Builder(context, sessionToken).buildAsync();
         controllerFuture.addListener(() -> {
+            MediaController controller = null;
             try {
-                MediaController controller = controllerFuture.get();
+                controller = controllerFuture.get();
                 consumer.accept(controller);
                 if (releaseAfterCallback) {
                     controller.release();
                 }
             } catch (ExecutionException | InterruptedException e) {
                 e.printStackTrace();
+            } finally {
+                if (controller != null) {
+                    controller.release();
+                }
             }
         }, MoreExecutors.directExecutor());
 

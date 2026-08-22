@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.android.library)
+    id("com.android.library")
 }
 apply from: "../../common.gradle"
 
@@ -8,5 +8,7 @@ android {
 }
 
 dependencies {
-    annotationProcessor libs.androidx.annotation
+    annotationProcessor "androidx.annotation:annotation:$annotationVersion"
+    implementation "androidx.media3:media3-common:$media3Version"
+    implementation "androidx.media3:media3-session:$media3Version"
 }

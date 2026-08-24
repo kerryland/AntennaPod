@@ -21,7 +21,7 @@ import de.danoeh.antennapod.playback.base.MediaItemAdapter;
 import de.danoeh.antennapod.playback.service.PlaybackController;
 
 public class MenuItemAssistant {
-    private static String TAG = "MenuItemAssistant";
+    private static final String TAG = "MenuItemAssistant";
     private static final long SKIP_TIMEOUT_MS = 2000;
 
     /**

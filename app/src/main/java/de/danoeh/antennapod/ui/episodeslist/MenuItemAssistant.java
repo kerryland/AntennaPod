@@ -5,11 +5,11 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-import androidx.annotation.Nullable;
+import androidx.annotation.NonNull;
 import androidx.annotation.OptIn;
 import androidx.media3.common.MediaItem;
-import androidx.media3.common.Player;
 import androidx.media3.common.util.UnstableApi;
+import androidx.media3.session.MediaController;
 
 import java.util.HashSet;
 import java.util.List;
@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.playback.base.MediaItemAdapter;
 import de.danoeh.antennapod.playback.service.PlaybackController;
+import de.danoeh.antennapod.playback.service.PlaybackStatus;
 
 public class MenuItemAssistant {
     private static final String TAG = "MenuItemAssistant";
@@ -44,15 +45,8 @@ public class MenuItemAssistant {
                 }
             }
 
-            MediaItem currentMediaItem = controller.getCurrentMediaItem();
-            long currentMediaId;
-            try {
-                currentMediaId = currentMediaItem == null ? -1 : Long.parseLong(currentMediaItem.mediaId);
-            } catch (NumberFormatException e) {
-                currentMediaId = -1;
-            }
-
-            if (currentMediaId == -1 || !knownMediaItems.contains(currentMediaId)) {
+            final long mediaIdToSkip= getPlayingMediaId(controller);
+            if (mediaIdToSkip == -1 || !knownMediaItems.contains(mediaIdToSkip)) {
                 // Nothing relevant is playing, nothing to skip
                 if (callback != null) {
                     callback.run();
@@ -63,50 +57,69 @@ public class MenuItemAssistant {
 
             Log.d(TAG, "skipIfPlaying: found current podcast -- now seekToNextMediaItem");
 
-            Handler handler = new Handler(Looper.getMainLooper());
-            AtomicBoolean finished = new AtomicBoolean(false);
-            final Player.Listener[] listenerHolder = new Player.Listener[1];
-            Runnable finish = () -> {
-                if (!finished.compareAndSet(false, true)) {
-                    return;
-                }
-                handler.removeCallbacksAndMessages(null);
-                if (listenerHolder[0] != null) {
-                    controller.removeListener(listenerHolder[0]);
-                }
-                controller.release();
-                Log.d(TAG, "skipIfPlaying: media item changed, running callback");
-                if (callback != null) {
-                    callback.run();
-                }
-            };
+            Handler waitForNextMediaItem = new Handler(Looper.getMainLooper());
+            Runnable skipIfPlayingFinished = skipIfPlayingFinished(callback, controller, waitForNextMediaItem);
 
-            Player.Listener transitionListener = new Player.Listener() {
+            // Check if 'seekToNextMediaItem' worked by polling because I could not
+            // get Player.Listener.onMediaItemTransition to fire.
+            waitForNextMediaItem.postDelayed(new Runnable() {
                 @Override
-                public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {
-                    long newMediaId;
-                    try {
-                        newMediaId = mediaItem == null ? -1 : Long.parseLong(mediaItem.mediaId);
-                    } catch (NumberFormatException e) {
-                        newMediaId = -1;
+                public void run() {
+                    long currentId = getPlayingMediaId(controller);
+                    if (currentId != mediaIdToSkip) {
+                        // We've moved! Now check if we're on a removed item or not
+                        if (!knownMediaItems.contains(currentId)) {
+                            skipIfPlayingFinished.run();
+                        } else {
+                            // We're on another removed item, skip again
+                            controller.seekToNextMediaItem();
+                            waitForNextMediaItem.postDelayed(this, 100);
+                        }
+                    } else {
+                        // Still on same item, check again
+                        waitForNextMediaItem.postDelayed(this, 100);
                     }
-                    if (knownMediaItems.contains(newMediaId)) {
-                        // The next item is also being removed, keep skipping
-                        Log.d(TAG, "skipIfPlaying: next item is also removed, skipping again");
-                        handler.removeCallbacksAndMessages(null);
-                        handler.postDelayed(finish, SKIP_TIMEOUT_MS);
-                        controller.seekToNextMediaItem();
-                        return;
-                    }
-                    finish.run();
                 }
-            };
-            listenerHolder[0] = transitionListener;
-            controller.addListener(transitionListener);
-            // Safety net in case no transition happens (e.g. no next item exists)
-            handler.postDelayed(finish, SKIP_TIMEOUT_MS);
+            }, 100);
+
             controller.seekToNextMediaItem();
+
+            // Fire the callack after the timeout, just in case
+            waitForNextMediaItem.postDelayed(skipIfPlayingFinished, SKIP_TIMEOUT_MS);
         });
+    }
+
+    private static long getPlayingMediaId(MediaController controller) {
+        MediaItem current = controller.getCurrentMediaItem();
+        long currentId;
+        try {
+            currentId = current == null ? -1 : Long.parseLong(current.mediaId);
+        } catch (NumberFormatException e) {
+            currentId = -1;
+        }
+        return currentId;
+    }
+
+    @NonNull
+    private static Runnable skipIfPlayingFinished(Runnable callback, MediaController controller, Handler handler) {
+        AtomicBoolean finished = new AtomicBoolean(false);
+
+        Runnable finish = () -> {
+            Log.d(TAG, "skipIfPlayingFinished");
+            // Make sure we only 'finish' once
+            if (!finished.compareAndSet(false, true)) {
+                return;
+            }
+            // Cleanup
+            handler.removeCallbacksAndMessages(null);
+            controller.release();
+
+            Log.d(TAG, "skipIfPlaying: media item changed, running callback");
+            if (callback != null) {
+                callback.run();
+            }
+        };
+        return finish;
     }
 
     public interface CurrentPositionCallback {

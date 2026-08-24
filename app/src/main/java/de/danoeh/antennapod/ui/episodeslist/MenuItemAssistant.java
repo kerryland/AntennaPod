@@ -17,7 +17,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import de.danoeh.antennapod.model.feed.FeedItem;
-import de.danoeh.antennapod.playback.base.MediaItemAdapter;
 import de.danoeh.antennapod.playback.service.PlaybackController;
 import de.danoeh.antennapod.playback.service.PlaybackStatus;
 
@@ -130,11 +129,9 @@ public class MenuItemAssistant {
         PlaybackController.bindToMedia3Service(context, controller -> {
             for (int element = 0; element < queue.size(); element++) {
                 FeedItem feedItem = queue.get(element);
-                if (controller.getCurrentMediaItem() != null) {
-                    if (MediaItemAdapter.fromMediaIdStub(feedItem.getMedia().getId()).mediaId.equals(controller.getCurrentMediaItem().mediaId)) {
-                        callback.onCurrentPosition(element);
-                        break;
-                    }
+                if (PlaybackStatus.isPlaying(feedItem.getMedia())) {
+                    callback.onCurrentPosition(element);
+                    break;
                 }
             }
         });

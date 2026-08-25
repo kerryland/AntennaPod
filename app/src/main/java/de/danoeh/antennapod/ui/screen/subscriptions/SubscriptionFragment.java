@@ -4,8 +4,10 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ActionMode;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,7 +41,6 @@ import de.danoeh.antennapod.ui.screen.AddFeedFragment;
 import de.danoeh.antennapod.ui.screen.SearchFragment;
 
 import de.danoeh.antennapod.ui.view.EmptyViewHandler;
-import de.danoeh.antennapod.ui.view.FloatingSelectMenu;
 import de.danoeh.antennapod.ui.view.ItemOffsetDecoration;
 import de.danoeh.antennapod.ui.view.LiftOnScrollListener;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
@@ -93,7 +94,6 @@ public class SubscriptionFragment extends Fragment
     private static Pair<Integer, Integer> scrollPosition = null;
 
     private FloatingActionButton subscriptionAddButton;
-    private FloatingSelectMenu floatingSelectMenu;
     private RecyclerView.ItemDecoration itemDecoration;
     private List<Feed> feeds;
     private int stateToShow = Feed.STATE_SUBSCRIBED;
@@ -148,8 +148,6 @@ public class SubscriptionFragment extends Fragment
             @Override
             protected void onSelectedItemsUpdated() {
                 super.onSelectedItemsUpdated();
-                FeedMenuHandler.onPrepareMenu(floatingSelectMenu.getMenu(), getSelectedItems());
-                floatingSelectMenu.updateItemVisibility();
             }
         };
         setColumnNumber(prefs.getInt(PREF_NUM_COLUMNS, getDefaultNumOfColumns()));
@@ -179,30 +177,14 @@ public class SubscriptionFragment extends Fragment
         swipeRefreshLayout.setDistanceToTriggerSync(getResources().getInteger(R.integer.swipe_refresh_distance));
         swipeRefreshLayout.setOnRefreshListener(() -> FeedUpdateManager.getInstance().runOnceOrAsk(requireContext()));
 
-        floatingSelectMenu = root.findViewById(R.id.floatingSelectMenu);
-        floatingSelectMenu.inflate(R.menu.nav_feed_action_speeddial);
         if (stateToShow == Feed.STATE_ARCHIVED) {
             toolbar.setTitle(R.string.archive_feed_label_noun);
             toolbar.getMenu().removeItem(R.id.subscriptions_filter);
             toolbar.getMenu().removeItem(R.id.refresh_item);
             toolbar.getMenu().removeItem(R.id.subscriptions_counter);
             toolbar.getMenu().removeItem(R.id.show_archive);
-            floatingSelectMenu.getMenu().removeItem(R.id.keep_updated);
-            floatingSelectMenu.getMenu().removeItem(R.id.notify_new_episodes);
-            floatingSelectMenu.getMenu().removeItem(R.id.autodownload);
-            floatingSelectMenu.getMenu().removeItem(R.id.autoDeleteDownload);
-            floatingSelectMenu.getMenu().removeItem(R.id.playback_speed);
             subscriptionAddButton.setVisibility(View.GONE);
         }
-        floatingSelectMenu.setOnMenuItemClickListener(menuItem -> {
-            List<Feed> selection = subscriptionAdapter.getSelectedItems();
-            new FeedMultiSelectActionHandler(getActivity(), selection)
-                    .handleAction(menuItem.getItemId());
-            if (selection.size() <= 1) {
-                subscriptionAdapter.endSelectMode();
-            }
-            return true;
-        });
 
         tagsRecycler = root.findViewById(R.id.tags_recycler);
         tagsRecycler.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
@@ -489,7 +471,6 @@ public class SubscriptionFragment extends Fragment
 
     @Override
     public void onEndSelectMode() {
-        floatingSelectMenu.setVisibility(View.GONE);
         subscriptionAddButton.setVisibility(View.VISIBLE);
         tagsRecycler.setVisibility(shouldShowTags ? View.VISIBLE : View.GONE);
         updateFilterVisibility();
@@ -500,12 +481,37 @@ public class SubscriptionFragment extends Fragment
 
     @Override
     public void onStartSelectMode() {
-        floatingSelectMenu.setVisibility(View.VISIBLE);
         subscriptionAddButton.setVisibility(View.GONE);
         tagsRecycler.setVisibility(shouldShowTags ? View.INVISIBLE : View.GONE);
         updateFilterVisibility();
         setCollapsingToolbarFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL
                 | AppBarLayout.LayoutParams.SCROLL_FLAG_EXIT_UNTIL_COLLAPSED);
+    }
+
+    @Override
+    public void onPrepareSelectMode(ActionMode mode, Menu menu) {
+        FeedMenuHandler.onPrepareMenu(menu, subscriptionAdapter.getSelectedItems());
+        if (stateToShow == Feed.STATE_ARCHIVED) {
+            menu.removeItem(R.id.keep_updated);
+            menu.removeItem(R.id.notify_new_episodes);
+            menu.removeItem(R.id.autodownload);
+            menu.removeItem(R.id.autoDeleteDownload);
+            menu.removeItem(R.id.playback_speed);
+        }
+    }
+
+    @Override
+    public boolean onActionItemClicked(ActionMode mode, MenuItem menuItem) {
+        List<Feed> selection = subscriptionAdapter.getSelectedItems();
+        FeedMultiSelectActionHandler handler = new FeedMultiSelectActionHandler(getActivity(), selection);
+        if (handler.isHandlingAction(menuItem.getItemId())) {
+            handler.handleAction(menuItem.getItemId());
+            if (selection.size() <= 1) {
+                subscriptionAdapter.endSelectMode();
+            }
+            return true;
+        }
+        return false;
     }
 
     public Pair<Integer, Integer> getScrollPosition() {

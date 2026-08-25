@@ -7,7 +7,7 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.ContextMenu;
+import android.view.ActionMode;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -39,7 +39,6 @@ import de.danoeh.antennapod.ui.screen.InboxFragment;
 import de.danoeh.antennapod.ui.screen.SearchFragment;
 import de.danoeh.antennapod.net.download.serviceinterface.FeedUpdateManager;
 import de.danoeh.antennapod.ui.episodes.PlaybackSpeedUtils;
-import de.danoeh.antennapod.ui.view.FloatingSelectMenu;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -51,7 +50,6 @@ import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.activity.MainActivity;
 import de.danoeh.antennapod.ui.episodeslist.EpisodeItemListAdapter;
 import de.danoeh.antennapod.ui.common.ConfirmationDialog;
-import de.danoeh.antennapod.ui.MenuItemUtils;
 import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.ui.common.Converter;
@@ -105,7 +103,6 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
     private SwipeActions swipeActions;
     private SharedPreferences prefs;
 
-    private FloatingSelectMenu floatingSelectMenu;
     private ProgressBar progressBar;
 
     @Override
@@ -454,7 +451,6 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
             ((SimpleItemAnimator) animator).setSupportsChangeAnimations(false);
         }
         recyclerView.setRecycledViewPool(((MainActivity) getActivity()).getRecycledViewPool());
-        registerForContextMenu(recyclerView);
         recyclerView.addOnScrollListener(new LiftOnScrollListener(root.findViewById(R.id.appbar)));
 
         swipeActions = new QueueSwipeActions();
@@ -463,30 +459,11 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
 
         recyclerAdapter = new QueueRecyclerAdapter((MainActivity) getActivity(), swipeActions) {
             @Override
-            public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-                super.onCreateContextMenu(menu, v, menuInfo);
-                MenuItemUtils.setOnClickListeners(menu, QueueFragment.this::onContextItemSelected);
-            }
-
-            @Override
             protected void onSelectedItemsUpdated() {
                 super.onSelectedItemsUpdated();
-                Menu menu = floatingSelectMenu.getMenu();
-                List<FeedItem> selectedItems = getSelectedItems();
-                FeedItemMenuHandler.onPrepareMenu(getContext(), floatingSelectMenu.getMenu(), getSelectedItems(),
-                        R.id.add_to_queue_item, R.id.add_to_queue_play_next_item, R.id.remove_inbox_item);
-
-                Pair<Boolean, Boolean> canMove = canMove(queue, selectedItems);
-                menu.findItem(R.id.move_to_top_item).setVisible(canMove.first);
-                menu.findItem(R.id.move_to_bottom_item).setVisible(canMove.second);
-                PlaybackController.bindToMedia3Service(this.getActivity(), controller -> {
-                            MediaItem currentMediaItem = controller.getCurrentMediaItem();
-                    menu.findItem(R.id.move_to_play_next_item).setVisible(currentMediaItem!=null);
-                });
-
-                floatingSelectMenu.updateItemVisibility();
             }
         };
+        recyclerAdapter.setContextMenuClickListener(QueueFragment.this::onContextItemSelected);
         recyclerAdapter.setOnSelectModeListener(this);
         recyclerView.setAdapter(recyclerAdapter);
 
@@ -501,19 +478,37 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
         emptyView.setMessage(R.string.no_items_label);
         emptyView.updateAdapter(recyclerAdapter);
 
-        floatingSelectMenu = root.findViewById(R.id.floatingSelectMenu);
-        floatingSelectMenu.inflate(R.menu.episodes_apply_action_speeddial);
-        floatingSelectMenu.setOnMenuItemClickListener(menuItem -> {
-            if (recyclerAdapter.getSelectedCount() == 0) {
-                EventBus.getDefault().post(new MessageEvent(getString(R.string.no_items_selected_message)));
-                return false;
-            }
-            new EpisodeMultiSelectActionHandler(getActivity(), menuItem.getItemId())
-                    .handleAction(recyclerAdapter.getSelectedFeedItemsInOrder());
+        return root;
+    }
+
+    @Override
+    public void onPrepareSelectMode(ActionMode mode, Menu menu) {
+        List<FeedItem> selectedItems = recyclerAdapter.getSelectedItems();
+        FeedItemMenuHandler.onPrepareMenu(getContext(), menu, selectedItems,
+                R.id.add_to_queue_item, R.id.add_to_queue_play_next_item, R.id.remove_inbox_item);
+
+        Pair<Boolean, Boolean> canMove = canMove(queue, selectedItems);
+        menu.findItem(R.id.move_to_top_item).setVisible(canMove.first);
+        menu.findItem(R.id.move_to_bottom_item).setVisible(canMove.second);
+        PlaybackController.bindToMedia3Service(this.getActivity(), controller -> {
+            MediaItem currentMediaItem = controller.getCurrentMediaItem();
+            menu.findItem(R.id.move_to_play_next_item).setVisible(canMove.first && currentMediaItem != null);
+        });
+    }
+
+    @Override
+    public boolean onActionItemClicked(ActionMode mode, MenuItem menuItem) {
+        if (recyclerAdapter.getSelectedCount() == 0) {
+            EventBus.getDefault().post(new MessageEvent(getString(R.string.no_items_selected_message)));
+            return false;
+        }
+        EpisodeMultiSelectActionHandler handler = new EpisodeMultiSelectActionHandler(getActivity(), menuItem.getItemId());
+        if (handler.isHandlingAction()) {
+            handler.handleAction(recyclerAdapter.getSelectedFeedItemsInOrder());
             recyclerAdapter.endSelectMode();
             return true;
-        });
-        return root;
+        }
+        return false;
     }
 
     @Override
@@ -584,20 +579,12 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
     @Override
     public void onStartSelectMode() {
         swipeActions.detach();
-        floatingSelectMenu.setVisibility(View.VISIBLE);
-        recyclerView.setPadding(recyclerView.getPaddingLeft(), recyclerView.getPaddingTop(),
-                recyclerView.getPaddingRight(),
-                (int) getResources().getDimension(R.dimen.floating_select_menu_height));
         refreshToolbarState();
         refreshInfoBar();
     }
 
     @Override
     public void onEndSelectMode() {
-        floatingSelectMenu.setVisibility(View.GONE);
-        recyclerView.setPadding(recyclerView.getPaddingLeft(), recyclerView.getPaddingTop(),
-                recyclerView.getPaddingRight(), 0);
-        infoBar.setVisibility(View.VISIBLE);
         swipeActions.attachTo(recyclerView);
         refreshInfoBar();
     }

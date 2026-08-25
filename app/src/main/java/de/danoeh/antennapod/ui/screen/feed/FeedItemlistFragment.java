@@ -4,9 +4,10 @@ import android.content.res.Configuration;
 import android.graphics.LightingColorFilter;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.ContextMenu;
+import android.view.ActionMode;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,7 +43,6 @@ import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.CoverLoader;
 import de.danoeh.antennapod.ui.FeedItemFilterDialog;
-import de.danoeh.antennapod.ui.MenuItemUtils;
 import de.danoeh.antennapod.ui.TransitionEffect;
 import de.danoeh.antennapod.ui.appstartintent.MainActivityStarter;
 import de.danoeh.antennapod.ui.cleaner.HtmlToPlainText;
@@ -154,6 +154,7 @@ public class FeedItemlistFragment extends Fragment implements AdapterView.OnItem
         setupHeaderView();
 
         adapter = new FeedItemListAdapter(getActivity());
+        adapter.setContextMenuClickListener(FeedItemlistFragment.this::onContextItemSelected);
         adapter.setOnSelectModeListener(this);
         viewBinding.recyclerView.setAdapter(adapter);
         swipeActions = new SwipeActions(this, TAG).attachTo(viewBinding.recyclerView);
@@ -194,22 +195,31 @@ public class FeedItemlistFragment extends Fragment implements AdapterView.OnItem
 
         loadItems();
 
-        viewBinding.floatingSelectMenu.inflate(R.menu.episodes_apply_action_speeddial);
-        viewBinding.floatingSelectMenu.setOnMenuItemClickListener(menuItem -> {
-            if (adapter.getSelectedCount() == 0) {
-                EventBus.getDefault().post(new MessageEvent(getString(R.string.no_items_selected_message)));
-                return false;
-            }
-            EpisodeMultiSelectActionHandler handler
-                    = new EpisodeMultiSelectActionHandler(getActivity(), menuItem.getItemId());
+        return viewBinding.getRoot();
+    }
+
+    @Override
+    public void onPrepareSelectMode(ActionMode mode, Menu menu) {
+        FeedItemMenuHandler.onPrepareMenu(getContext(), menu, adapter.getSelectedItems());
+    }
+
+    @Override
+    public boolean onActionItemClicked(ActionMode mode, MenuItem menuItem) {
+        if (adapter.getSelectedCount() == 0) {
+            EventBus.getDefault().post(new MessageEvent(getString(R.string.no_items_selected_message)));
+            return false;
+        }
+        EpisodeMultiSelectActionHandler handler
+                = new EpisodeMultiSelectActionHandler(getActivity(), menuItem.getItemId());
+        if (handler.isHandlingAction()) {
             Completable.fromAction(() -> handleActionForAllSelectedItems(handler))
                     .subscribeOn(Schedulers.computation())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(() -> adapter.endSelectMode(),
                             error -> Log.e(TAG, Log.getStackTraceString(error)));
             return true;
-        });
-        return viewBinding.getRoot();
+        }
+        return false;
     }
 
     private void handleActionForAllSelectedItems(EpisodeMultiSelectActionHandler handler) {
@@ -235,9 +245,7 @@ public class FeedItemlistFragment extends Fragment implements AdapterView.OnItem
         boolean pageLoaderVisible = viewBinding.recyclerView.isScrolledToBottom() && hasMorePages;
         nextPageLoader.getRoot().setVisibility(pageLoaderVisible ? View.VISIBLE : View.GONE);
         int paddingBottom = 0;
-        if (adapter.inActionMode()) {
-            paddingBottom = (int) getResources().getDimension(R.dimen.floating_select_menu_height);
-        } else if (pageLoaderVisible) {
+        if (pageLoaderVisible) {
             paddingBottom = nextPageLoader.getRoot().getMeasuredHeight();
         }
         viewBinding.recyclerView.setPadding(viewBinding.recyclerView.getPaddingLeft(), 0,
@@ -450,7 +458,6 @@ public class FeedItemlistFragment extends Fragment implements AdapterView.OnItem
 
     @Override
     public void onStartSelectMode() {
-        viewBinding.floatingSelectMenu.setVisibility(View.VISIBLE);
         swipeActions.detach();
         updateRecyclerPadding();
         updateToolbar();
@@ -458,7 +465,6 @@ public class FeedItemlistFragment extends Fragment implements AdapterView.OnItem
 
     @Override
     public void onEndSelectMode() {
-        viewBinding.floatingSelectMenu.setVisibility(View.GONE);
         updateRecyclerPadding();
         swipeActions.attachTo(viewBinding.recyclerView);
     }
@@ -749,19 +755,16 @@ public class FeedItemlistFragment extends Fragment implements AdapterView.OnItem
         }
 
         @Override
-        public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-            super.onCreateContextMenu(menu, v, menuInfo);
+        protected void onPrepareContextMenu(Menu menu) {
+            super.onPrepareContextMenu(menu);
             if (!inActionMode() && feed.getState() != Feed.STATE_NOT_SUBSCRIBED) {
                 menu.findItem(R.id.multi_select).setVisible(true);
             }
-            MenuItemUtils.setOnClickListeners(menu, FeedItemlistFragment.this::onContextItemSelected);
         }
 
         @Override
         protected void onSelectedItemsUpdated() {
             super.onSelectedItemsUpdated();
-            FeedItemMenuHandler.onPrepareMenu(getContext(), viewBinding.floatingSelectMenu.getMenu(), getSelectedItems());
-            viewBinding.floatingSelectMenu.updateItemVisibility();
         }
     }
 }

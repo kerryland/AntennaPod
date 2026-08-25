@@ -9,6 +9,8 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import android.view.Menu;
+import androidx.appcompat.view.menu.MenuBuilder;
 import com.google.android.material.appbar.MaterialToolbar;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
@@ -88,6 +90,10 @@ public class ItemPagerFragment extends Fragment implements MaterialToolbar.OnMen
         toolbar = layout.findViewById(R.id.toolbar);
         toolbar.setTitle("");
         toolbar.inflateMenu(R.menu.feeditem_options);
+        Menu menu = toolbar.getMenu();
+        if (menu instanceof MenuBuilder) {
+            ((MenuBuilder) menu).setOptionalIconsVisible(true);
+        }
         toolbar.setNavigationOnClickListener(v -> getParentFragmentManager().popBackStack());
         toolbar.setOnMenuItemClickListener(this);
 

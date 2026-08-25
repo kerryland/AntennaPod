@@ -3,9 +3,10 @@ package de.danoeh.antennapod.ui.episodeslist;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.ContextMenu;
+import android.view.ActionMode;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,7 +28,6 @@ import de.danoeh.antennapod.model.feed.SortOrder;
 import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.ui.screen.SearchFragment;
 import de.danoeh.antennapod.net.download.serviceinterface.FeedUpdateManager;
-import de.danoeh.antennapod.ui.view.FloatingSelectMenu;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -39,7 +39,6 @@ import java.util.List;
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.activity.MainActivity;
 import de.danoeh.antennapod.ui.common.ConfirmationDialog;
-import de.danoeh.antennapod.ui.MenuItemUtils;
 import de.danoeh.antennapod.event.EpisodeDownloadEvent;
 import de.danoeh.antennapod.event.FeedItemEvent;
 import de.danoeh.antennapod.event.FeedListUpdateEvent;
@@ -73,7 +72,6 @@ public abstract class EpisodesListFragment extends Fragment
     protected EpisodeItemListRecyclerView recyclerView;
     protected EpisodeItemListAdapter listAdapter;
     protected EmptyViewHandler emptyView;
-    protected FloatingSelectMenu floatingSelectMenu;
     protected MaterialToolbar toolbar;
     protected SwipeRefreshLayout swipeRefreshLayout;
     protected SwipeActions swipeActions;
@@ -93,13 +91,11 @@ public abstract class EpisodesListFragment extends Fragment
     @Override
     public void onResume() {
         super.onResume();
-        registerForContextMenu(recyclerView);
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        unregisterForContextMenu(recyclerView);
     }
 
     @Override
@@ -179,21 +175,19 @@ public abstract class EpisodesListFragment extends Fragment
 
         listAdapter = new EpisodeItemListAdapter(getActivity()) {
             @Override
-            public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-                super.onCreateContextMenu(menu, v, menuInfo);
+            protected void onPrepareContextMenu(Menu menu) {
+                super.onPrepareContextMenu(menu);
                 if (!inActionMode()) {
                     menu.findItem(R.id.multi_select).setVisible(true);
                 }
-                MenuItemUtils.setOnClickListeners(menu, EpisodesListFragment.this::onContextItemSelected);
             }
 
             @Override
             protected void onSelectedItemsUpdated() {
                 super.onSelectedItemsUpdated();
-                FeedItemMenuHandler.onPrepareMenu(getContext(), floatingSelectMenu.getMenu(), getSelectedItems());
-                floatingSelectMenu.updateItemVisibility();
             }
         };
+        listAdapter.setContextMenuClickListener(EpisodesListFragment.this::onContextItemSelected);
         listAdapter.setOnSelectModeListener(this);
         recyclerView.setAdapter(listAdapter);
         progressBar = root.findViewById(R.id.progressBar);
@@ -207,41 +201,48 @@ public abstract class EpisodesListFragment extends Fragment
         emptyView.updateAdapter(listAdapter);
         emptyView.hide();
 
-        floatingSelectMenu = root.findViewById(R.id.floatingSelectMenu);
-        floatingSelectMenu.inflate(R.menu.episodes_apply_action_speeddial);
-        floatingSelectMenu.setOnMenuItemClickListener(menuItem -> {
-            if (listAdapter.getSelectedCount() == 0) {
-                EventBus.getDefault().post(new MessageEvent(getString(R.string.no_items_selected_message)));
-                return false;
-            }
-            int confirmationString = 0;
-            if (listAdapter.getSelectedItems().size() >= 25 || listAdapter.shouldSelectLazyLoadedItems()) {
-                // Should ask for confirmation
-                if (menuItem.getItemId() == R.id.mark_read_item) {
-                    confirmationString = R.string.multi_select_mark_played_confirmation;
-                } else if (menuItem.getItemId() == R.id.mark_unread_item) {
-                    confirmationString = R.string.multi_select_mark_unplayed_confirmation;
-                }
-            }
-            if (confirmationString == 0) {
-                performMultiSelectAction(menuItem.getItemId());
-            } else {
-                new ConfirmationDialog(getActivity(), R.string.multi_select, confirmationString) {
-                    @Override
-                    public void onConfirmButtonPressed(DialogInterface dialog) {
-                        performMultiSelectAction(menuItem.getItemId());
-                    }
-                }.createNewDialog().show();
-            }
-            return true;
-        });
-
         return root;
     }
 
-    private void performMultiSelectAction(int actionItemId) {
+    @Override
+    public void onPrepareSelectMode(ActionMode mode, Menu menu) {
+        FeedItemMenuHandler.onPrepareMenu(getContext(), menu, listAdapter.getSelectedItems());
+    }
+
+    @Override
+    public boolean onActionItemClicked(ActionMode mode, MenuItem menuItem) {
+        if (listAdapter.getSelectedCount() == 0) {
+            EventBus.getDefault().post(new MessageEvent(getString(R.string.no_items_selected_message)));
+            return false;
+        }
+        int confirmationString = 0;
+        if (listAdapter.getSelectedItems().size() >= 25 || listAdapter.shouldSelectLazyLoadedItems()) {
+            // Should ask for confirmation
+            if (menuItem.getItemId() == R.id.mark_read_item) {
+                confirmationString = R.string.multi_select_mark_played_confirmation;
+            } else if (menuItem.getItemId() == R.id.mark_unread_item) {
+                confirmationString = R.string.multi_select_mark_unplayed_confirmation;
+            }
+        }
+        if (confirmationString == 0) {
+            return performMultiSelectAction(menuItem.getItemId());
+        } else {
+            new ConfirmationDialog(getActivity(), R.string.multi_select, confirmationString) {
+                @Override
+                public void onConfirmButtonPressed(DialogInterface dialog) {
+                    performMultiSelectAction(menuItem.getItemId());
+                }
+            }.createNewDialog().show();
+        }
+        return true;
+    }
+
+    private boolean performMultiSelectAction(int actionItemId) {
         EpisodeMultiSelectActionHandler handler = new EpisodeMultiSelectActionHandler(getActivity(), actionItemId);
         customiseEpisodeMultiSelectActionHandler(handler);
+        if (!handler.isHandlingAction()) {
+            return false;
+        }
         Completable.fromAction(
                 () -> {
                     handler.handleAction(listAdapter.getSelectedItems());
@@ -259,6 +260,7 @@ public abstract class EpisodesListFragment extends Fragment
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(() -> listAdapter.endSelectMode(),
                         error -> Log.e(TAG, Log.getStackTraceString(error)));
+        return true;
     }
 
     protected void customiseEpisodeMultiSelectActionHandler(EpisodeMultiSelectActionHandler handler) {
@@ -319,17 +321,12 @@ public abstract class EpisodesListFragment extends Fragment
 
     @Override
     public void onStartSelectMode() {
-        floatingSelectMenu.setVisibility(View.VISIBLE);
-        recyclerView.setPadding(recyclerView.getPaddingLeft(), recyclerView.getPaddingTop(),
-                recyclerView.getPaddingRight(),
-                (int) getResources().getDimension(R.dimen.floating_select_menu_height));
+        swipeActions.detach();
     }
 
     @Override
     public void onEndSelectMode() {
-        floatingSelectMenu.setVisibility(View.GONE);
-        recyclerView.setPadding(recyclerView.getPaddingLeft(), recyclerView.getPaddingTop(),
-                recyclerView.getPaddingRight(), 0);
+        swipeActions.attachTo(recyclerView);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

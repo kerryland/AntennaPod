@@ -4,16 +4,19 @@
 
     <item
         android:id="@+id/move_to_top_item"
+        android:icon="@drawable/ic_arrow_full_up"
         android:menuCategory="container"
         android:title="@string/move_to_top_label" />
 
     <item
         android:id="@+id/move_to_play_next_item"
+        android:icon="@drawable/ic_shuffle"
         android:menuCategory="container"
         android:title="@string/move_to_play_next_label" />
 
     <item
         android:id="@+id/move_to_bottom_item"
+        android:icon="@drawable/ic_arrow_full_down"
         android:menuCategory="container"
         android:title="@string/move_to_bottom_label" />
     <!-- rest of the menu items can be found in the generic feeditemlist_context.xml -->

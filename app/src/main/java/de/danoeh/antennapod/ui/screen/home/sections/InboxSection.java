@@ -2,7 +2,6 @@ package de.danoeh.antennapod.ui.screen.home.sections;
 
 import android.os.Bundle;
 import android.util.Log;
-import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,7 +28,6 @@ import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
-import de.danoeh.antennapod.ui.MenuItemUtils;
 import de.danoeh.antennapod.ui.episodeslist.EpisodeItemListAdapter;
 import de.danoeh.antennapod.ui.screen.InboxFragment;
 import de.danoeh.antennapod.ui.screen.home.HomeSection;
@@ -55,13 +53,8 @@ public class InboxSection extends HomeSection {
         viewBinding.recyclerView.setOverScrollMode(RecyclerView.OVER_SCROLL_NEVER);
         viewBinding.recyclerView.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, false));
         viewBinding.recyclerView.setRecycledViewPool(((MainActivity) requireActivity()).getRecycledViewPool());
-        adapter = new EpisodeItemListAdapter(requireActivity()) {
-            @Override
-            public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-                super.onCreateContextMenu(menu, v, menuInfo);
-                MenuItemUtils.setOnClickListeners(menu, InboxSection.this::onContextItemSelected);
-            }
-        };
+        adapter = new EpisodeItemListAdapter(requireActivity());
+        adapter.setContextMenuClickListener(InboxSection.this::onContextItemSelected);
         adapter.setDummyViews(NUM_EPISODES);
         viewBinding.recyclerView.setAdapter(adapter);
         viewBinding.emptyLabel.setText(R.string.home_new_empty_text);

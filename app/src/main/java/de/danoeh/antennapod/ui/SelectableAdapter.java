@@ -7,11 +7,13 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.appcompat.view.menu.MenuBuilder;
 import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
 import de.danoeh.antennapod.R;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -21,6 +23,7 @@ import java.util.List;
  * Used by Recyclerviews that need to provide ability to select items.
  */
 public abstract class SelectableAdapter<T extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<T> {
+    private static final String TAG = "SelectableAdapter";
     public static final int COUNT_AUTOMATICALLY = -1;
     private ActionMode actionMode;
     private final HashSet<Long> selectedIds = new HashSet<>();
@@ -59,6 +62,16 @@ public abstract class SelectableAdapter<T extends RecyclerView.ViewHolder> exten
             public boolean onCreateActionMode(ActionMode mode, Menu menu) {
                 MenuInflater inflater = mode.getMenuInflater();
                 inflater.inflate(R.menu.multi_select_options, menu);
+                try {
+                    Field menuBuilderField = menu.getClass().getDeclaredField("mWrappedObject");
+                    menuBuilderField.setAccessible(true);
+                    Object menuBuilder = menuBuilderField.get(menu);
+                    if (menuBuilder instanceof MenuBuilder) {
+                        ((MenuBuilder) menuBuilder).setOptionalIconsVisible(true);
+                    }
+                } catch (Exception e) {
+                    Log.d(TAG, "Could not enable icons in select mode menu", e);
+                }
                 return true;
             }
 
@@ -66,11 +79,17 @@ public abstract class SelectableAdapter<T extends RecyclerView.ViewHolder> exten
             public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
                 onSelectedItemsUpdated();
                 toggleSelectAllIcon(menu);
+                if (onSelectModeListener != null) {
+                    onSelectModeListener.onPrepareSelectMode(mode, menu);
+                }
                 return true;
             }
 
             @Override
             public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+                if (onSelectModeListener != null && onSelectModeListener.onActionItemClicked(mode, item)) {
+                    return true;
+                }
                 if (item.getItemId() == R.id.select_toggle) {
                     boolean selectAll = selectedIds.size() != getItemCount();
                     shouldSelectLazyLoadedItems = selectAll;
@@ -244,5 +263,14 @@ public abstract class SelectableAdapter<T extends RecyclerView.ViewHolder> exten
         void onStartSelectMode();
 
         void onEndSelectMode();
+
+        @SuppressWarnings("unused")
+        default void onPrepareSelectMode(ActionMode mode, Menu menu) {
+        }
+
+        @SuppressWarnings("unused")
+        default boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+            return false;
+        }
     }
 }

@@ -69,6 +69,14 @@ public class FeedMultiSelectActionHandler {
         }
     }
 
+    public boolean isHandlingAction(int id) {
+        return id == R.id.remove_archive_feed || id == R.id.remove_restore_feed
+                || id == R.id.notify_new_episodes || id == R.id.keep_updated
+                || id == R.id.autodownload || id == R.id.autoDeleteDownload
+                || id == R.id.playback_speed || id == R.id.edit_tags
+                || id == R.id.remove_all_inbox_item || id == R.id.share_feed;
+    }
+
     private void notifyNewEpisodesPrefHandler() {
         PreferenceSwitchDialog preferenceSwitchDialog = new PreferenceSwitchDialog(activity,
                 activity.getString(R.string.episode_notification),

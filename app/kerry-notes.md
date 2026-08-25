@@ -88,6 +88,41 @@ FeedItemMenuHandler
 EpisodeMultiSelectActionHandler
 
 
+menu XMLs live in app/src/main/res/menu/ unless noted.
+
+Context (long-press) menus
+
+feeditemlist_context.xml — EpisodeItemListAdapter (Episodes/Inbox/Feed item list/Completed downloads/Search), HorizontalItemListAdapter
+queue_context.xml — QueueRecyclerAdapter (appended to the generic after my reorder)
+nav_feed_context.xml — NavDrawerFragment, HorizontalFeedListAdapter
+nav_folder_context.xml — NavDrawerFragment, SubscriptionTagAdapter
+opml_selection_options.xml — OpmlImportActivity
+Multi-select / action-bar (CAB) menu
+
+multi_select_options.xml — SelectableAdapter
+Toolbar / options menus
+
+episodes.xml — AllEpisodesFragment
+inbox.xml — InboxFragment
+queue.xml — QueueFragment
+subscriptions.xml — SubscriptionFragment
+favorites.xml — FavoritesFragment
+home.xml — HomeFragment
+downloads_completed.xml — CompletedDownloadsFragment
+download_log.xml — DownloadLogFragment
+feedlist.xml — FeedItemlistFragment
+feedinfo.xml — FeedInfoFragment
+feeditem_options.xml — ItemPagerFragment
+mediaplayer.xml — AudioPlayerFragment, Media3VideoPlayerActivity, VideoplayerActivity
+playback_history.xml — PlaybackHistoryFragment
+search.xml — SearchFragment
+transcript.xml — TranscriptDialogFragment
+cast_button.xml — playback:cast/src/play/ → CastEnabledActivity
+countries_menu.xml, online_search.xml — ui:discovery → DiscoveryFragment, OnlineSearchFragment
+bug_report_options.xml — ui:preferences → BugReportFragment
+statistics.xml — ui:statistics → StatisticsFragment
+
+
 HomeFragment loads:
 - QueueSection
 - InboxSection

@@ -50,6 +50,24 @@ public class EpisodeMultiSelectActionHandler {
         this.queueAdditionsArePermanent = queueAdditionsArePermanent;
     }
 
+    public boolean isHandlingAction() {
+        return actionId == R.id.add_to_queue_item
+                || actionId == R.id.add_to_queue_play_next_item
+                || actionId == R.id.remove_from_queue_item
+                || actionId == R.id.remove_inbox_item
+                || actionId == R.id.mark_read_item
+                || actionId == R.id.mark_unread_item
+                || actionId == R.id.download_item
+                || actionId == R.id.remove_item
+                || actionId == R.id.add_to_favorites_item
+                || actionId == R.id.remove_from_favorites_item
+                || actionId == R.id.reset_position
+                || actionId == R.id.share_item
+                || actionId == R.id.move_to_top_item
+                || actionId == R.id.move_to_bottom_item
+                || actionId == R.id.move_to_play_next_item;
+    }
+
     private void skipIfPlaying(List<FeedItem> items, Runnable callback) {
         MenuItemAssistant.skipIfPlaying(activity, items, callback);
     }

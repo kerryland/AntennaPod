@@ -171,6 +171,14 @@ public class FeedItemMenuHandler {
                 setItemVisibility(menu, id, false);
             }
         }
+        // Hide feed-specific multi-select items if they exist in the menu
+        int[] feedItems = {R.id.edit_tags, R.id.share_feed, R.id.remove_all_inbox_item,
+                R.id.remove_archive_feed, R.id.remove_restore_feed, R.id.keep_updated,
+                R.id.notify_new_episodes, R.id.autodownload, R.id.autoDeleteDownload,
+                R.id.playback_speed};
+        for (int id : feedItems) {
+            setItemVisibility(menu, id, false);
+        }
         return true;
     }
 

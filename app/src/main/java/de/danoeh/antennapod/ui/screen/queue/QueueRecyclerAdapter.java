@@ -2,8 +2,7 @@ package de.danoeh.antennapod.ui.screen.queue;
 
 import android.annotation.SuppressLint;
 import android.util.Log;
-import android.view.ContextMenu;
-import android.view.MenuInflater;
+import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -74,11 +73,14 @@ public class QueueRecyclerAdapter extends EpisodeItemListAdapter {
     }
 
     @Override
-    public void onCreateContextMenu(final ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-        MenuInflater inflater = getActivity().getMenuInflater();
-        inflater.inflate(R.menu.queue_context, menu);
-        super.onCreateContextMenu(menu, v, menuInfo);
+    protected void onInflateContextMenu(Menu menu) {
+        super.onInflateContextMenu(menu);
+        getActivity().getMenuInflater().inflate(R.menu.queue_context, menu);
+    }
 
+    @Override
+    protected void onPrepareContextMenu(Menu menu) {
+        super.onPrepareContextMenu(menu);
         if (!inActionMode()) {
             menu.findItem(R.id.multi_select).setVisible(true);
             final boolean keepSorted = UserPreferences.isQueueKeepSorted();
@@ -87,6 +89,9 @@ public class QueueRecyclerAdapter extends EpisodeItemListAdapter {
             }
             if (getItem(getItemCount() - 1).getId() == getLongPressedItem().getId() || keepSorted) {
                 menu.findItem(R.id.move_to_bottom_item).setVisible(false);
+            }
+            if (keepSorted) {
+                menu.findItem(R.id.move_to_play_next_item).setVisible(false);
             }
         } else {
             menu.findItem(R.id.move_to_top_item).setVisible(false);

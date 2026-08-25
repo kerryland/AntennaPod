@@ -5,22 +5,215 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="AppCompatResource">
 
+    <!-- Selection actions -->
     <item
         android:id="@+id/select_toggle"
+        android:icon="@drawable/ic_select_all"
         android:title="@string/select_all_label"
         android:showAsAction="never"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/select_all_above"
+        android:icon="@drawable/ic_select_all_above"
         android:title="@string/select_all_above"
         android:showAsAction="never"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/select_all_below"
+        android:icon="@drawable/ic_select_all_below"
         android:title="@string/select_all_below"
         android:showAsAction="never"
         app:showAsAction="never" />
+
+    <!-- SEPARATOR - Make sure it's also showAsAction="never" -->
+    <item
+        android:id="@+id/menu_separator"
+        android:title="──────────────"
+        android:enabled="false"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
+    <!-- Episode actions -->
+    <item
+        android:id="@+id/add_to_queue_item"
+        android:icon="@drawable/media3_icon_playlist_add"
+        android:title="@string/add_to_queue_label"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/add_to_queue_play_next_item"
+        android:icon="@drawable/media3_icon_playlist_add"
+        android:title="@string/add_to_queue_play_next_label"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/remove_from_queue_item"
+        android:icon="@drawable/media3_icon_playlist_remove"
+        android:title="@string/remove_from_queue_label"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/mark_read_item"
+        android:icon="@drawable/ic_mark_played"
+        android:title="@string/mark_as_played_label"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/mark_unread_item"
+        android:icon="@drawable/ic_mark_unplayed"
+        android:title="@string/mark_as_unplayed_label"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/download_item"
+        android:icon="@drawable/ic_download"
+        android:title="@string/download_label"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/remove_item"
+        android:icon="@drawable/ic_delete"
+        android:title="@string/delete_label"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/remove_inbox_item"
+        android:icon="@drawable/ic_check"
+        android:title="@string/remove_inbox_label"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/add_to_favorites_item"
+        android:icon="@drawable/ic_star"
+        android:title="@string/add_to_favorite_label"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/remove_from_favorites_item"
+        android:icon="@drawable/ic_star_border"
+        android:title="@string/remove_from_favorite_label"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/reset_position"
+        android:icon="@drawable/ic_replay"
+        android:title="@string/reset_playback_position_label"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/share_item"
+        android:icon="@drawable/ic_share"
+        android:title="@string/share_label"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/move_to_top_item"
+        android:icon="@drawable/ic_arrow_full_up"
+        android:title="@string/move_to_top_label"
+        android:visible="false"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/move_to_bottom_item"
+        android:icon="@drawable/ic_arrow_full_down"
+        android:title="@string/move_to_bottom_label"
+        android:visible="false"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/move_to_play_next_item"
+        android:icon="@drawable/ic_shuffle"
+        android:title="@string/move_to_play_next_label"
+        android:visible="false"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
+    <!-- Feed actions -->
+    <item
+        android:id="@+id/edit_tags"
+        android:title="@string/edit_tags"
+        android:icon="@drawable/ic_tag"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/share_feed"
+        android:title="@string/share_label"
+        android:icon="@drawable/ic_share"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/remove_all_inbox_item"
+        android:title="@string/remove_all_inbox_label"
+        android:icon="@drawable/ic_check"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/remove_archive_feed"
+        android:title="@string/remove_archive_feed_label"
+        android:icon="@drawable/ic_delete"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/remove_restore_feed"
+        android:title="@string/remove_restore_feed_label"
+        android:icon="@drawable/ic_delete"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/keep_updated"
+        android:title="@string/keep_updated"
+        android:icon="@drawable/ic_refresh"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/notify_new_episodes"
+        android:title="@string/episode_notification"
+        android:icon="@drawable/ic_notifications"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/autodownload"
+        android:title="@string/auto_download_label"
+        android:icon="@drawable/ic_download"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/autoDeleteDownload"
+        android:title="@string/pref_auto_delete_playback_title"
+        android:icon="@drawable/ic_delete_auto"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/playback_speed"
+        android:title="@string/playback_speed"
+        android:icon="@drawable/ic_playback_speed"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
 
 </menu>

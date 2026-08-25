@@ -2,62 +2,74 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@id/skip_episode_item"
+        android:icon="@drawable/ic_skip_episode"
         android:menuCategory="container"
         android:title="@string/skip_episode_label" />
 
     <item
         android:id="@+id/remove_inbox_item"
+        android:icon="@drawable/ic_check"
         android:menuCategory="container"
         android:title="@string/remove_inbox_label" />
 
     <item
         android:id="@+id/mark_read_item"
+        android:icon="@drawable/ic_mark_played"
         android:menuCategory="container"
         android:title="@string/mark_as_played_label" />
 
     <item
         android:id="@+id/mark_unread_item"
+        android:icon="@drawable/ic_mark_unplayed"
         android:menuCategory="container"
         android:title="@string/mark_as_unplayed_label" />
 
     <item
         android:id="@+id/add_to_queue_item"
+        android:icon="@drawable/media3_icon_playlist_add"
         android:menuCategory="container"
         android:title="@string/add_to_queue_label" />
 
     <item
         android:id="@+id/add_to_queue_play_next_item"
+        android:icon="@drawable/media3_icon_playlist_add"
         android:menuCategory="container"
         android:title="@string/add_to_queue_play_next_label">
     </item>
 
     <item
         android:id="@+id/remove_from_queue_item"
+        android:icon="@drawable/media3_icon_playlist_remove"
         android:menuCategory="container"
         android:title="@string/remove_from_queue_label" />
 
     <item
         android:id="@+id/remove_item"
+        android:icon="@drawable/ic_delete"
         android:menuCategory="container"
         android:title="@string/delete_label" />
 
     <item
         android:id="@+id/add_to_favorites_item"
+        android:icon="@drawable/ic_star"
         android:menuCategory="container"
         android:title="@string/add_to_favorite_label" />
 
     <item
         android:id="@+id/remove_from_favorites_item"
+        android:icon="@drawable/ic_star_border"
         android:menuCategory="container"
         android:title="@string/remove_from_favorite_label" />
 
     <item
         android:id="@+id/reset_position"
+        android:icon="@drawable/ic_replay"
         android:menuCategory="container"
         android:title="@string/reset_playback_position_label" />
 
     <item
         android:id="@+id/share_item"
+        android:icon="@drawable/ic_share"
         android:menuCategory="container"
         android:title="@string/share_label" />
 

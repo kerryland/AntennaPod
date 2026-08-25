@@ -1,16 +1,20 @@
 package de.danoeh.antennapod.ui.episodeslist;
 
 import android.app.Activity;
-import android.view.ContextMenu;
+import android.view.Gravity;
 import android.view.InputDevice;
-import android.view.MenuInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
+import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.view.menu.MenuBuilder;
+import androidx.appcompat.widget.PopupMenu;
 import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -29,14 +33,14 @@ import de.danoeh.antennapod.ui.screen.episode.ItemPagerFragment;
 /**
  * List adapter for the list of new episodes.
  */
-public class EpisodeItemListAdapter extends SelectableAdapter<EpisodeItemViewHolder>
-        implements View.OnCreateContextMenuListener {
+public class EpisodeItemListAdapter extends SelectableAdapter<EpisodeItemViewHolder> {
 
     private final WeakReference<FragmentActivity> mainActivityRef;
     private List<FeedItem> episodes = new ArrayList<>();
     private FeedItem longPressedItem;
     int longPressedPosition = 0; // used to init actionMode
     private int dummyViews = 0;
+    private MenuItem.OnMenuItemClickListener contextMenuClickListener;
 
     public EpisodeItemListAdapter(FragmentActivity mainActivity) {
         super(mainActivity);
@@ -102,18 +106,19 @@ public class EpisodeItemListAdapter extends SelectableAdapter<EpisodeItemViewHol
                 toggleSelection(holder.getBindingAdapterPosition());
             }
         });
-        holder.itemView.setOnCreateContextMenuListener(this);
         holder.itemView.setOnLongClickListener(v -> {
             longPressedItem = item;
             longPressedPosition = holder.getBindingAdapterPosition();
-            return false;
+            showContextMenu(v);
+            return true;
         });
         holder.itemView.setOnTouchListener((v, e) -> {
             if (e.isFromSource(InputDevice.SOURCE_MOUSE)
                     && e.getButtonState() == MotionEvent.BUTTON_SECONDARY) {
                 longPressedItem = item;
                 longPressedPosition = holder.getBindingAdapterPosition();
-                return false;
+                showContextMenu(v);
+                return true;
             }
             return false;
         });
@@ -144,7 +149,6 @@ public class EpisodeItemListAdapter extends SelectableAdapter<EpisodeItemViewHol
         // Set all listeners to null. This is required to prevent leaking fragments that have set a listener.
         // Activity -> recycledViewPool -> EpisodeItemViewHolder -> Listener -> Fragment (can not be garbage collected)
         holder.itemView.setOnClickListener(null);
-        holder.itemView.setOnCreateContextMenuListener(null);
         holder.itemView.setOnLongClickListener(null);
         holder.itemView.setOnTouchListener(null);
         holder.secondaryActionButton.setOnClickListener(null);
@@ -193,18 +197,82 @@ public class EpisodeItemListAdapter extends SelectableAdapter<EpisodeItemViewHol
         return mainActivityRef.get();
     }
 
-    @Override
-    public void onCreateContextMenu(final ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-        MenuInflater inflater = mainActivityRef.get().getMenuInflater();
-        if (inActionMode()) {
+    public void setContextMenuClickListener(MenuItem.OnMenuItemClickListener contextMenuClickListener) {
+        this.contextMenuClickListener = contextMenuClickListener;
+    }
+
+    public void showContextMenu(View anchor) {
+        if (inActionMode() || longPressedItem == null) {
             return;
         }
-        if (longPressedItem == null) {
-            return;
+        ViewGroup content = (ViewGroup) getActivity().findViewById(android.R.id.content);
+        View popupAnchor = anchor;
+        if (content != null) {
+            popupAnchor = new View(getActivity());
+            FrameLayout.LayoutParams anchorParams = new FrameLayout.LayoutParams(1, 1);
+            anchorParams.gravity = Gravity.TOP | Gravity.END;
+            content.addView(popupAnchor, anchorParams);
         }
-        inflater.inflate(R.menu.feeditemlist_context, menu);
-        menu.setHeaderTitle(longPressedItem.getTitle());
-        FeedItemMenuHandler.onPrepareMenu(getActivity(), menu, Collections.singletonList(longPressedItem), R.id.skip_episode_item);
+
+        PopupMenu popupMenu = new PopupMenu(getActivity(), popupAnchor);
+        Menu menu = popupMenu.getMenu();
+        onInflateContextMenu(menu);
+        getActivity().getMenuInflater().inflate(R.menu.feeditemlist_context, menu);
+        FeedItemMenuHandler.onPrepareMenu(getActivity(), menu,
+                Collections.singletonList(longPressedItem), R.id.skip_episode_item);
+        onPrepareContextMenu(menu);
+        popupMenu.setForceShowIcon(true);
+        if (menu instanceof MenuBuilder) {
+            ((MenuBuilder) menu).setOptionalIconsVisible(true);
+        }
+        if (contextMenuClickListener != null) {
+            popupMenu.setOnMenuItemClickListener(contextMenuClickListener::onMenuItemClick);
+        }
+
+        if (content != null) {
+            // Position the popup vertically centered on the right edge of the screen.
+            int visibleItems = 0;
+            for (int i = 0; i < menu.size(); i++) {
+                if (menu.getItem(i).isVisible()) {
+                    visibleItems++;
+                }
+            }
+            float density = getActivity().getResources().getDisplayMetrics().density;
+            int menuHeight = visibleItems * Math.round(48f * density);
+            int verticalCenter = getActivity().getResources().getDisplayMetrics().heightPixels / 2;
+            FrameLayout.LayoutParams anchorParams =
+                    (FrameLayout.LayoutParams) popupAnchor.getLayoutParams();
+            anchorParams.topMargin = Math.max(0, verticalCenter - menuHeight / 2);
+            popupAnchor.setLayoutParams(anchorParams);
+
+            ViewGroup container = content;
+            View dismissAnchor = popupAnchor;
+            popupMenu.setOnDismissListener(m -> container.removeView(dismissAnchor));
+
+            // Show once the anchor view has been laid out so the position is correct.
+            dismissAnchor.getViewTreeObserver().addOnGlobalLayoutListener(
+                    new ViewTreeObserver.OnGlobalLayoutListener() {
+                        private boolean shown = false;
+
+                        @Override
+                        public void onGlobalLayout() {
+                            if (shown) {
+                                return;
+                            }
+                            shown = true;
+                            dismissAnchor.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                            popupMenu.show();
+                        }
+                    });
+        } else {
+            popupMenu.show();
+        }
+    }
+
+    protected void onInflateContextMenu(Menu menu) {
+    }
+
+    protected void onPrepareContextMenu(Menu menu) {
     }
 
     public boolean onContextItemSelected(MenuItem item) {

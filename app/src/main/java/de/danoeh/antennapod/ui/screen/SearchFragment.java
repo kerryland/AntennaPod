@@ -5,8 +5,10 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.ActionMode;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -44,7 +46,6 @@ import de.danoeh.antennapod.ui.appstartintent.OnlineFeedviewActivityStarter;
 import de.danoeh.antennapod.ui.discovery.OnlineSearchFragment;
 import de.danoeh.antennapod.ui.view.EmptyViewHandler;
 import de.danoeh.antennapod.ui.episodeslist.EpisodeItemListRecyclerView;
-import de.danoeh.antennapod.ui.view.FloatingSelectMenu;
 import de.danoeh.antennapod.ui.view.LiftOnScrollListener;
 import de.danoeh.antennapod.ui.episodeslist.EpisodeItemViewHolder;
 import io.reactivex.rxjava3.core.Observable;
@@ -82,7 +83,6 @@ public class SearchFragment extends Fragment implements EpisodeItemListAdapter.O
     private List<FeedItem> results;
     private ChipGroup chipGroup;
     private SearchView searchView;
-    private FloatingSelectMenu floatingSelectMenu;
     private Handler automaticSearchDebouncer;
     private long lastQueryChange = 0;
     private boolean isOtherViewInFoucus = false;
@@ -150,27 +150,22 @@ public class SearchFragment extends Fragment implements EpisodeItemListAdapter.O
         setupToolbar(layout.findViewById(R.id.toolbar));
         progressBar = layout.findViewById(R.id.progressBar);
         recyclerView = layout.findViewById(R.id.recyclerView);
-        floatingSelectMenu = layout.findViewById(R.id.floatingSelectMenu);
         recyclerView.setRecycledViewPool(((MainActivity) getActivity()).getRecycledViewPool());
-        registerForContextMenu(recyclerView);
         adapter = new EpisodeItemListAdapter(getActivity()) {
             @Override
-            public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-                super.onCreateContextMenu(menu, v, menuInfo);
+            protected void onPrepareContextMenu(Menu menu) {
+                super.onPrepareContextMenu(menu);
                 if (!inActionMode()) {
                     menu.findItem(R.id.multi_select).setVisible(true);
                 }
-                MenuItemUtils.setOnClickListeners(menu, SearchFragment.this::onContextItemSelected);
             }
 
             @Override
             protected void onSelectedItemsUpdated() {
                 super.onSelectedItemsUpdated();
-                FeedItemMenuHandler.onPrepareMenu(getContext(), floatingSelectMenu.getMenu(), getSelectedItems(),
-                        R.id.remove_inbox_item);
-                floatingSelectMenu.updateItemVisibility();
             }
         };
+        adapter.setContextMenuClickListener(SearchFragment.this::onContextItemSelected);
         adapter.setOnSelectModeListener(this);
         recyclerView.setAdapter(adapter);
         recyclerView.addOnScrollListener(new LiftOnScrollListener(layout.findViewById(R.id.appbar)));
@@ -222,19 +217,29 @@ public class SearchFragment extends Fragment implements EpisodeItemListAdapter.O
                 }
             }
         });
-        floatingSelectMenu.inflate(R.menu.episodes_apply_action_speeddial);
-        floatingSelectMenu.setOnMenuItemClickListener(menuItem -> {
-            if (adapter.getSelectedCount() == 0) {
-                EventBus.getDefault().post(new MessageEvent(getString(R.string.no_items_selected_message)));
-                return false;
-            }
-            new EpisodeMultiSelectActionHandler(getActivity(), menuItem.getItemId())
-                    .handleAction(adapter.getSelectedItems());
-            adapter.endSelectMode();
-            return true;
-        });
 
         return layout;
+    }
+
+    @Override
+    public void onPrepareSelectMode(ActionMode mode, Menu menu) {
+        FeedItemMenuHandler.onPrepareMenu(getContext(), menu, adapter.getSelectedItems(),
+                R.id.remove_inbox_item);
+    }
+
+    @Override
+    public boolean onActionItemClicked(ActionMode mode, MenuItem menuItem) {
+        if (adapter.getSelectedCount() == 0) {
+            EventBus.getDefault().post(new MessageEvent(getString(R.string.no_items_selected_message)));
+            return false;
+        }
+        EpisodeMultiSelectActionHandler handler = new EpisodeMultiSelectActionHandler(getActivity(), menuItem.getItemId());
+        if (handler.isHandlingAction()) {
+            handler.handleAction(adapter.getSelectedItems());
+            adapter.endSelectMode();
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -487,17 +492,10 @@ public class SearchFragment extends Fragment implements EpisodeItemListAdapter.O
     @Override
     public void onStartSelectMode() {
         searchViewFocusOff();
-        floatingSelectMenu.setVisibility(View.VISIBLE);
-        recyclerView.setPadding(recyclerView.getPaddingLeft(), recyclerView.getPaddingTop(),
-                recyclerView.getPaddingRight(),
-                (int) getResources().getDimension(R.dimen.floating_select_menu_height));
     }
 
     @Override
     public void onEndSelectMode() {
-        floatingSelectMenu.setVisibility(View.GONE);
-        recyclerView.setPadding(recyclerView.getPaddingLeft(), recyclerView.getPaddingTop(),
-                recyclerView.getPaddingRight(), 0);
         searchViewFocusOn();
     }
 

@@ -38,6 +38,16 @@ public abstract class FeedMenuHandler {
         setItemVisibility(menu, R.id.remove_restore_feed, allArchived);
         boolean singleNonLocalFeedSelected = selectedItems.size() == 1 && !selectedItems.get(0).isLocalFeed();
         setItemVisibility(menu, R.id.share_feed, singleNonLocalFeedSelected);
+
+        // Hide episode-specific multi-select items if they exist in the menu
+        int[] episodeItems = {R.id.add_to_queue_item, R.id.remove_from_queue_item, R.id.mark_read_item,
+                R.id.mark_unread_item, R.id.download_item, R.id.remove_item, R.id.remove_inbox_item,
+                R.id.add_to_favorites_item, R.id.remove_from_favorites_item, R.id.reset_position,
+                R.id.add_to_queue_play_next_item, R.id.share_item, R.id.move_to_top_item,
+                R.id.move_to_bottom_item, R.id.move_to_play_next_item};
+        for (int id : episodeItems) {
+            setItemVisibility(menu, id, false);
+        }
         return true;
     }
 

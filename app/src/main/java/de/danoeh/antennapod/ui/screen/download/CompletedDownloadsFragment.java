@@ -3,8 +3,9 @@ package de.danoeh.antennapod.ui.screen.download;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.ContextMenu;
+import android.view.ActionMode;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,7 +25,6 @@ import de.danoeh.antennapod.ui.common.ConfirmationDialog;
 import de.danoeh.antennapod.ui.episodeslist.EpisodeItemListAdapter;
 import de.danoeh.antennapod.actionbutton.DeleteActionButton;
 import de.danoeh.antennapod.event.DownloadLogEvent;
-import de.danoeh.antennapod.ui.MenuItemUtils;
 import de.danoeh.antennapod.ui.screen.SearchFragment;
 import de.danoeh.antennapod.net.download.serviceinterface.FeedUpdateManager;
 import de.danoeh.antennapod.storage.database.DBReader;
@@ -43,7 +43,6 @@ import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterfa
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.view.EmptyViewHandler;
 import de.danoeh.antennapod.ui.episodeslist.EpisodeItemListRecyclerView;
-import de.danoeh.antennapod.ui.view.FloatingSelectMenu;
 import de.danoeh.antennapod.ui.view.LiftOnScrollListener;
 import de.danoeh.antennapod.ui.episodeslist.EpisodeItemViewHolder;
 import io.reactivex.rxjava3.core.Observable;
@@ -76,7 +75,6 @@ public class CompletedDownloadsFragment extends Fragment
     private Disposable disposable;
     private EmptyViewHandler emptyView;
     private boolean displayUpArrow;
-    private FloatingSelectMenu floatingSelectMenu;
     private SwipeActions swipeActions;
     private ProgressBar progressBar;
     private MaterialToolbar toolbar;
@@ -108,6 +106,7 @@ public class CompletedDownloadsFragment extends Fragment
         recyclerView = root.findViewById(R.id.recyclerView);
         recyclerView.setRecycledViewPool(((MainActivity) getActivity()).getRecycledViewPool());
         adapter = new CompletedDownloadsListAdapter(getActivity());
+        adapter.setContextMenuClickListener(CompletedDownloadsFragment.this::onContextItemSelected);
         adapter.setOnSelectModeListener(this);
         recyclerView.setAdapter(adapter);
         recyclerView.addOnScrollListener(new LiftOnScrollListener(root.findViewById(R.id.appbar)));
@@ -117,18 +116,6 @@ public class CompletedDownloadsFragment extends Fragment
         progressBar = root.findViewById(R.id.progLoading);
         progressBar.setVisibility(View.VISIBLE);
 
-        floatingSelectMenu = root.findViewById(R.id.floatingSelectMenu);
-        floatingSelectMenu.inflate(R.menu.episodes_apply_action_speeddial);
-        floatingSelectMenu.setOnMenuItemClickListener(menuItem -> {
-            if (adapter.getSelectedCount() == 0) {
-                EventBus.getDefault().post(new MessageEvent(getString(R.string.no_items_selected_message)));
-                return false;
-            }
-            new EpisodeMultiSelectActionHandler(getActivity(), menuItem.getItemId())
-                    .handleAction(adapter.getSelectedItems());
-            adapter.endSelectMode();
-            return true;
-        });
         if (getArguments() != null && getArguments().getBoolean(ARG_SHOW_LOGS, false)) {
             new DownloadLogFragment().show(getChildFragmentManager(), DownloadLogFragment.TAG);
         }
@@ -346,18 +333,31 @@ public class CompletedDownloadsFragment extends Fragment
     @Override
     public void onStartSelectMode() {
         swipeActions.detach();
-        floatingSelectMenu.setVisibility(View.VISIBLE);
-        recyclerView.setPadding(recyclerView.getPaddingLeft(), recyclerView.getPaddingTop(),
-                recyclerView.getPaddingRight(),
-                (int) getResources().getDimension(R.dimen.floating_select_menu_height));
     }
 
     @Override
     public void onEndSelectMode() {
-        floatingSelectMenu.setVisibility(View.GONE);
         swipeActions.attachTo(recyclerView);
-        recyclerView.setPadding(recyclerView.getPaddingLeft(), recyclerView.getPaddingTop(),
-                recyclerView.getPaddingRight(), 0);
+    }
+
+    @Override
+    public void onPrepareSelectMode(ActionMode mode, Menu menu) {
+        FeedItemMenuHandler.onPrepareMenu(getContext(), menu, adapter.getSelectedItems());
+    }
+
+    @Override
+    public boolean onActionItemClicked(ActionMode mode, MenuItem menuItem) {
+        if (adapter.getSelectedCount() == 0) {
+            EventBus.getDefault().post(new MessageEvent(getString(R.string.no_items_selected_message)));
+            return false;
+        }
+        EpisodeMultiSelectActionHandler handler = new EpisodeMultiSelectActionHandler(getActivity(), menuItem.getItemId());
+        if (handler.isHandlingAction()) {
+            handler.handleAction(adapter.getSelectedItems());
+            adapter.endSelectMode();
+            return true;
+        }
+        return false;
     }
 
     private class CompletedDownloadsListAdapter extends EpisodeItemListAdapter {
@@ -378,19 +378,16 @@ public class CompletedDownloadsFragment extends Fragment
         }
 
         @Override
-        public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-            super.onCreateContextMenu(menu, v, menuInfo);
+        protected void onPrepareContextMenu(Menu menu) {
+            super.onPrepareContextMenu(menu);
             if (!inActionMode()) {
                 menu.findItem(R.id.multi_select).setVisible(true);
             }
-            MenuItemUtils.setOnClickListeners(menu, CompletedDownloadsFragment.this::onContextItemSelected);
         }
 
         @Override
         protected void onSelectedItemsUpdated() {
             super.onSelectedItemsUpdated();
-            FeedItemMenuHandler.onPrepareMenu(getContext(), floatingSelectMenu.getMenu(), getSelectedItems());
-            floatingSelectMenu.updateItemVisibility();
         }
     }
 

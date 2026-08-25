@@ -109,6 +109,12 @@ DBPodAdapter -- create database
 DBUpgrader -- upgrade database schema. Based on 'oldVersion' and PodDBAdapter.VERSION 
 DBWriter -- write to database
 
+## FeedItem
+read (state):
+   NEW = -1; // i.e. in the inbox
+   UNPLAYED = 0;
+   PLAYED = 1;
+
 # Sorting
 What controls the order we see things in AntennaPod?
 ## On Screen Sorting

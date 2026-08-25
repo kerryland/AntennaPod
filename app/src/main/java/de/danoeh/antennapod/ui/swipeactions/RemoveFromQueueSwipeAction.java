@@ -26,7 +26,7 @@ public class RemoveFromQueueSwipeAction implements SwipeAction {
 
     @Override
     public int getActionIcon() {
-        return R.drawable.ic_playlist_remove;
+        return R.drawable.media3_icon_playlist_remove;
     }
 
     @Override

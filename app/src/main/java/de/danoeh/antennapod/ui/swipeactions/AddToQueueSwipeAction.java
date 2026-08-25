@@ -22,7 +22,7 @@ public class AddToQueueSwipeAction implements SwipeAction {
 
     @Override
     public int getActionIcon() {
-        return R.drawable.ic_playlist_play;
+        return R.drawable.media3_icon_playlist_add;
     }
 
     @Override

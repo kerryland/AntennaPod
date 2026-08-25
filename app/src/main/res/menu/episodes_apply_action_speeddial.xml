@@ -38,6 +38,11 @@
         android:title="@string/add_to_queue_label" />
 
     <item
+        android:id="@+id/add_to_queue_play_next_item"
+        android:icon="@drawable/media3_icon_playlist_add"
+        android:title="@string/add_to_queue_play_next_label" />
+
+    <item
         android:id="@+id/share_item"
         android:icon="@drawable/ic_share"
         android:title="@string/share_label" />

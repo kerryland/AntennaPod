@@ -66,6 +66,7 @@ public class FeedItemMenuHandler {
         boolean canSkip = false;
         boolean canRemoveFromQueue = false;
         boolean canAddToQueue = false;
+        boolean canAddToQueuePlayNext = false;
         boolean canVisitWebsite = false;
         boolean canShare = false;
         boolean canRemoveFromInbox = false;
@@ -86,6 +87,7 @@ public class FeedItemMenuHandler {
             canSkip |= hasMedia && PlaybackStatus.isPlaying(item.getMedia());
             canRemoveFromQueue |= item.isTagged(FeedItem.TAG_QUEUE);
             canAddToQueue |= hasMedia && !item.isTagged(FeedItem.TAG_QUEUE);
+            canAddToQueuePlayNext |= canAddToQueue;
             canVisitWebsite |= !item.getFeed().isLocalFeed() && ShareUtils.hasLinkToShare(item);
             canShare |= !item.getFeed().isLocalFeed();
             canRemoveFromInbox |= item.isNew();
@@ -110,9 +112,14 @@ public class FeedItemMenuHandler {
             }
         }
 
+        if (UserPreferences.getEnqueueLocation() == UserPreferences.EnqueueLocation.AFTER_CURRENTLY_PLAYING) {
+            canAddToQueuePlayNext = false;
+        }
+
         setItemVisibility(menu, R.id.skip_episode_item, canSkip);
         setItemVisibility(menu, R.id.remove_from_queue_item, canRemoveFromQueue);
         setItemVisibility(menu, R.id.add_to_queue_item, canAddToQueue);
+        setItemVisibility(menu, R.id.add_to_queue_play_next_item, canAddToQueuePlayNext);
         setItemVisibility(menu, R.id.visit_website_item, canVisitWebsite);
         setItemVisibility(menu, R.id.share_item, canShare);
         setItemVisibility(menu, R.id.remove_inbox_item, canRemoveFromInbox);
@@ -223,11 +230,12 @@ public class FeedItemMenuHandler {
         } else if (menuItemId == R.id.mark_unread_item) {
             new EpisodeMultiSelectActionHandler(fragment.getActivity(), R.id.mark_unread_item)
                     .handleAction(Collections.singletonList(selectedItem));
-        } else if (menuItemId == R.id.add_to_queue_item) {
-            if (!(fragment instanceof InboxFragment)) {
-                selectedItem.addTag(FeedItem.TAG_QUEUE_PERMANENT);
-            }
-            DBWriter.addQueueItem(context, false, selectedItem);
+
+        } else if (menuItemId == R.id.add_to_queue_item || menuItemId == R.id.add_to_queue_play_next_item) {
+            EpisodeMultiSelectActionHandler menuHandler = new EpisodeMultiSelectActionHandler(fragment.getActivity(), menuItemId);
+            menuHandler.setQueueAdditionsArePermanent(!(fragment instanceof InboxFragment));
+            menuHandler.handleAction(Collections.singletonList(selectedItem));
+
         } else if (menuItemId == R.id.remove_from_queue_item) {
             MenuItemAssistant.skipIfPlaying(context, Collections.singletonList(selectedItem), () ->
                     DBWriter.removeQueueItem(context, true, selectedItem)); // TRUE!!?

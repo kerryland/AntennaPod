@@ -474,7 +474,7 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
                 Menu menu = floatingSelectMenu.getMenu();
                 List<FeedItem> selectedItems = getSelectedItems();
                 FeedItemMenuHandler.onPrepareMenu(getContext(), floatingSelectMenu.getMenu(), getSelectedItems(),
-                        R.id.add_to_queue_item, R.id.remove_inbox_item);
+                        R.id.add_to_queue_item, R.id.add_to_queue_play_next_item, R.id.remove_inbox_item);
 
                 Pair<Boolean, Boolean> canMove = canMove(queue, selectedItems);
                 menu.findItem(R.id.move_to_top_item).setVisible(canMove.first);

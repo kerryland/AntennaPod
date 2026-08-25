@@ -55,7 +55,9 @@ public class EpisodeMultiSelectActionHandler {
     }
     public void handleAction(List<FeedItem> items) {
         if (actionId == R.id.add_to_queue_item) {
-            queueChecked(items, queueAdditionsArePermanent);
+            queueChecked(items, queueAdditionsArePermanent, false);
+        } else if (actionId == R.id.add_to_queue_play_next_item) {
+            queueChecked(items, queueAdditionsArePermanent, true);
         } else if (actionId == R.id.remove_from_queue_item) {
             skipIfPlaying(items, () ->
                     removeFromQueueChecked(items));
@@ -84,19 +86,23 @@ public class EpisodeMultiSelectActionHandler {
         } else if (actionId == R.id.move_to_bottom_item) {
             moveToBottomChecked(items);
         } else if (actionId == R.id.move_to_play_next_item) {
-            Observable.fromCallable(() -> DBReader.getQueue())
-                    .subscribeOn(Schedulers.computation())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(queueItems -> MenuItemAssistant.findCurrentlyPlayingPosition(activity, queueItems,
-                            position -> movePlayNextChecked(position,
-                                    items)));
+            moveToPlayNext(items);
 
         } else {
             Log.e(TAG, "Unrecognized speed dial action item. Do nothing. id=" + actionId);
         }
     }
 
-    private void queueChecked(List<FeedItem> items, boolean permanent) {
+    private void moveToPlayNext(List<FeedItem> items) {
+        Observable.fromCallable(() -> DBReader.getQueue())
+                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(queueItems -> MenuItemAssistant.findCurrentlyPlayingPosition(activity, queueItems,
+                        position -> movePlayNextChecked(position,
+                                items)));
+    }
+
+    private void queueChecked(List<FeedItem> items, boolean permanent, boolean playNext) {
         // Count here to give accurate number in snackbar
         List<FeedItem> toQueue = new ArrayList<>();
         for (FeedItem episode : items) {
@@ -105,6 +111,10 @@ public class EpisodeMultiSelectActionHandler {
             }
         }
         DBWriter.addQueueItem(activity, permanent, toQueue.toArray(new FeedItem[0]));
+
+        if (playNext) {
+            moveToPlayNext(toQueue);
+        }
         showMessage(R.plurals.added_to_queue_message, toQueue.size());
     }
 

@@ -405,6 +405,10 @@ class DBUpgrader {
             db.execSQL("ALTER TABLE " + PodDBAdapter.TABLE_NAME_FEED_ITEMS
                     + " ADD COLUMN " + PodDBAdapter.KEY_ADDED_TO_INBOX_OR_QUEUE + " INTEGER DEFAULT 0");
         }
+
+        if (oldVersion < 3120010) {
+            db.execSQL(PodDBAdapter.CREATE_TABLE_PREFERENCES);
+        }
     }
 
 }

@@ -57,7 +57,7 @@ public class PodDBAdapter {
 
     private static final String TAG = "PodDBAdapter";
     public static final String DATABASE_NAME = "Antennapod.db";
-    public static final int VERSION = 3120009;
+    public static final int VERSION = 3120010;
 
     /**
      * Maximum number of arguments for IN-operator.
@@ -146,6 +146,9 @@ public class PodDBAdapter {
     public static final String TABLE_NAME_QUEUE = "Queue";
     public static final String TABLE_NAME_SIMPLECHAPTERS = "SimpleChapters";
     public static final String TABLE_NAME_FAVORITES = "Favorites";
+    public static final String TABLE_NAME_PREFERENCES = "Preferences";
+    public static final String KEY_PREF_KEY = "key";
+    public static final String KEY_PREF_VALUE = "value";
 
     // SQL Statements for creating new tables
     private static final String TABLE_PRIMARY_KEY = KEY_ID
@@ -266,6 +269,10 @@ public class PodDBAdapter {
             + TABLE_NAME_FAVORITES + "(" + KEY_ID + " INTEGER PRIMARY KEY,"
             + KEY_FEEDITEM + " INTEGER," + KEY_FEED + " INTEGER)";
 
+    static final String CREATE_TABLE_PREFERENCES = "CREATE TABLE "
+            + TABLE_NAME_PREFERENCES + " (" + KEY_PREF_KEY + " TEXT PRIMARY KEY,"
+            + KEY_PREF_VALUE + " TEXT)";
+
     /**
      * All the tables in the database
      */
@@ -276,7 +283,8 @@ public class PodDBAdapter {
             TABLE_NAME_DOWNLOAD_LOG,
             TABLE_NAME_QUEUE,
             TABLE_NAME_SIMPLECHAPTERS,
-            TABLE_NAME_FAVORITES
+            TABLE_NAME_FAVORITES,
+            TABLE_NAME_PREFERENCES
     };
 
     public static final String SELECT_KEY_ITEM_ID = "item_id";
@@ -477,6 +485,32 @@ public class PodDBAdapter {
         } finally {
             adapter.close();
         }
+    }
+
+    public Map<String, String> getAllPreferences() {
+        Map<String, String> map = new HashMap<>();
+        try (Cursor cursor = db.query(TABLE_NAME_PREFERENCES, null, null, null, null, null, null)) {
+            if (cursor.moveToFirst()) {
+                final int keyIndex = cursor.getColumnIndexOrThrow(KEY_PREF_KEY);
+                final int valueIndex = cursor.getColumnIndexOrThrow(KEY_PREF_VALUE);
+                do {
+                    map.put(cursor.getString(keyIndex), cursor.getString(valueIndex));
+                } while (cursor.moveToNext());
+            }
+        }
+        return map;
+    }
+
+    public void setPreference(String key, String value) {
+        ContentValues values = new ContentValues();
+        values.put(KEY_PREF_KEY, key);
+        values.put(KEY_PREF_VALUE, value);
+        db.insertWithOnConflict(TABLE_NAME_PREFERENCES, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+    }
+
+    public boolean removePreference(String key) {
+        return db.delete(TABLE_NAME_PREFERENCES, KEY_PREF_KEY + "=?",
+                new String[]{key}) > 0;
     }
 
     /**
@@ -1660,6 +1694,7 @@ public class PodDBAdapter {
             db.execSQL(CREATE_TABLE_QUEUE);
             db.execSQL(CREATE_TABLE_SIMPLECHAPTERS);
             db.execSQL(CREATE_TABLE_FAVORITES);
+            db.execSQL(CREATE_TABLE_PREFERENCES);
 
             db.execSQL(CREATE_INDEX_FEEDITEMS_FEED);
             db.execSQL(CREATE_INDEX_FEEDITEMS_PUBDATE);

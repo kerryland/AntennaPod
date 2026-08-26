@@ -40,6 +40,7 @@ public class ClientConfigurator {
             e.printStackTrace();
         }
         PodDBAdapter.init(context);
+        SettingsStorage.install(context);
         UserPreferences.init(context);
         SynchronizationCredentials.init(context);
         SynchronizationSettings.init(context);

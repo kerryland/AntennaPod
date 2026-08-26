@@ -67,7 +67,7 @@ public class DownloadActionButton extends ItemActionButton {
         }
 
         if (UserPreferences.isVpnDownload()) {
-            downloadAfterVpnConnects(context, shouldBypass);
+            downloadAfterVpnConnects(context);
         } else {
             downloadNow(context, shouldBypass);
         }
@@ -108,7 +108,7 @@ public class DownloadActionButton extends ItemActionButton {
         return isDownloading || media.isDownloaded();
     }
 
-    private void downloadAfterVpnConnects(Context context, boolean shouldBypass) {
+    private void downloadAfterVpnConnects(Context context) {
         VpnMonitor vpnMonitor = VpnMonitor.getInstance(context);
         if (!vpnMonitor.isVpnConnected()) {
             VpnLauncherHelper.launchVpnAndReturnOnConnect(context, 60000);
@@ -126,7 +126,7 @@ public class DownloadActionButton extends ItemActionButton {
                             }
                         }});
 
-                    downloadNow(context, shouldBypass);
+                    downloadNow(context, true);
                 }
             }
         });

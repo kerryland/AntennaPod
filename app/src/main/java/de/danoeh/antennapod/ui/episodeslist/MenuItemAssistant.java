@@ -1,5 +1,6 @@
 package de.danoeh.antennapod.ui.episodeslist;
 
+import android.app.PendingIntent;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
@@ -8,6 +9,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.OptIn;
 import androidx.media3.common.MediaItem;
+import androidx.media3.common.Player;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.session.MediaController;
 
@@ -19,10 +21,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.playback.service.PlaybackController;
 import de.danoeh.antennapod.playback.service.PlaybackStatus;
+import de.danoeh.antennapod.ui.appstartintent.MediaButtonStarter;
 
 public class MenuItemAssistant {
     private static final String TAG = "MenuItemAssistant";
-    private static final long SKIP_TIMEOUT_MS = 2000;
+    private static final long SKIP_TIMEOUT_MS = 5000;
 
     /**
      * Do something {@code callback} after we have found a podcast to play if the currently playing one
@@ -71,7 +74,7 @@ public class MenuItemAssistant {
                             skipIfPlayingFinished.run();
                         } else {
                             // We're on another removed item, skip again
-                            controller.seekToNextMediaItem();
+                            skipToNext(context);
                             waitForNextMediaItem.postDelayed(this, 100);
                         }
                     } else {
@@ -81,11 +84,19 @@ public class MenuItemAssistant {
                 }
             }, 100);
 
-            controller.seekToNextMediaItem();
+            skipToNext(context);
 
-            // Fire the callack after the timeout, just in case
+            // Fire the callback after the timeout, just in case
             waitForNextMediaItem.postDelayed(skipIfPlayingFinished, SKIP_TIMEOUT_MS);
         });
+    }
+
+    private static void skipToNext(Context context) {
+        try {
+            MediaButtonStarter.createPendingIntent(context, Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM).send();
+        } catch (PendingIntent.CanceledException e) {
+            Log.e(TAG, "Could not skip to next", e);
+        }
     }
 
     private static long getPlayingMediaId(MediaController controller) {
@@ -96,6 +107,7 @@ public class MenuItemAssistant {
         } catch (NumberFormatException e) {
             currentId = -1;
         }
+        Log.d(TAG, "Currently playing " + currentId);
         return currentId;
     }
 

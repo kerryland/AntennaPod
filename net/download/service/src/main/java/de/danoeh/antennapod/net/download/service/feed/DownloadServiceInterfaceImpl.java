@@ -71,7 +71,7 @@ public class DownloadServiceInterfaceImpl extends DownloadServiceInterface {
 
     private void enqueueDownloadRequest(Context context, FeedItem item, OneTimeWorkRequest.Builder workRequest) {
         WorkManager.getInstance(context).enqueueUniqueWork(item.getMedia().getDownloadUrl(),
-                ExistingWorkPolicy.KEEP, workRequest.build());
+                ExistingWorkPolicy.REPLACE, workRequest.build());
         downloadStarted = true;
     }
 

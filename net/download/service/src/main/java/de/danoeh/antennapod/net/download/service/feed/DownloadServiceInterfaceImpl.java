@@ -18,6 +18,7 @@ import androidx.work.OutOfQuotaPolicy;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import de.danoeh.antennapod.net.download.service.episode.EpisodeDownloadWorker;
+import de.danoeh.antennapod.net.download.service.feed.remote.VpnMonitor;
 import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedMedia;
@@ -64,7 +65,7 @@ public class DownloadServiceInterfaceImpl extends DownloadServiceInterface {
             workRequest.addTag(DownloadServiceInterface.WORK_DATA_WAS_QUEUED);
         }
         workRequest.setInputData(new Data.Builder().putLong(WORK_DATA_MEDIA_ID, item.getMedia().getId()).build());
-        workRequest.setConstraints(getConstraints());
+        workRequest.setConstraints(getConstraints(context));
         return workRequest;
     }
 
@@ -74,9 +75,11 @@ public class DownloadServiceInterfaceImpl extends DownloadServiceInterface {
         downloadStarted = true;
     }
 
-    private static Constraints getConstraints() {
+    private static Constraints getConstraints(Context context) {
         Constraints.Builder constraints = new Constraints.Builder();
-        if (UserPreferences.isAllowMobileEpisodeDownload()) {
+        boolean vpnActive = UserPreferences.isVpnDownload()
+                && VpnMonitor.getInstance(context).isVpnConnected();
+        if (UserPreferences.isAllowMobileEpisodeDownload() || vpnActive) {
             constraints.setRequiredNetworkType(NetworkType.CONNECTED);
         } else {
             constraints.setRequiredNetworkType(NetworkType.UNMETERED);

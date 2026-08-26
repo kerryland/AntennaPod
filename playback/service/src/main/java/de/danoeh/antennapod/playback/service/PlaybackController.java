@@ -539,13 +539,10 @@ public abstract class PlaybackController {
             try {
                 controller = controllerFuture.get();
                 consumer.accept(controller);
-                if (releaseAfterCallback) {
-                    controller.release();
-                }
             } catch (ExecutionException | InterruptedException e) {
                 e.printStackTrace();
             } finally {
-                if (controller != null) {
+                if (releaseAfterCallback && controller != null) {
                     controller.release();
                 }
             }

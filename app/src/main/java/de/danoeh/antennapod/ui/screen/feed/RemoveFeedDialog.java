@@ -20,6 +20,7 @@ import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.databinding.RemoveFeedDialogBinding;
 import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.storage.database.DBWriter;
+import de.danoeh.antennapod.ui.episodeslist.MenuItemAssistant;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.disposables.Disposable;
@@ -132,6 +133,7 @@ public class RemoveFeedDialog extends BottomSheetDialogFragment {
                     for (int i = 0; i < feeds.size(); i++) {
                         Feed feed = feeds.get(i);
                         updateProgressText(R.string.deleting_podcast_progress, i + 1, feeds.size());
+                        MenuItemAssistant.skipIfPlaying(context, feed.getItems(), null);
                         DBWriter.deleteFeed(context, feed.getId()).get();
                     }
                 })

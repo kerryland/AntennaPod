@@ -254,7 +254,7 @@
     <string name="play_label">Play</string>
     <string name="pause_label">Pause</string>
     <string name="stream_label">Stream</string>
-    <string name="delete_label">Delete</string>
+    <string name="delete_label">Delete Download</string>
     <plurals name="deleted_episode_message">
         <item quantity="one">%d downloaded episode deleted.</item>
         <item quantity="other">%d downloaded episodes deleted.</item>

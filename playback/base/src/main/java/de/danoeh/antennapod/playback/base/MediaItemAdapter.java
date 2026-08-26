@@ -83,13 +83,13 @@ public class MediaItemAdapter {
         extras.putString(KEY_STREAM_URL, playable.getStreamUrl());
         metadataBuilder.setExtras(extras);
         String localPlaybackUri;
-        if (playable.localFileAvailable()) {
+        if (localFileExists(playable)) {
             localPlaybackUri = playable.getLocalFileUrl();
         } else {
             localPlaybackUri = playable.getStreamUrl();
         }
         Bundle requestExtras = new Bundle();
-        if (!playable.localFileAvailable() && playable instanceof FeedMedia) {
+        if (!localFileExists(playable) && playable instanceof FeedMedia) {
             FeedMedia feedMedia = (FeedMedia) playable;
             if (feedMedia.getItem() != null && feedMedia.getItem().getFeed() != null) {
                 FeedPreferences prefs = feedMedia.getItem().getFeed().getPreferences();
@@ -108,6 +108,16 @@ public class MediaItemAdapter {
                         .setExtras(requestExtras)
                         .build())
                 .build();
+    }
+
+    private static boolean localFileExists(Playable playable) {
+        if (!playable.localFileAvailable()) {
+            return false;
+        }
+        if (playable instanceof FeedMedia) {
+            return ((FeedMedia) playable).fileExists();
+        }
+        return true;
     }
 
     private static Bitmap loadArtworkBitmap(Context context, Playable playable, int iconSize) {

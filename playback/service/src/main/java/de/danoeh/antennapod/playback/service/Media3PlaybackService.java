@@ -137,7 +137,6 @@ public class Media3PlaybackService extends MediaLibraryService {
                         .add(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
                         .remove(Player.COMMAND_SEEK_TO_PREVIOUS)
                         .remove(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
-                        .add(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
                         .build();
             }
 

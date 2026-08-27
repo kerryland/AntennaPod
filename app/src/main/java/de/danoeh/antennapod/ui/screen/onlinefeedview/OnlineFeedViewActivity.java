@@ -300,15 +300,16 @@ public class OnlineFeedViewActivity extends AppCompatActivity {
             Feed feed = handlerResult.feed;
             feed.setState(Feed.STATE_NOT_SUBSCRIBED);
             feed.setLastRefreshAttempt(System.currentTimeMillis());
-            FeedDatabaseWriter.updateFeed(this, feed, false);
-            Feed feedFromDb = DBReader.getFeed(feed.getId(), false, 0, Integer.MAX_VALUE); // TODO: sb 0, not MAX_VALUE
-            feedFromDb.getPreferences().setKeepUpdated(false);
-            if (username != null && password != null) {
-                feedFromDb.getPreferences().setUsername(username);
-                feedFromDb.getPreferences().setPassword(password);
+            Feed feedFromDb = FeedDatabaseWriter.updateFeed(this, feed, false);
+            if (feedFromDb != null && feedFromDb.getPreferences() != null) {
+                feedFromDb.getPreferences().setKeepUpdated(false);
+                if (username != null && password != null) {
+                    feedFromDb.getPreferences().setUsername(username);
+                    feedFromDb.getPreferences().setPassword(password);
+                }
+                DBWriter.setFeedPreferences(feedFromDb.getPreferences());
             }
-            DBWriter.setFeedPreferences(feedFromDb.getPreferences());
-            emitter.onSuccess(feed.getId());
+            emitter.onSuccess(feedFromDb != null ? feedFromDb.getId() : feed.getId());
         })
         .subscribeOn(Schedulers.computation())
         .observeOn(AndroidSchedulers.mainThread())

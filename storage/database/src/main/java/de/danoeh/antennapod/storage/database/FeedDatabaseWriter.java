@@ -178,7 +178,13 @@ public abstract class FeedDatabaseWriter {
                 DBWriter.deleteFeedItems(context, unlistedItems).get();
             }
         } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
+            if (e instanceof InterruptedException) {
+                // Preserve the interrupt status so a cancelled caller (e.g. an RxJava disposal that
+                // interrupts a thread blocked on the database) stays interrupted instead of being
+                // silently swallowed and continuing with a half-written feed.
+                Thread.currentThread().interrupt();
+            }
+            Log.e(TAG, "Could not update feed", e);
         }
 
         adapter.close();

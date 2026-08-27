@@ -77,7 +77,7 @@ public abstract class HomeSection extends Fragment implements View.OnCreateConte
             Log.i(TAG, "Selected item or listAdapter was null, ignoring selection");
             return super.onContextItemSelected(item);
         }
-        return FeedItemMenuHandler.onMenuItemClicked(this, item.getItemId(), longPressedItem, null);
+        return FeedItemMenuHandler.onMenuItemClicked(this, item.getItemId(), longPressedItem);
     }
 
     @Override

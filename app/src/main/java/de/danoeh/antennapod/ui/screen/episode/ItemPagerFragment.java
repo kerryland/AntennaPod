@@ -1,7 +1,6 @@
 package de.danoeh.antennapod.ui.screen.episode;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -176,7 +175,7 @@ public class ItemPagerFragment extends Fragment implements MaterialToolbar.OnMen
             openPodcast();
             return true;
         }
-        return FeedItemMenuHandler.onMenuItemClicked(this, menuItem.getItemId(), item, null);
+        return FeedItemMenuHandler.onMenuItemClicked(this, menuItem.getItemId(), item);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

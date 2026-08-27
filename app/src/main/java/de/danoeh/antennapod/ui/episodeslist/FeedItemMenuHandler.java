@@ -9,17 +9,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.collection.ArrayMap;
 import androidx.fragment.app.Fragment;
-import androidx.preference.ListPreference;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.event.MessageEvent;
@@ -219,8 +215,7 @@ public class FeedItemMenuHandler {
      * to support some UI operations, e.g., creating a Snackbar.
      */
     public static boolean onMenuItemClicked(@NonNull Fragment fragment, int menuItemId,
-                                            @NonNull FeedItem selectedItem,
-                                            @Nullable List<FeedItem> episodes) {
+                                            @NonNull FeedItem selectedItem) {
 
         @NonNull Context context = fragment.requireContext();
         if (menuItemId == R.id.skip_episode_item) {

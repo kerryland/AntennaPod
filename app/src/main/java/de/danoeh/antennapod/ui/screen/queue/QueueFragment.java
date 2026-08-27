@@ -416,7 +416,7 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
                 return true; // not if nothing is playing?
             }
         }
-        return FeedItemMenuHandler.onMenuItemClicked(this, item.getItemId(), selectedItem, queue);
+        return FeedItemMenuHandler.onMenuItemClicked(this, item.getItemId(), selectedItem);
     }
 
     @Override

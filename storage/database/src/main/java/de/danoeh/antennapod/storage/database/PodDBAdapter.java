@@ -1329,12 +1329,13 @@ public class PodDBAdapter {
     }
 
     public final Cursor getFeedItemCursor(final String guid, final String episodeUrl) {
-        String escapedEpisodeUrl = DatabaseUtils.sqlEscapeString(episodeUrl);
-        String whereClauseCondition = TABLE_NAME_FEED_MEDIA + "." + KEY_DOWNLOAD_URL + "=" + escapedEpisodeUrl;
-
+        String whereClauseCondition;
         if (guid != null) {
             String escapedGuid = DatabaseUtils.sqlEscapeString(guid);
             whereClauseCondition = TABLE_NAME_FEED_ITEMS + "." + KEY_ITEM_IDENTIFIER + "=" + escapedGuid;
+        } else {
+            String escapedEpisodeUrl = DatabaseUtils.sqlEscapeString(episodeUrl);
+            whereClauseCondition = TABLE_NAME_FEED_MEDIA + "." + KEY_DOWNLOAD_URL + "=" + escapedEpisodeUrl;
         }
 
         final String query = SELECT_FEED_ITEMS_AND_MEDIA
@@ -1551,7 +1552,7 @@ public class PodDBAdapter {
         String queryFeedId;
         if (feedID != 0) {
             // search items in specific feed
-            queryFeedId = KEY_FEED + " = " + feedID;
+            queryFeedId = TABLE_NAME_FEED_ITEMS + "." + KEY_FEED + " = " + feedID;
         } else {
             // search through all items
             queryFeedId = "1 = 1";

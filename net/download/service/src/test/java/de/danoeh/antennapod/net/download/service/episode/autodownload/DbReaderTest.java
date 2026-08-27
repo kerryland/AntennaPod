@@ -19,6 +19,7 @@ import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.model.feed.FeedMedia;
 import de.danoeh.antennapod.model.feed.FeedOrder;
 import de.danoeh.antennapod.model.feed.SortOrder;
+import de.danoeh.antennapod.model.download.DownloadResult;
 import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.storage.database.NavDrawerData;
@@ -507,6 +508,136 @@ public class DbReaderTest {
             FeedItem feedItemByGuid = DBReader.getFeedItemByGuidOrEpisodeUrl(item1.getItemIdentifier(),
                     item1.getMedia().getDownloadUrl());
             assertEquals(item1.getItemIdentifier(), feedItemByGuid.getItemIdentifier());
+        }
+
+        @Test
+        public void testGetFeedItemListWrongFeed() {
+            saveFeedlist(1, 3, false);
+            Feed unknownFeed = new Feed(99999, null, "x", "link", "d",
+                    null, null, null, "rss", "x", null, "", "", 0);
+            List<FeedItem> items = DBReader.getFeedItemList(unknownFeed, FeedItemFilter.unfiltered(),
+                    SortOrder.DATE_NEW_OLD, 0, Integer.MAX_VALUE);
+            assertEquals(0, items.size());
+        }
+
+        @Test
+        public void testGetEpisodesLimitAndOffset() {
+            saveFeedlist(1, 5, false);
+            List<FeedItem> items = DBReader.getEpisodes(1, 2, FeedItemFilter.unfiltered(),
+                    SortOrder.DATE_NEW_OLD);
+            assertEquals(2, items.size());
+        }
+
+        @Test
+        public void testGetRandomEpisodes() {
+            saveFeedlist(1, 4, true, false, 0, FeedItem.UNPLAYED);
+            List<FeedItem> items = DBReader.getRandomEpisodes(2, 1);
+            assertEquals(1, items.size());
+        }
+
+        @Test
+        public void testGetFeed() {
+            Feed feed = saveFeedlist(1, 3, false).get(0);
+            Feed saved = DBReader.getFeed(feed.getId(), false, 0, Integer.MAX_VALUE);
+            assertNotNull(saved);
+            assertEquals(feed.getId(), saved.getId());
+            assertEquals(3, saved.getItems().size());
+        }
+
+        @Test
+        public void testGetNonExistentFeed() {
+            assertNull(DBReader.getFeed(99999, false, 0, Integer.MAX_VALUE));
+        }
+
+        @Test
+        public void testGetFeedMedia() {
+            FeedItem item = saveFeedlist(1, 1, true).get(0).getItems().get(0);
+            FeedMedia media = DBReader.getFeedMedia(item.getMedia().getId());
+            assertNotNull(media);
+            assertEquals(item.getMedia().getId(), media.getId());
+        }
+
+        @Test
+        public void testGetFeedItemsWithUrl() {
+            FeedItem item = saveFeedlist(1, 3, true).get(0).getItems().get(0);
+            List<FeedItem> result = DBReader.getFeedItemsWithUrl(
+                    Collections.singletonList(item.getMedia().getDownloadUrl()));
+            assertEquals(1, result.size());
+        }
+
+        @Test
+        public void testLoadDescriptionOfFeedItem() {
+            Feed feed = new Feed(0, null, "feed", "link", "d", null, null, null,
+                    "rss", "id", null, "", "", 0);
+            FeedItem item = new FeedItem(0, "title", "id0", "link", new Date(),
+                    FeedItem.UNPLAYED, feed, false);
+            item.setDescriptionIfLonger("some description");
+            feed.setItems(new ArrayList<>(Collections.singletonList(item)));
+            PodDBAdapter adapter = PodDBAdapter.getInstance();
+            adapter.open();
+            adapter.setCompleteFeed(feed);
+            adapter.close();
+
+            DBReader.loadDescriptionOfFeedItem(item);
+            assertEquals("some description", item.getDescription());
+        }
+
+        @Test
+        public void testGetPausedQueue() {
+            Feed feed = new Feed(0, null, "feed", "link", "d", null, null, null,
+                    "rss", "id", null, "", "", 0);
+            feed.setItems(new ArrayList<>());
+            FeedItem item = new FeedItem(0, "title", "id0", "link", new Date(),
+                    FeedItem.UNPLAYED, feed, false);
+            FeedMedia media = new FeedMedia(item, "url", 1, "audio/mp3");
+            media.setPosition(5000);
+            item.setMedia(media);
+            feed.getItems().add(item);
+            PodDBAdapter adapter = PodDBAdapter.getInstance();
+            adapter.open();
+            adapter.setCompleteFeed(feed);
+            adapter.setQueue(Collections.singletonList(item));
+            adapter.close();
+
+            List<FeedItem> pausedQueue = DBReader.getPausedQueue(10);
+            assertTrue(pausedQueue.stream().anyMatch(i -> i.getId() == item.getId()));
+        }
+
+        @Test
+        public void testSearchFeedItems() {
+            Feed feed = saveFeedlist(1, 5, false).get(0);
+            List<FeedItem> results = DBReader.searchFeedItems(feed.getId(), "item",
+                    FeedItemFilter.unfiltered());
+            assertEquals(5, results.size());
+        }
+
+        @Test
+        public void testSearchFeedItemsAllFeeds() {
+            saveFeedlist(1, 5, false);
+            List<FeedItem> results = DBReader.searchFeedItems(0, "item",
+                    FeedItemFilter.unfiltered());
+            assertEquals(5, results.size());
+        }
+
+        @Test
+        public void testSearchFeeds() {
+            saveFeedlist(2, 0, false);
+            List<Feed> results = DBReader.searchFeeds("feed", FeedItemFilter.unfiltered());
+            assertEquals(2, results.size());
+        }
+
+        @Test
+        public void testGetDownloadLog() {
+            saveFeedlist(1, 0, false);
+            List<DownloadResult> log = DBReader.getDownloadLog();
+            assertNotNull(log);
+        }
+
+        @Test
+        public void testGetFeedItemByGuidWithNullEpisodeUrl() {
+            FeedItem item1 = saveFeedlist(1, 1, true).get(0).getItems().get(0);
+            FeedItem result = DBReader.getFeedItemByGuidOrEpisodeUrl(item1.getItemIdentifier(), null);
+            assertEquals(item1.getItemIdentifier(), result.getItemIdentifier());
         }
 
     }

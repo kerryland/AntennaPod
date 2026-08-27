@@ -4,6 +4,7 @@ plugins {
 }
 apply from: "../common.gradle"
 apply from: "../playFlavor.gradle"
+apply from: "../mockitoAgent.gradle"
 
 android {
     namespace "de.danoeh.antennapod"
@@ -123,6 +124,7 @@ dependencies {
     testImplementation "androidx.test:core:$testCoreVersion"
     testImplementation "junit:junit:$junitVersion"
     testImplementation "org.robolectric:robolectric:$robolectricVersion"
+    testImplementation "org.mockito:mockito-core:$mockitoVersion"
 
     androidTestImplementation "org.awaitility:awaitility:$awaitilityVersion"
     androidTestImplementation 'com.nanohttpd:nanohttpd:2.1.1'

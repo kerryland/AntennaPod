@@ -13,9 +13,7 @@ import androidx.media3.common.Player;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.session.MediaController;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import de.danoeh.antennapod.model.feed.FeedItem;
@@ -39,56 +37,53 @@ public class MenuItemAssistant {
      */
     @OptIn(markerClass = UnstableApi.class)
     public static void skipIfPlaying(Context context, List<FeedItem> feedItems, Runnable callback) {
-        PlaybackController.bindToMedia3ServiceKeepAlive(context, controller -> {
-            Set<Long> knownMediaItems = new HashSet<>();
-            for (FeedItem feedItem : feedItems) {
-                if (feedItem.getMedia() != null) {
-                    knownMediaItems.add(feedItem.getMedia().getId());
-                }
+        PlaybackController.bindToMedia3ServiceKeepAlive(context, controller ->
+                skipIfPlaying(controller, context, feedItems, callback));
+    }
+
+    @OptIn(markerClass = UnstableApi.class)
+    static void skipIfPlaying(MediaController controller, Context context, List<FeedItem> feedItems, Runnable callback) {
+        final long mediaIdToSkip= getPlayingMediaId(controller);
+        if (mediaIdToSkip == -1 || !isMediaIdInList(feedItems, mediaIdToSkip)) {
+            // Nothing relevant is playing, nothing to skip
+            if (callback != null) {
+                callback.run();
             }
+            controller.release();
+            return;
+        }
 
-            final long mediaIdToSkip= getPlayingMediaId(controller);
-            if (mediaIdToSkip == -1 || !knownMediaItems.contains(mediaIdToSkip)) {
-                // Nothing relevant is playing, nothing to skip
-                if (callback != null) {
-                    callback.run();
-                }
-                controller.release();
-                return;
-            }
+        Log.d(TAG, "skipIfPlaying: found current podcast -- now seekToNextMediaItem");
 
-            Log.d(TAG, "skipIfPlaying: found current podcast -- now seekToNextMediaItem");
+        Handler waitForNextMediaItem = new Handler(Looper.getMainLooper());
+        Runnable skipIfPlayingFinished = skipIfPlayingFinished(callback, controller, waitForNextMediaItem);
 
-            Handler waitForNextMediaItem = new Handler(Looper.getMainLooper());
-            Runnable skipIfPlayingFinished = skipIfPlayingFinished(callback, controller, waitForNextMediaItem);
-
-            // Check if 'seekToNextMediaItem' worked by polling because I could not
-            // get Player.Listener.onMediaItemTransition to fire.
-            waitForNextMediaItem.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    long currentId = getPlayingMediaId(controller);
-                    if (currentId != mediaIdToSkip) {
-                        // We've moved! Now check if we're on a removed item or not
-                        if (!knownMediaItems.contains(currentId)) {
-                            skipIfPlayingFinished.run();
-                        } else {
-                            // We're on another removed item, skip again
-                            skipToNext(context);
-                            waitForNextMediaItem.postDelayed(this, 100);
-                        }
+        // Check if 'seekToNextMediaItem' worked by polling because I could not
+        // get Player.Listener.onMediaItemTransition to fire.
+        waitForNextMediaItem.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                long currentId = getPlayingMediaId(controller);
+                if (currentId != mediaIdToSkip) {
+                    // We've moved! Now check if we're on a removed item or not
+                    if (!isMediaIdInList(feedItems, currentId)) {
+                        skipIfPlayingFinished.run();
                     } else {
-                        // Still on same item, check again
+                        // We're on another removed item, skip again
+                        skipToNext(context);
                         waitForNextMediaItem.postDelayed(this, 100);
                     }
+                } else {
+                    // Still on same item, check again
+                    waitForNextMediaItem.postDelayed(this, 100);
                 }
-            }, 100);
+            }
+        }, 100);
 
-            skipToNext(context);
+        skipToNext(context);
 
-            // Fire the callback after the timeout, just in case
-            waitForNextMediaItem.postDelayed(skipIfPlayingFinished, SKIP_TIMEOUT_MS);
-        });
+        // Fire the callback after the timeout, just in case
+        waitForNextMediaItem.postDelayed(skipIfPlayingFinished, SKIP_TIMEOUT_MS);
     }
 
     private static void skipToNext(Context context) {
@@ -109,6 +104,15 @@ public class MenuItemAssistant {
         }
         Log.d(TAG, "Currently playing " + currentId);
         return currentId;
+    }
+
+    private static boolean isMediaIdInList(List<FeedItem> feedItems, long mediaId) {
+        for (FeedItem feedItem : feedItems) {
+            if (feedItem.getMedia() != null && feedItem.getMedia().getId() == mediaId) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @NonNull

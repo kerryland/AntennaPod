@@ -6,9 +6,9 @@ import androidx.fragment.app.Fragment;
 
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.event.MessageEvent;
-import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
+import de.danoeh.antennapod.ui.episodeslist.FeedItemMenuHandler;
 import de.danoeh.antennapod.ui.screen.InboxFragment;
 
 import org.greenrobot.eventbus.EventBus;
@@ -45,7 +45,7 @@ public class AddToQueueSwipeAction implements SwipeAction {
             if (!(fragment instanceof InboxFragment)) {
                 item.addTag(FeedItem.TAG_QUEUE_PERMANENT);
             }
-            DBWriter.addQueueItem(fragment.requireContext(), false, item);
+            FeedItemMenuHandler.onMenuItemClicked(fragment, R.id.add_to_queue_item, item);
         }
     }
 

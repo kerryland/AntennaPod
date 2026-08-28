@@ -21,6 +21,7 @@ import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.event.MessageEvent;
 import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
+import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.preferences.PlaybackPreferences;
 import de.danoeh.antennapod.playback.service.PlaybackServiceInterface;
 import de.danoeh.antennapod.storage.database.DBWriter;
@@ -34,6 +35,9 @@ import de.danoeh.antennapod.model.feed.FeedMedia;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.appstartintent.MediaButtonStarter;
 import de.danoeh.antennapod.ui.view.LocalDeleteModal;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.greenrobot.eventbus.EventBus;
 
 /**
@@ -240,8 +244,28 @@ public class FeedItemMenuHandler {
             menuHandler.handleAction(Collections.singletonList(selectedItem));
 
         } else if (menuItemId == R.id.remove_from_queue_item) {
-            MenuItemAssistant.skipIfPlaying(context, Collections.singletonList(selectedItem), () ->
-                    DBWriter.removeQueueItem(context, true, selectedItem)); // TRUE!!?
+            Observable.fromCallable(DBReader::getQueue)
+                    .subscribeOn(Schedulers.computation())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(queue -> {
+                        MenuItemAssistant.skipIfPlaying(context, Collections.singletonList(selectedItem), () ->
+                                {
+                                    DBWriter.removeQueueItem(context, true, selectedItem);
+                                    EventBus.getDefault().post(new MessageEvent(
+                                            fragment.getResources().getQuantityString(R.plurals.removed_from_queue_message, 1, 1),
+                                            xcontext -> {
+                                                for (int index = 0; index < queue.size(); index++) {
+                                                    FeedItem queueItem = queue.get(index);
+                                                    if (queueItem.equals(selectedItem)) {
+                                                        DBWriter.addQueueItemAt(xcontext,
+                                                                false, selectedItem.getId(), index);
+                                                    }
+                                                };
+                                            },
+                                            fragment.getString(R.string.undo)));
+                                }
+                        );
+                    });
         } else if (menuItemId == R.id.add_to_favorites_item) {
             DBWriter.addFavoriteItems(Collections.singletonList(selectedItem));
         } else if (menuItemId == R.id.remove_from_favorites_item) {

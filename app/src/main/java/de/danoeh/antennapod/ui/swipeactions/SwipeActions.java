@@ -38,6 +38,7 @@ public class SwipeActions extends ItemTouchHelper.SimpleCallback implements Life
     private static final List<SwipeAction> swipeActions = Collections.unmodifiableList(
             Arrays.asList(new AddToQueueSwipeAction(), new RemoveFromInboxSwipeAction(),
                     new StartDownloadSwipeAction(), new MarkFavoriteSwipeAction(),
+                    new PlayNextSwipeAction(),
                     new RemoveFromFavoritesSwipeAction(), new TogglePlaybackStateSwipeAction(),
                     new RemoveFromQueueSwipeAction(), new DeleteSwipeAction(),
                     new RemoveFromHistorySwipeAction()));

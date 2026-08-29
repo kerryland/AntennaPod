@@ -4,21 +4,23 @@ import android.content.Context;
 
 import androidx.fragment.app.Fragment;
 
+import java.util.Collections;
+
 import de.danoeh.antennapod.R;
-import de.danoeh.antennapod.ui.episodeslist.FeedItemMenuHandler;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
+import de.danoeh.antennapod.ui.episodeslist.EpisodeMultiSelectActionHandler;
 
-public class RemoveFromInboxSwipeAction implements SwipeAction {
+public class PlayNextSwipeAction implements SwipeAction {
 
     @Override
     public String getId() {
-        return REMOVE_FROM_INBOX;
+        return PLAY_NEXT;
     }
 
     @Override
     public int getActionIcon() {
-        return R.drawable.ic_check;
+        return R.drawable.media3_icon_queue_next;
     }
 
     @Override
@@ -28,18 +30,22 @@ public class RemoveFromInboxSwipeAction implements SwipeAction {
 
     @Override
     public String getTitle(Context context) {
-        return context.getString(R.string.remove_inbox_label);
+        return context.getString(R.string.play_next);
     }
 
     @Override
     public void performAction(FeedItem item, Fragment fragment, FeedItemFilter filter) {
-        if (item.isNew()) {
-            FeedItemMenuHandler.onMenuItemClicked(fragment, R.id.add_to_queue_play_next_item, item);
+        if (item.isTagged(FeedItem.TAG_QUEUE)) {
+            new EpisodeMultiSelectActionHandler(fragment.getActivity(), R.id.move_to_play_next_item)
+                    .handleAction(Collections.singletonList(item));
+        } else {
+            new EpisodeMultiSelectActionHandler(fragment.getActivity(), R.id.add_to_queue_play_next_item)
+                    .handleAction(Collections.singletonList(item));
         }
     }
 
     @Override
     public boolean willRemove(FeedItemFilter filter, FeedItem item) {
-        return filter.showNew;
+        return false;
     }
 }

@@ -419,6 +419,7 @@
         <item quantity="other">%d episodes moved to play next.</item>
     </plurals>
 
+    <string name="play_next">Play Next</string>
     <string name="sort">Sort</string>
     <string name="keep_sorted">Keep sorted</string>
     <string name="date">Date</string>

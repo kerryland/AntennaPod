@@ -12,6 +12,7 @@ import de.danoeh.antennapod.model.feed.FeedItemFilter;
 public interface SwipeAction {
 
     String ADD_TO_QUEUE = "ADD_TO_QUEUE";
+    String PLAY_NEXT = "PLAY_NEXT";
     String REMOVE_FROM_INBOX = "REMOVE_FROM_INBOX";
     String START_DOWNLOAD = "START_DOWNLOAD";
     String MARK_FAV = "MARK_FAV";

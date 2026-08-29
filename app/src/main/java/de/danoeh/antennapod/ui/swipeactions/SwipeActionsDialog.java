@@ -82,6 +82,7 @@ public class SwipeActionsDialog {
         if (!tag.equals(InboxFragment.TAG)) {
             keys.add(new TogglePlaybackStateSwipeAction());
         }
+        keys.add(new PlayNextSwipeAction());
 
         String forFragment = "";
         switch (tag) {

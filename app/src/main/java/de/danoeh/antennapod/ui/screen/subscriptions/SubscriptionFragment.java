@@ -521,8 +521,7 @@ public class SubscriptionFragment extends Fragment
             disposable.dispose();
         }
         if (editPriorityMode) {
-            editPriorityMode = false;
-            subscriptionAdapter.setEditPriorityMode(false);
+            exitEditPriorityMode();
         }
         suppressNextFeedListEvent = false;
         if (subscriptionAdapter != null) {

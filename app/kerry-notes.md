@@ -122,6 +122,10 @@ countries_menu.xml, online_search.xml — ui:discovery → DiscoveryFragment, On
 bug_report_options.xml — ui:preferences → BugReportFragment
 statistics.xml — ui:statistics → StatisticsFragment
 
+Swipe action    
+- swipe_actions.xml
+- SwipeActions.java
+
 
 HomeFragment loads:
 - QueueSection

@@ -10,7 +10,7 @@
 
     <item
         android:id="@+id/move_to_play_next_item"
-        android:icon="@drawable/ic_shuffle"
+        android:icon="@drawable/media3_icon_queue_next"
         android:menuCategory="container"
         android:title="@string/move_to_play_next_label" />
 

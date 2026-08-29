@@ -1,8 +1,10 @@
 package de.danoeh.antennapod.ui.screen.subscriptions;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.text.InputType;
 import android.util.Log;
 import android.view.ActionMode;
 import android.view.ContextMenu;
@@ -11,17 +13,21 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.activity.MainActivity;
@@ -34,6 +40,7 @@ import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.model.feed.SubscriptionsFilter;
 import de.danoeh.antennapod.net.download.serviceinterface.FeedUpdateManager;
 import de.danoeh.antennapod.storage.database.DBReader;
+import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.storage.database.NavDrawerData;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.MenuItemUtils;
@@ -52,6 +59,7 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -97,6 +105,9 @@ public class SubscriptionFragment extends Fragment
     private RecyclerView.ItemDecoration itemDecoration;
     private List<Feed> feeds;
     private int stateToShow = Feed.STATE_SUBSCRIBED;
+    private boolean editPriorityMode = false;
+    private boolean suppressNextFeedListEvent = false;
+    private ItemTouchHelper itemTouchHelper;
 
     public static SubscriptionFragment newInstance(int state) {
         SubscriptionFragment fragment = new SubscriptionFragment();
@@ -152,7 +163,19 @@ public class SubscriptionFragment extends Fragment
         };
         setColumnNumber(prefs.getInt(PREF_NUM_COLUMNS, getDefaultNumOfColumns()));
         subscriptionAdapter.setOnSelectModeListener(this);
+        subscriptionAdapter.setOnEditPriorityListener(new SubscriptionsRecyclerAdapter.OnEditPriorityListener() {
+            @Override
+            public void onEditPriority(Feed feed) {
+                showEditPriorityDialog(feed);
+            }
+
+            @Override
+            public void onStartDrag(RecyclerView.ViewHolder viewHolder) {
+                itemTouchHelper.startDrag(viewHolder);
+            }
+        });
         subscriptionRecycler.setAdapter(subscriptionAdapter);
+        setupItemTouchHelper();
         setupEmptyView();
 
         progressBar = root.findViewById(R.id.progressBar);
@@ -183,6 +206,8 @@ public class SubscriptionFragment extends Fragment
             toolbar.getMenu().removeItem(R.id.refresh_item);
             toolbar.getMenu().removeItem(R.id.subscriptions_counter);
             toolbar.getMenu().removeItem(R.id.show_archive);
+            toolbar.getMenu().removeItem(R.id.edit_priority);
+            toolbar.getMenu().removeItem(R.id.finished_priority);
             subscriptionAddButton.setVisibility(View.GONE);
         }
 
@@ -234,7 +259,13 @@ public class SubscriptionFragment extends Fragment
     @Override
     public boolean onMenuItemClick(MenuItem item) {
         final int itemId = item.getItemId();
-        if (itemId == R.id.refresh_item) {
+        if (itemId == R.id.edit_priority) {
+            enterEditPriorityMode();
+            return true;
+        } else if (itemId == R.id.finished_priority) {
+            exitEditPriorityMode();
+            return true;
+        } else if (itemId == R.id.refresh_item) {
             FeedUpdateManager.getInstance().runOnceOrAsk(requireContext());
             return true;
         } else if (itemId == R.id.subscriptions_filter) {
@@ -315,6 +346,157 @@ public class SubscriptionFragment extends Fragment
         emptyView.attachToRecyclerView(subscriptionRecycler);
     }
 
+    private void setupItemTouchHelper() {
+        itemTouchHelper = new ItemTouchHelper(new ItemTouchHelper.Callback() {
+            @Override
+            public int getMovementFlags(@NonNull RecyclerView recyclerView,
+                                        @NonNull RecyclerView.ViewHolder viewHolder) {
+                if (!editPriorityMode) {
+                    return 0;
+                }
+                int dragFlags = ItemTouchHelper.UP | ItemTouchHelper.DOWN
+                        | ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT;
+                return makeMovementFlags(dragFlags, 0);
+            }
+
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView,
+                                  @NonNull RecyclerView.ViewHolder viewHolder,
+                                  @NonNull RecyclerView.ViewHolder target) {
+                int from = viewHolder.getBindingAdapterPosition();
+                int to = target.getBindingAdapterPosition();
+                if (from < 0 || to < 0 || from >= subscriptionAdapter.getItemCount()
+                        || to >= subscriptionAdapter.getItemCount()) {
+                    return false;
+                }
+                subscriptionAdapter.moveItem(from, to);
+                return true;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+            }
+
+            @Override
+            public void onSelectedChanged(@Nullable RecyclerView.ViewHolder viewHolder, int actionState) {
+                if (actionState == ItemTouchHelper.ACTION_STATE_DRAG && viewHolder != null) {
+                    View card = viewHolder.itemView.findViewById(R.id.outerContainer);
+                    if (card != null) {
+                        card.animate().scaleX(1.1f).scaleY(1.1f).setDuration(150).start();
+                    }
+                }
+                super.onSelectedChanged(viewHolder, actionState);
+            }
+
+            @Override
+            public void clearView(@NonNull RecyclerView recyclerView,
+                                  @NonNull RecyclerView.ViewHolder viewHolder) {
+                super.clearView(recyclerView, viewHolder);
+                View card = viewHolder.itemView.findViewById(R.id.outerContainer);
+                if (card != null) {
+                    card.animate().scaleX(1f).scaleY(1f).setDuration(150).start();
+                }
+                int position = viewHolder.getBindingAdapterPosition();
+                if (editPriorityMode && position >= 0 && position < subscriptionAdapter.getItemCount()) {
+                    onDragDropped(position);
+                }
+            }
+
+            @Override
+            public boolean isLongPressDragEnabled() {
+                return false;
+            }
+        });
+        itemTouchHelper.attachToRecyclerView(subscriptionRecycler);
+    }
+
+    private void enterEditPriorityMode() {
+        if (editPriorityMode) {
+            return;
+        }
+        editPriorityMode = true;
+        toolbar.setTitle(R.string.edit_priority);
+        subscriptionAddButton.setVisibility(View.GONE);
+        tagsRecycler.setVisibility(View.GONE);
+        Menu menu = toolbar.getMenu();
+        menu.findItem(R.id.finished_priority).setVisible(true);
+        menu.findItem(R.id.edit_priority).setVisible(false);
+        menu.findItem(R.id.subscriptions_sort).setVisible(false);
+        menu.findItem(R.id.subscriptions_filter).setVisible(false);
+        menu.findItem(R.id.subscriptions_counter).setVisible(false);
+        menu.findItem(R.id.subscription_num_columns).setVisible(false);
+        menu.findItem(R.id.pref_show_subscription_title).setVisible(false);
+        menu.findItem(R.id.show_archive).setVisible(false);
+        menu.findItem(R.id.refresh_item).setVisible(false);
+        menu.findItem(R.id.action_search).setVisible(false);
+        subscriptionAdapter.setEditPriorityMode(true);
+        loadSubscriptionsAndTags();
+    }
+
+    private void exitEditPriorityMode() {
+        if (!editPriorityMode) {
+            return;
+        }
+        editPriorityMode = false;
+        toolbar.setTitle(R.string.subscriptions_label);
+        subscriptionAddButton.setVisibility(View.VISIBLE);
+        tagsRecycler.setVisibility(shouldShowTags ? View.VISIBLE : View.GONE);
+        Menu menu = toolbar.getMenu();
+        menu.findItem(R.id.finished_priority).setVisible(false);
+        menu.findItem(R.id.edit_priority).setVisible(true);
+        menu.findItem(R.id.subscriptions_sort).setVisible(true);
+        menu.findItem(R.id.subscriptions_filter).setVisible(true);
+        menu.findItem(R.id.subscriptions_counter).setVisible(true);
+        menu.findItem(R.id.subscription_num_columns).setVisible(true);
+        menu.findItem(R.id.pref_show_subscription_title).setVisible(true);
+        menu.findItem(R.id.show_archive).setVisible(true);
+        menu.findItem(R.id.refresh_item).setVisible(true);
+        menu.findItem(R.id.action_search).setVisible(true);
+        subscriptionAdapter.setEditPriorityMode(false);
+        loadSubscriptionsAndTags();
+    }
+
+    private void showEditPriorityDialog(Feed feed) {
+        MaterialAlertDialogBuilder dialog = new MaterialAlertDialogBuilder(requireContext());
+        dialog.setTitle(R.string.edit_priority);
+        EditText input = new EditText(requireContext());
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        input.setText(String.valueOf(feed.getPreferences().getPriority()));
+        dialog.setView(input);
+        dialog.setPositiveButton(android.R.string.ok, (d, which) -> {
+            String value = input.getText().toString();
+            try {
+                int priority = Integer.parseInt(value);
+                feed.getPreferences().setPriority(priority);
+                suppressNextFeedListEvent = true;
+                DBWriter.setFeedPreferences(feed.getPreferences());
+                subscriptionAdapter.moveItemToPriorityPosition(feed);
+            } catch (NumberFormatException ignored) {
+                // Keep the previous priority
+            }
+        });
+        dialog.setNegativeButton(android.R.string.cancel, (d, which) -> d.dismiss());
+        dialog.show();
+    }
+
+    private void onDragDropped(int position) {
+        Feed dragged = (Feed) subscriptionAdapter.getItem(position);
+        if (dragged == null) {
+            return;
+        }
+        int newPriority;
+        if (position + 1 < subscriptionAdapter.getItemCount()) {
+            Feed following = (Feed) subscriptionAdapter.getItem(position + 1);
+            newPriority = following.getPreferences().getPriority();
+        } else {
+            newPriority = dragged.getPreferences().getPriority();
+        }
+        dragged.getPreferences().setPriority(newPriority);
+        suppressNextFeedListEvent = true;
+        DBWriter.setFeedPreferences(dragged.getPreferences());
+        subscriptionAdapter.refreshItem(dragged);
+    }
+
     @Override
     public void onStart() {
         super.onStart();
@@ -338,6 +520,11 @@ public class SubscriptionFragment extends Fragment
         if (disposable != null) {
             disposable.dispose();
         }
+        if (editPriorityMode) {
+            editPriorityMode = false;
+            subscriptionAdapter.setEditPriorityMode(false);
+        }
+        suppressNextFeedListEvent = false;
         if (subscriptionAdapter != null) {
             subscriptionAdapter.endSelectMode();
         }
@@ -386,6 +573,12 @@ public class SubscriptionFragment extends Fragment
                             subscriptionAdapter.endSelectMode();
                         }
                         feeds = openedFolderFeeds;
+                        if (editPriorityMode) {
+                            feeds.sort(Comparator
+                                    .comparingInt((Feed f) -> f.getPreferences().getPriority())
+                                    .thenComparing(Feed::getTitle, String.CASE_INSENSITIVE_ORDER)
+                            );
+                        }
                         progressBar.setVisibility(View.GONE);
                         subscriptionAdapter.setItems(feeds, result.first.feedCounters);
                         if (firstLoaded) {
@@ -453,6 +646,10 @@ public class SubscriptionFragment extends Fragment
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onFeedListChanged(FeedListUpdateEvent event) {
+        if (suppressNextFeedListEvent) {
+            suppressNextFeedListEvent = false;
+            return;
+        }
         loadSubscriptionsAndTags();
     }
 

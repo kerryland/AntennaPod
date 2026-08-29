@@ -84,6 +84,17 @@
                         android:textSize="14sp"
                         style="@style/TextPill" />
 
+                    <TextView
+                        android:id="@+id/priorityViewPill"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="5"
+                        android:layout_alignParentEnd="true"
+                        android:textSize="14sp"
+                        android:background="@drawable/bg_priority_pill"
+                        android:visibility="gone"
+                        style="@style/TextPill" />
+
                     <ImageView
                         android:id="@+id/errorIcon"
                         android:layout_width="24dp"

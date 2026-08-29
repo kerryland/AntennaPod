@@ -59,4 +59,16 @@
         android:id="@+id/show_archive"
         android:title="@string/archive_feed_label_noun"
         custom:showAsAction="never" />
+
+    <item
+            android:id="@+id/edit_priority"
+            android:title="@string/edit_priority"
+            custom:showAsAction="never" />
+
+    <item
+            android:id="@+id/finished_priority"
+            android:icon="@drawable/ic_check"
+            android:title="@string/finished"
+            custom:showAsAction="always"
+            android:visible="false" />
 </menu>

@@ -32,6 +32,8 @@ public class SubscriptionsRecyclerAdapter extends SelectableAdapter<Subscription
     private List<Feed> listItems;
     private Map<Long, Integer> feedCounters;
     private int columnCount = 3;
+    private boolean editPriorityMode = false;
+    private OnEditPriorityListener editPriorityListener;
 
     public SubscriptionsRecyclerAdapter(MainActivity mainActivity) {
         super(mainActivity);
@@ -39,6 +41,73 @@ public class SubscriptionsRecyclerAdapter extends SelectableAdapter<Subscription
         this.listItems = new ArrayList<>();
         this.feedCounters = Map.of();
         setHasStableIds(true);
+    }
+
+    public void setEditPriorityMode(boolean editPriorityMode) {
+        this.editPriorityMode = editPriorityMode;
+        notifyDataSetChanged();
+    }
+
+    public boolean isEditPriorityMode() {
+        return editPriorityMode;
+    }
+
+    public void setOnEditPriorityListener(OnEditPriorityListener listener) {
+        this.editPriorityListener = listener;
+    }
+
+    public void moveItem(int from, int to) {
+        Feed feed = listItems.remove(from);
+        listItems.add(to, feed);
+        notifyItemMoved(from, to);
+    }
+
+    public void refreshItem(Feed feed) {
+        int index = listItems.indexOf(feed);
+        if (index >= 0) {
+            notifyItemChanged(index);
+        }
+    }
+
+    public void moveItemToPriorityPosition(Feed feed) {
+        int from = listItems.indexOf(feed);
+        if (from < 0) {
+            return;
+        }
+        int priority = feed.getPreferences().getPriority();
+        int to = 0;
+        for (int i = 0; i < listItems.size(); i++) {
+            if (i == from) {
+                continue;
+            }
+            Feed other = listItems.get(i);
+            int otherPriority = other.getPreferences().getPriority();
+            if (priority < otherPriority
+                    || (priority == otherPriority
+                    && feed.getTitle().compareToIgnoreCase(other.getTitle()) < 0)) {
+                break;
+            }
+            to++;
+        }
+        if (to == from) {
+            notifyItemChanged(from);
+            return;
+        }
+        int insertion = to > from ? to - 1 : to;
+        Feed moved = listItems.remove(from);
+        listItems.add(insertion, moved);
+        if (insertion == from) {
+            notifyItemChanged(from);
+        } else {
+            notifyItemMoved(from, insertion);
+            notifyItemChanged(insertion);
+        }
+    }
+
+    public interface OnEditPriorityListener {
+        void onEditPriority(Feed feed);
+
+        void onStartDrag(RecyclerView.ViewHolder viewHolder);
     }
 
     public void setColumnCount(int columnCount) {
@@ -69,7 +138,26 @@ public class SubscriptionsRecyclerAdapter extends SelectableAdapter<Subscription
         Feed feed = listItems.get(position);
         holder.bind(feed, columnCount, feedCounters.containsKey(feed.getId()) ? feedCounters.get(feed.getId()) : 0);
         int cardMargin = 0;
-        if (inActionMode()) {
+        if (editPriorityMode) {
+            holder.itemView.setSelected(false);
+            holder.itemView.setBackgroundResource(android.R.color.transparent);
+            if (holder.selectIcon != null) {
+                holder.selectIcon.setVisibility(View.GONE);
+                holder.gradient.setVisibility(View.GONE);
+            }
+            if (holder.priority != null) {
+                holder.priority.setVisibility(View.VISIBLE);
+                holder.priority.setText(String.valueOf(feed.getPreferences().getPriority()));
+                holder.priority.setOnClickListener(v -> {
+                    if (editPriorityListener != null) {
+                        editPriorityListener.onEditPriority(feed);
+                    }
+                });
+            }
+            if (holder.count != null) {
+                holder.count.setVisibility(View.GONE);
+            }
+        } else if (inActionMode()) {
             if (holder.selectIcon != null) {
                 holder.selectIcon.setVisibility(View.VISIBLE);
                 holder.gradient.setVisibility(View.VISIBLE);
@@ -98,6 +186,12 @@ public class SubscriptionsRecyclerAdapter extends SelectableAdapter<Subscription
         animateCardMargin(holder, cardMargin);
 
         holder.itemView.setOnLongClickListener(v -> {
+            if (editPriorityMode) {
+                if (editPriorityListener != null) {
+                    editPriorityListener.onStartDrag(holder);
+                }
+                return true;
+            }
             if (!inActionMode()) {
                 startSelectMode(holder.getBindingAdapterPosition());
                 return true;
@@ -107,7 +201,7 @@ public class SubscriptionsRecyclerAdapter extends SelectableAdapter<Subscription
         holder.itemView.setOnClickListener(v -> {
             if (inActionMode()) {
                 toggleSelection(holder.getBindingAdapterPosition());
-            } else {
+            } else if (!editPriorityMode) {
                 Fragment fragment = FeedItemlistFragment.newInstance(feed.getId());
                 mainActivityRef.get().loadChildFragment(fragment);
             }

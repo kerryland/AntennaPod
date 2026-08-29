@@ -20,6 +20,7 @@ public class SubscriptionViewHolder extends RecyclerView.ViewHolder {
     public final TextView title;
     public final ImageView coverImage;
     public final TextView count;
+    public final TextView priority;
     public final TextView fallbackTitle;
     public final ImageView gradient;
     public final ImageView selectIcon;
@@ -32,6 +33,7 @@ public class SubscriptionViewHolder extends RecyclerView.ViewHolder {
         title = itemView.findViewById(R.id.titleLabel);
         coverImage = itemView.findViewById(R.id.coverImage);
         count = itemView.findViewById(R.id.countViewPill);
+        priority = itemView.findViewById(R.id.priorityViewPill);
         fallbackTitle = itemView.findViewById(R.id.fallbackTitleLabel);
         gradient = itemView.findViewById(R.id.gradientOverlay);
         selectIcon = itemView.findViewById(R.id.selectedIcon);
@@ -49,6 +51,9 @@ public class SubscriptionViewHolder extends RecyclerView.ViewHolder {
             count.setVisibility(View.VISIBLE);
         } else {
             count.setVisibility(View.GONE);
+        }
+        if (priority != null) {
+            priority.setVisibility(View.GONE);
         }
 
         CoverLoader coverLoader = new CoverLoader();

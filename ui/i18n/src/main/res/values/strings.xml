@@ -431,6 +431,8 @@
     <string name="random">Random</string>
     <string name="smart_shuffle">Smart shuffle</string>
     <string name="priority">Priority</string>
+    <string name="edit_priority">Edit Priority</string>
+    <string name="finished">Finished</string>
     <string name="size">Size</string>
     <string name="clear_queue_confirmation_msg">Please confirm that you want to remove ALL episodes from the queue.</string>
     <string name="queue_time_left_label">%1$s • %2$s left</string>

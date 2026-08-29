@@ -126,7 +126,7 @@ Swipe action
 - swipe_actions.xml
 - SwipeActions.java
 
-
+# UI Fragments
 HomeFragment loads:
 - QueueSection
 - InboxSection
@@ -140,6 +140,9 @@ ItemPagerFragment
 CompletedDownloadsFragment
 SearchFragment
 SubscriptionFragment
+- fragment_subscriptions.xml
+- subscription_grid_item.xml
+
 
 PlayerWidget extends AppWidgetProvider
 

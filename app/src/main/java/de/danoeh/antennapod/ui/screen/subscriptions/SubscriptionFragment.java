@@ -418,6 +418,7 @@ public class SubscriptionFragment extends Fragment
         toolbar.setTitle(R.string.edit_priority);
         subscriptionAddButton.setVisibility(View.GONE);
         tagsRecycler.setVisibility(View.GONE);
+        swipeRefreshLayout.setEnabled(false);
         Menu menu = toolbar.getMenu();
         menu.findItem(R.id.finished_priority).setVisible(true);
         menu.findItem(R.id.edit_priority).setVisible(false);
@@ -441,6 +442,7 @@ public class SubscriptionFragment extends Fragment
         toolbar.setTitle(R.string.subscriptions_label);
         subscriptionAddButton.setVisibility(View.VISIBLE);
         tagsRecycler.setVisibility(shouldShowTags ? View.VISIBLE : View.GONE);
+        swipeRefreshLayout.setEnabled(true);
         Menu menu = toolbar.getMenu();
         menu.findItem(R.id.finished_priority).setVisible(false);
         menu.findItem(R.id.edit_priority).setVisible(true);
@@ -489,7 +491,8 @@ public class SubscriptionFragment extends Fragment
             Feed following = (Feed) subscriptionAdapter.getItem(position + 1);
             newPriority = following.getPreferences().getPriority();
         } else {
-            newPriority = dragged.getPreferences().getPriority();
+            Feed preceding = (Feed) subscriptionAdapter.getItem(position - 1);
+            newPriority = preceding.getPreferences().getPriority();
         }
         dragged.getPreferences().setPriority(newPriority);
         suppressNextFeedListEvent = true;

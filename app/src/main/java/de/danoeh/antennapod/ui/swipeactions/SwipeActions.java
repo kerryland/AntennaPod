@@ -214,6 +214,10 @@ public class SwipeActions extends ItemTouchHelper.SimpleCallback implements Life
             swipeOutEnabled = true;
         }
 
+        if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
+            translateSelectedItems(recyclerView, viewHolder, dx);
+        }
+
         //add color, icon and label
         Context context = fragment.requireContext();
         int themeColor = ThemeUtils.getColorFromAttr(context, android.R.attr.colorBackground);
@@ -237,6 +241,27 @@ public class SwipeActions extends ItemTouchHelper.SimpleCallback implements Life
         super.onChildDraw(c, recyclerView, viewHolder, dx, dy, actionState, isCurrentlyActive);
     }
 
+    private void translateSelectedItems(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder,
+                                        float translationX) {
+        if (selectedItemsProvider == null) {
+            return;
+        }
+        List<FeedItem> selected = selectedItemsProvider.get();
+        if (selected.isEmpty()) {
+            return;
+        }
+        for (int i = 0; i < recyclerView.getChildCount(); i++) {
+            RecyclerView.ViewHolder child = recyclerView.getChildViewHolder(recyclerView.getChildAt(i));
+            if (child == viewHolder || !(child instanceof EpisodeItemViewHolder)) {
+                continue;
+            }
+            FeedItem childItem = ((EpisodeItemViewHolder) child).getFeedItem();
+            if (childItem != null && selected.contains(childItem)) {
+                child.itemView.setTranslationX(translationX);
+            }
+        }
+    }
+
     @Override
     public float getSwipeEscapeVelocity(float defaultValue) {
         return swipeOutEnabled ? defaultValue * 1.5f : Float.MAX_VALUE;
@@ -255,6 +280,8 @@ public class SwipeActions extends ItemTouchHelper.SimpleCallback implements Life
     @Override
     public void clearView(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
         super.clearView(recyclerView, viewHolder);
+
+        translateSelectedItems(recyclerView, viewHolder, 0);
 
         if (swipedOutTo != 0) {
             onSwiped(viewHolder, swipedOutTo);

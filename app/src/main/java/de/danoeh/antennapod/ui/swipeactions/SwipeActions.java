@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.ui.screen.AllEpisodesFragment;
@@ -46,6 +47,7 @@ public class SwipeActions extends ItemTouchHelper.SimpleCallback implements Life
     private final Fragment fragment;
     private final String tag;
     private FeedItemFilter filter = null;
+    private Supplier<List<FeedItem>> selectedItemsProvider;
 
     Actions actions;
     boolean swipeOutEnabled = true;
@@ -80,6 +82,10 @@ public class SwipeActions extends ItemTouchHelper.SimpleCallback implements Life
 
     public void setFilter(FeedItemFilter filter) {
         this.filter = filter;
+    }
+
+    public void setSelectedItemsProvider(Supplier<List<FeedItem>> selectedItemsProvider) {
+        this.selectedItemsProvider = selectedItemsProvider;
     }
 
     public SwipeActions attachTo(RecyclerView recyclerView) {
@@ -153,10 +159,20 @@ public class SwipeActions extends ItemTouchHelper.SimpleCallback implements Life
             return;
         }
 
-        FeedItem item = ((EpisodeItemViewHolder) viewHolder).getFeedItem();
+        FeedItem swipedItem = ((EpisodeItemViewHolder) viewHolder).getFeedItem();
 
-        (swipeDir == ItemTouchHelper.RIGHT ? actions.right : actions.left)
-                .performAction(item, fragment, filter);
+        SwipeAction action = swipeDir == ItemTouchHelper.RIGHT ? actions.right : actions.left;
+
+        List<FeedItem> items;
+        if (selectedItemsProvider != null) {
+            List<FeedItem> selected = selectedItemsProvider.get();
+            items = selected.isEmpty() ? Collections.singletonList(swipedItem) : selected;
+        } else {
+            items = Collections.singletonList(swipedItem);
+        }
+        for (FeedItem item : items) {
+            action.performAction(item, fragment, filter);
+        }
     }
 
     @Override

@@ -465,6 +465,7 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
         };
         recyclerAdapter.setContextMenuClickListener(QueueFragment.this::onContextItemSelected);
         recyclerAdapter.setOnSelectModeListener(this);
+        swipeActions.setSelectedItemsProvider(recyclerAdapter::getSelectedItems);
         recyclerView.setAdapter(recyclerAdapter);
 
         swipeRefreshLayout = root.findViewById(R.id.swipeRefresh);
@@ -578,14 +579,12 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
 
     @Override
     public void onStartSelectMode() {
-        swipeActions.detach();
         refreshToolbarState();
         refreshInfoBar();
     }
 
     @Override
     public void onEndSelectMode() {
-        swipeActions.attachTo(recyclerView);
         refreshInfoBar();
     }
 

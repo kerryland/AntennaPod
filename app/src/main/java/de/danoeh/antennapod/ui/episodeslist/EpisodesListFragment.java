@@ -189,6 +189,7 @@ public abstract class EpisodesListFragment extends Fragment
         };
         listAdapter.setContextMenuClickListener(EpisodesListFragment.this::onContextItemSelected);
         listAdapter.setOnSelectModeListener(this);
+        swipeActions.setSelectedItemsProvider(listAdapter::getSelectedItems);
         recyclerView.setAdapter(listAdapter);
         progressBar = root.findViewById(R.id.progressBar);
         progressBar.setVisibility(View.VISIBLE);
@@ -321,12 +322,10 @@ public abstract class EpisodesListFragment extends Fragment
 
     @Override
     public void onStartSelectMode() {
-        swipeActions.detach();
     }
 
     @Override
     public void onEndSelectMode() {
-        swipeActions.attachTo(recyclerView);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

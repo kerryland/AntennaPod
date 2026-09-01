@@ -925,6 +925,7 @@
     <string name="discover_is_hidden">You selected to hide suggestions.</string>
     <string name="discover_more">Discover more »</string>
     <string name="discover_powered_by_itunes">Suggestions by Apple Podcasts</string>
+    <string name="view_all_podcasts">View all %1$s podcasts</string>
     <string name="discover_confirm">Show suggestions</string>
     <string name="search_powered_by">Results by %1$s</string>
     <string name="select_country">Select country</string>

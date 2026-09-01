@@ -102,7 +102,6 @@ public class QuickFeedDiscoveryFragment extends Fragment implements AdapterView.
         viewBinding.errorRetryButton.setText(R.string.retry_label);
         viewBinding.poweredByLabel.setVisibility(View.VISIBLE);
 
-        ItunesTopListLoader loader = new ItunesTopListLoader(getContext());
         SharedPreferences prefs = getActivity().getSharedPreferences(ItunesTopListLoader.PREFS, MODE_PRIVATE);
         String countryCode = prefs.getString(ItunesTopListLoader.PREF_KEY_COUNTRY_CODE,
                 Locale.getDefault().getCountry());
@@ -128,6 +127,8 @@ public class QuickFeedDiscoveryFragment extends Fragment implements AdapterView.
             });
             return;
         }
+
+        ItunesTopListLoader loader = new ItunesTopListLoader(getContext());
 
         disposable = Observable.fromCallable(() ->
                         loader.loadToplist(countryCode, NUM_SUGGESTIONS, DBReader.getFeedList()))

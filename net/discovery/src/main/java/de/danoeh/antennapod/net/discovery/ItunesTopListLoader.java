@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.net.common.AntennapodHttpClient;
+import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import okhttp3.CacheControl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -36,6 +37,11 @@ public class ItunesTopListLoader {
 
     public List<PodcastSearchResult> loadToplist(String country, int limit, List<Feed> subscribed)
             throws JSONException, IOException {
+        return loadToplist(country, null, limit, subscribed);
+    }
+
+    public List<PodcastSearchResult> loadToplist(String country, String genre, int limit, List<Feed> subscribed)
+            throws JSONException, IOException {
         OkHttpClient client = AntennapodHttpClient.getHttpClient();
         String feedString;
         String loadCountry = country;
@@ -43,10 +49,10 @@ public class ItunesTopListLoader {
             loadCountry = Locale.getDefault().getCountry();
         }
         try {
-            feedString = getTopListFeed(client, loadCountry);
+            feedString = getTopListFeed(client, loadCountry, genre);
         } catch (IOException e) {
             if (COUNTRY_CODE_UNSET.equals(country)) {
-                feedString = getTopListFeed(client, "US");
+                feedString = getTopListFeed(client, "US", genre);
             } else {
                 throw e;
             }
@@ -75,8 +81,14 @@ public class ItunesTopListLoader {
         return suggestedNotSubscribed;
     }
 
-    private String getTopListFeed(OkHttpClient client, String country) throws IOException {
-        String url = "https://itunes.apple.com/%s/rss/toppodcasts/limit=" + NUM_LOADED + "/explicit=true/json";
+    private String getTopListFeed(OkHttpClient client, String country, String genre) throws IOException {
+        String url = "https://itunes.apple.com/%s/rss/toppodcasts";
+        if (genre != null && !genre.isEmpty()) {
+            url += "/genre=" + genre;
+        }
+        url += "/limit=" + NUM_LOADED + "/explicit=";
+        url += Boolean.toString(!UserPreferences.isParentalControlPasswordSet());
+        url += "/json";
         Log.d(TAG, "Feed URL " + String.format(url, country));
         Request.Builder httpReq = new Request.Builder()
                 .cacheControl(new CacheControl.Builder().maxStale(1, TimeUnit.DAYS).build())

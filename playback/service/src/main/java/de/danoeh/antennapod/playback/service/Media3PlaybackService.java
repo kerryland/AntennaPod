@@ -373,12 +373,7 @@ public class Media3PlaybackService extends MediaLibraryService {
                     SynchronizationQueue.getInstance().enqueueEpisodePlayed(currentPlayable, false);
                 }
             }
-            WidgetUpdater.WidgetState widgetState = new WidgetUpdater.WidgetState(currentPlayable,
-                    PlaybackService.isRunning ? PlayerStatus.PLAYING : PlayerStatus.PAUSED,
-                    (int) player.getContentPosition(), (int) player.getDuration(),
-                    player.getPlaybackParameters().speed);
-            Schedulers.io().scheduleDirect(() ->
-                    WidgetUpdater.updateWidget(Media3PlaybackService.this, widgetState));
+            updatePlayerWidget();
             updatePlaybackPreferences();
 
             // Auto-enable sleep timer when playback starts
@@ -486,11 +481,7 @@ public class Media3PlaybackService extends MediaLibraryService {
                             if (duration > 0) {
                                 EventBus.getDefault().post(
                                         new PlaybackPositionEvent((int) position, (int) duration));
-                                WidgetUpdater.WidgetState widgetState = new WidgetUpdater.WidgetState(currentPlayable,
-                                        Util.shouldShowPlayButton(player) ? PlayerStatus.PAUSED : PlayerStatus.PLAYING,
-                                        (int) position, (int) duration, speed);
-                                Schedulers.io().scheduleDirect(() ->
-                                        WidgetUpdater.updateWidget(this, widgetState));
+                                updatePlayerWidget();
                                 long currentTime = System.currentTimeMillis();
                                 if (currentTime - lastPositionSaveTime >= POSITION_SAVE_INTERVAL_MS) {
                                     saveCurrentPosition();
@@ -508,6 +499,14 @@ public class Media3PlaybackService extends MediaLibraryService {
             positionObserverDisposable.dispose();
             positionObserverDisposable = null;
         }
+    }
+
+    private void updatePlayerWidget() {
+        WidgetUpdater.WidgetState widgetState = new WidgetUpdater.WidgetState(currentPlayable,
+                Util.shouldShowPlayButton(player) ? PlayerStatus.PAUSED : PlayerStatus.PLAYING,
+                (int) player.getContentPosition(), (int) player.getDuration(),
+                player.getPlaybackParameters().speed);
+        Schedulers.io().scheduleDirect(() -> WidgetUpdater.updateWidget(this, widgetState));
     }
 
     @OptIn(markerClass = UnstableApi.class)
@@ -545,6 +544,7 @@ public class Media3PlaybackService extends MediaLibraryService {
                                 DBWriter.addQueueItem(this, media.getItem());
                             }
                             switchToPlayable(media);
+                            updatePlayerWidget();
                         },
                                 error -> Log.e(TAG, "Failed to load current media", error));
 
@@ -819,6 +819,7 @@ public class Media3PlaybackService extends MediaLibraryService {
                             player.setPlayWhenReady(playNext);
                             player.setMediaItem(nextMediaItem, SkipUtils.skipIntroIfNecessary(this, nextMedia));
                             player.prepare();
+                            updatePlayerWidget();
                         },
                         error -> Log.e(TAG, "Failed to load next queue item", error),
                         () -> {

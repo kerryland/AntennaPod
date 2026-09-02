@@ -27,9 +27,7 @@ import de.danoeh.antennapod.ui.BulkDownloader;
 import de.danoeh.antennapod.ui.common.IntentUtils;
 import de.danoeh.antennapod.ui.share.ShareDialog;
 import de.danoeh.antennapod.ui.view.LocalDeleteModal;
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
-import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.schedulers.Schedulers;
+import de.danoeh.antennapod.usecase.QueueUseCase;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -112,12 +110,7 @@ public class EpisodeMultiSelectActionHandler {
     }
 
     private void moveToPlayNext(List<FeedItem> items) {
-        Observable.fromCallable(() -> DBReader.getQueue())
-                .subscribeOn(Schedulers.computation())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(queueItems -> MenuItemAssistant.findCurrentlyPlayingPosition(activity, queueItems,
-                        position -> movePlayNextChecked(position,
-                                items)));
+        QueueUseCase.getInstance().moveToPlayNext(activity, items, null);
     }
 
     private void queueChecked(List<FeedItem> items, boolean permanent, boolean playNext) {
@@ -132,8 +125,9 @@ public class EpisodeMultiSelectActionHandler {
 
         if (playNext) {
             moveToPlayNext(toQueue);
+        } else {
+            showMessage(R.plurals.added_to_queue_message, toQueue.size());
         }
-        showMessage(R.plurals.added_to_queue_message, toQueue.size());
     }
 
     private void removeFromQueueChecked(List<FeedItem> items) {
@@ -281,12 +275,6 @@ public class EpisodeMultiSelectActionHandler {
     private void moveToBottomChecked(List<FeedItem> items) {
         DBWriter.moveQueueItemsToBottom(items);
         showMessage(R.plurals.move_to_bottom_message, items.size());
-    }
-
-    private void movePlayNextChecked(int position, List<FeedItem> items) {
-        Log.d(TAG, "movePlayNextChecked moving to " + position);
-        DBWriter.moveQueueItemsToPosition(position + 1, items);
-        showMessage(R.plurals.move_to_play_next_message, items.size());
     }
 
     private void showMessage(@PluralsRes int msgId, int numItems) {

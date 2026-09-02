@@ -517,6 +517,7 @@ public class DBWriter {
                 }
                 queue.remove(position);
                 item.removeTag(FeedItem.TAG_QUEUE);
+                item.removeTag(FeedItem.TAG_QUEUE_PERMANENT);
                 item.setRemoved(true);
                 events.add(QueueEvent.removed(item));
                 updatedItems.add(item);
@@ -527,6 +528,9 @@ public class DBWriter {
         }
         if (queueModified) {
             adapter.storeFeedItemlist(updatedItems);
+            // Ensure 'permanent' queue items are deleted when
+            // you explicitly remove them from the queue
+            adapter.removeQueueItems(updatedItems);
             adapter.setQueue(queue);
             for (QueueEvent event : events) {
                 EventBus.getDefault().post(event);
@@ -662,7 +666,6 @@ public class DBWriter {
             adapter.setQueue(queue);
             adapter.close();
 
-            System.out.println("QUEUE HAS " + queue.size() + " ITEMS inside");
             for (QueueEvent event : events) {
                 EventBus.getDefault().post(event);
             }

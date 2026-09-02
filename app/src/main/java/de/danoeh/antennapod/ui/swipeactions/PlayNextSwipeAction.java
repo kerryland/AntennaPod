@@ -10,6 +10,7 @@ import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.ui.episodeslist.EpisodeMultiSelectActionHandler;
+import de.danoeh.antennapod.usecase.QueueUseCase;
 
 public class PlayNextSwipeAction implements SwipeAction {
 
@@ -36,8 +37,7 @@ public class PlayNextSwipeAction implements SwipeAction {
     @Override
     public void performAction(FeedItem item, Fragment fragment, FeedItemFilter filter) {
         if (item.isTagged(FeedItem.TAG_QUEUE)) {
-            new EpisodeMultiSelectActionHandler(fragment.getActivity(), R.id.move_to_play_next_item)
-                    .handleAction(Collections.singletonList(item));
+            QueueUseCase.getInstance().moveToPlayNext(fragment.getActivity(), Collections.singletonList(item), null);
         } else {
             new EpisodeMultiSelectActionHandler(fragment.getActivity(), R.id.add_to_queue_play_next_item)
                     .handleAction(Collections.singletonList(item));

@@ -23,6 +23,7 @@ import de.danoeh.antennapod.net.common.NetworkUtils;
 import de.danoeh.antennapod.net.ssl.SslProviderInstaller;
 import de.danoeh.antennapod.storage.database.PodDBAdapter;
 
+import de.danoeh.antennapod.usecase.QueueUseCase;
 import de.danoeh.antennapod.ui.notifications.NotificationUtils;
 import java.io.File;
 
@@ -52,6 +53,7 @@ public class ClientConfigurator {
         FeedUpdateManager.setInstance(new FeedUpdateManagerImpl(context));
         AutoDownloadManager.setInstance(new AutoDownloadManagerImpl());
         SynchronizationQueue.setInstance(new SynchronizationQueueImpl(context));
+        QueueUseCase.setInstance(new QueueUseCase());
         AntennapodHttpClient.setCacheDirectory(new File(context.getCacheDir(), "okhttp"));
         AntennapodHttpClient.setProxyConfig(UserPreferences.getProxyConfig());
         SleepTimerPreferences.init(context);

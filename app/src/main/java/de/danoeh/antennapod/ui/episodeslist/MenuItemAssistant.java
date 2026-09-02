@@ -18,7 +18,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.playback.service.PlaybackController;
-import de.danoeh.antennapod.playback.service.PlaybackStatus;
 import de.danoeh.antennapod.ui.appstartintent.MediaButtonStarter;
 
 public class MenuItemAssistant {
@@ -135,21 +134,5 @@ public class MenuItemAssistant {
             }
         };
         return finish;
-    }
-
-    public interface CurrentPositionCallback {
-        void onCurrentPosition(int position);
-    }
-
-    public static void findCurrentlyPlayingPosition(Context context, List<FeedItem> queue, final CurrentPositionCallback callback) {
-        PlaybackController.bindToMedia3Service(context, controller -> {
-            for (int element = 0; element < queue.size(); element++) {
-                FeedItem feedItem = queue.get(element);
-                if (PlaybackStatus.isPlaying(feedItem.getMedia())) {
-                    callback.onCurrentPosition(element);
-                    break;
-                }
-            }
-        });
     }
 }

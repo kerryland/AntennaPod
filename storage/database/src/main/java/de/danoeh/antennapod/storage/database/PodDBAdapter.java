@@ -985,6 +985,14 @@ public class PodDBAdapter {
         }
     }
 
+    public void removeQueueItems(@NonNull List<FeedItem> items) {
+        if (items.isEmpty()) {
+            return;
+        }
+        db.execSQL("DELETE FROM " + TABLE_NAME_QUEUE
+                + " WHERE " + KEY_FEEDITEM + " IN (" + getItemIds(items) + ")");
+    }
+
     public void clearQueue() {
         // mark queue feeditems as `removed`
         db.execSQL(

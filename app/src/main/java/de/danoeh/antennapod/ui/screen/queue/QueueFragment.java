@@ -1,7 +1,5 @@
 package de.danoeh.antennapod.ui.screen.queue;
 
-import static de.danoeh.antennapod.ui.episodeslist.MenuItemAssistant.findCurrentlyPlayingPosition;
-
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
@@ -61,6 +59,7 @@ import de.danoeh.antennapod.event.PlayerStatusEvent;
 import de.danoeh.antennapod.event.QueueEvent;
 import de.danoeh.antennapod.event.playback.PlaybackPositionEvent;
 import de.danoeh.antennapod.ui.episodeslist.EpisodeMultiSelectActionHandler;
+import de.danoeh.antennapod.usecase.QueueUseCase;
 import de.danoeh.antennapod.ui.swipeactions.SwipeActions;
 import de.danoeh.antennapod.ui.episodeslist.FeedItemMenuHandler;
 import de.danoeh.antennapod.model.feed.FeedItem;
@@ -405,15 +404,11 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
                 return true;
 
             } else if (itemId == R.id.move_to_play_next_item) {
-                findCurrentlyPlayingPosition(getContext(), queue, currentlyPlayingPosition -> {
-                    if (currentlyPlayingPosition != position) {
-                        queue.add(queue.remove(position));
-                        recyclerAdapter.notifyItemMoved(position, currentlyPlayingPosition + 1);
-                        DBWriter.moveQueueItemsToPosition(currentlyPlayingPosition + 1, Collections.singletonList(selectedItem));
-                    }
-                });
+                QueueUseCase.getInstance().moveToPlayNext(getContext(),
+                        Collections.singletonList(selectedItem), newPosition ->
+                                recyclerAdapter.notifyItemMoved(position, newPosition ));
 
-                return true; // not if nothing is playing?
+                return true;
             }
         }
         return FeedItemMenuHandler.onMenuItemClicked(this, item.getItemId(), selectedItem);

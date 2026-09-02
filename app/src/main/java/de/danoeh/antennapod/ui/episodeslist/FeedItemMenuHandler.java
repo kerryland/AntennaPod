@@ -25,6 +25,8 @@ import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.preferences.PlaybackPreferences;
 import de.danoeh.antennapod.playback.service.PlaybackServiceInterface;
 import de.danoeh.antennapod.storage.database.DBWriter;
+import de.danoeh.antennapod.ui.appstartintent.MainActivityStarter;
+import de.danoeh.antennapod.ui.appstartintent.OnlineFeedviewActivityStarter;
 import de.danoeh.antennapod.ui.common.IntentUtils;
 import de.danoeh.antennapod.playback.service.PlaybackStatus;
 import de.danoeh.antennapod.ui.screen.InboxFragment;
@@ -79,6 +81,7 @@ public class FeedItemMenuHandler {
         boolean canRemoveFavorite = false;
         boolean canShowTranscript = false;
         boolean canShowSocialInteract = false;
+        boolean canOpenPodcast = false;
 
         for (FeedItem item : selectedItems) {
             final boolean hasMedia = item.getMedia() != null;
@@ -100,6 +103,7 @@ public class FeedItemMenuHandler {
             canRemoveFavorite |= item.isTagged(FeedItem.TAG_FAVORITE);
             canShowTranscript |= item.hasTranscript();
             canShowSocialInteract |= item.getSocialInteractUrl() != null;
+            canOpenPodcast |= item.getFeed() != null;
         }
 
         if (selectedItems.size() > 1) {
@@ -107,6 +111,7 @@ public class FeedItemMenuHandler {
             canShare = false;
             canShowTranscript = false;
             canShowSocialInteract = false;
+            canOpenPodcast = false;
             if (canAddFavorite) {
                 canRemoveFavorite = false;
             }
@@ -127,6 +132,7 @@ public class FeedItemMenuHandler {
         setItemVisibility(menu, R.id.mark_unread_item, canMarkUnplayed);
         setItemVisibility(menu, R.id.reset_position, canResetPosition);
         setItemVisibility(menu, R.id.open_social_interact_url, canShowSocialInteract);
+        setItemVisibility(menu, R.id.open_podcast, canOpenPodcast);
 
         // Display proper strings when item has no media
         if (selectedItems.size() == 1 && selectedItems.get(0).getMedia() == null) {
@@ -260,7 +266,7 @@ public class FeedItemMenuHandler {
                                                         DBWriter.addQueueItemAt(xcontext,
                                                                 false, selectedItem.getId(), index);
                                                     }
-                                                };
+                                                }
                                             },
                                             fragment.getString(R.string.undo)));
                                 }
@@ -291,6 +297,13 @@ public class FeedItemMenuHandler {
         } else if (menuItemId == R.id.share_item) {
             ShareDialog shareDialog = ShareDialog.newInstance(selectedItem);
             shareDialog.show((fragment.getActivity().getSupportFragmentManager()), "ShareEpisodeDialog");
+        } else if (menuItemId == R.id.open_podcast) {
+            if (selectedItem.getFeed().getState() == Feed.STATE_NOT_SUBSCRIBED) {
+                context.startActivity(new OnlineFeedviewActivityStarter(context,
+                        selectedItem.getFeed().getDownloadUrl()).getIntent());
+            } else {
+                new MainActivityStarter(context).withOpenFeed(selectedItem.getFeedId()).withClearTop().start();
+            }
         } else {
             Log.d(TAG, "Unknown menuItemId: " + menuItemId);
             return false;
@@ -313,7 +326,6 @@ public class FeedItemMenuHandler {
         }
 
         Log.d(TAG, "markReadWithUndo(" + item.getId() + ")");
-        int itemOldState = item.getPlayState();
 
         // we're marking it as [un]played since the user didn't actually play it
         // but they don't want it considered 'NEW' anymore

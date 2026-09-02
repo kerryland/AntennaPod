@@ -74,6 +74,12 @@
         android:title="@string/share_label" />
 
     <item
+        android:id="@+id/open_podcast"
+        android:icon="@drawable/ic_open_podcast"
+        android:menuCategory="container"
+        android:title="@string/open_podcast" />
+
+    <item
         android:id="@+id/multi_select"
         android:menuCategory="container"
         android:title="@string/multi_select"

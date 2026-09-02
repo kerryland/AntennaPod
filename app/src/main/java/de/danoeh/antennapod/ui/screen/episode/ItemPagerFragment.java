@@ -15,18 +15,14 @@ import androidx.fragment.app.Fragment;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
-import de.danoeh.antennapod.model.feed.Feed;
-import de.danoeh.antennapod.ui.appstartintent.MainActivityStarter;
-import de.danoeh.antennapod.ui.appstartintent.OnlineFeedviewActivityStarter;
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
-
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.event.FeedItemEvent;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.ui.episodeslist.FeedItemMenuHandler;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.Disposable;
@@ -171,10 +167,6 @@ public class ItemPagerFragment extends Fragment implements MaterialToolbar.OnMen
 
     @Override
     public boolean onMenuItemClick(MenuItem menuItem) {
-        if (menuItem.getItemId() == R.id.open_podcast) {
-            openPodcast();
-            return true;
-        }
         return FeedItemMenuHandler.onMenuItemClicked(this, menuItem.getItemId(), item);
     }
 
@@ -190,17 +182,6 @@ public class ItemPagerFragment extends Fragment implements MaterialToolbar.OnMen
                 refreshToolbarState();
                 return;
             }
-        }
-    }
-
-    private void openPodcast() {
-        if (item == null) {
-            return;
-        }
-        if (item.getFeed().getState() == Feed.STATE_NOT_SUBSCRIBED) {
-            startActivity(new OnlineFeedviewActivityStarter(getContext(), item.getFeed().getDownloadUrl()).getIntent());
-        } else {
-            new MainActivityStarter(getContext()).withOpenFeed(item.getFeedId()).withClearTop().start();
         }
     }
 

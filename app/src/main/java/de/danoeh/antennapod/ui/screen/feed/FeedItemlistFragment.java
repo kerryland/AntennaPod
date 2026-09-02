@@ -757,6 +757,7 @@ public class FeedItemlistFragment extends Fragment implements AdapterView.OnItem
         @Override
         protected void onPrepareContextMenu(Menu menu) {
             super.onPrepareContextMenu(menu);
+            menu.findItem(R.id.open_podcast).setVisible(false);
             if (!inActionMode() && feed.getState() != Feed.STATE_NOT_SUBSCRIBED) {
                 menu.findItem(R.id.multi_select).setVisible(true);
             }

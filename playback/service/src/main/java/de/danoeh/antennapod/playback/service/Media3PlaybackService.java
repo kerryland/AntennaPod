@@ -771,7 +771,7 @@ public class Media3PlaybackService extends MediaLibraryService {
     }
 
     /**
-     * Loads the next item, and starts it if continuous playback is enabled.
+     * Loads the next item, and starts it if continuous playback is enabled, and we're currently playing.
      */
     @UnstableApi
     private void startNextInQueue(FeedMedia media, boolean wasSkipped, boolean ended) {
@@ -785,6 +785,7 @@ public class Media3PlaybackService extends MediaLibraryService {
         if (item == null) {
             return;
         }
+        boolean playNext = wasSkipped ? player.getPlayWhenReady() : UserPreferences.isFollowQueue();
         queueLoaderDisposable = Maybe.fromCallable(() -> {
             FeedItem nextItem = DBReader.getNextInQueue(item);
 
@@ -815,7 +816,7 @@ public class Media3PlaybackService extends MediaLibraryService {
                                 return;
                             }
                             switchToPlayable(nextMedia);
-                            player.setPlayWhenReady(UserPreferences.isFollowQueue());
+                            player.setPlayWhenReady(playNext);
                             player.setMediaItem(nextMediaItem, SkipUtils.skipIntroIfNecessary(this, nextMedia));
                             player.prepare();
                         },

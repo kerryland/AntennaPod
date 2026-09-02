@@ -22,6 +22,7 @@ import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.model.feed.FeedMedia;
 import de.danoeh.antennapod.model.feed.FeedOrder;
 import de.danoeh.antennapod.model.feed.FeedPreferences;
+import de.danoeh.antennapod.model.feed.FeedPreferences.PlaybackOrderSetting;
 import de.danoeh.antennapod.model.feed.SortOrder;
 import de.danoeh.antennapod.model.feed.SubscriptionsFilter;
 import de.danoeh.antennapod.model.download.DownloadResult;
@@ -726,6 +727,38 @@ public final class DBReader {
                     }
                 };
                 break;
+            case MOST_RECENT_PRIORITY:
+                comparator = (lhs, rhs) -> {
+                    long counterLhs = feedCounters.containsKey(lhs.getId()) ? feedCounters.get(lhs.getId()) : 0;
+                    long counterRhs = feedCounters.containsKey(rhs.getId()) ? feedCounters.get(rhs.getId()) : 0;
+                    PlaybackOrderSetting orderLhs = lhs.getPreferences().getPlaybackOrder();
+                    PlaybackOrderSetting orderRhs = rhs.getPreferences().getPlaybackOrder();
+                    int groupLhs = counterLhs == 0 ? 2
+                            : orderLhs == PlaybackOrderSetting.NEWEST_FIRST ? 0 : 1;
+                    int groupRhs = counterRhs == 0 ? 2
+                            : orderRhs == PlaybackOrderSetting.NEWEST_FIRST ? 0 : 1;
+                    if (groupLhs != groupRhs) {
+                        return Integer.compare(groupLhs, groupRhs);
+                    }
+                    int priorityLhs = lhs.getPreferences().getPriority();
+                    int priorityRhs = rhs.getPreferences().getPriority();
+                    if (priorityLhs != priorityRhs) {
+                        return Integer.compare(priorityLhs, priorityRhs);
+                    }
+                    if (counterLhs != counterRhs) {
+                        return Long.compare(counterRhs, counterLhs);
+                    }
+                    String titleLhs = lhs.getTitle();
+                    String titleRhs = rhs.getTitle();
+                    if (titleLhs == null) {
+                        return 1;
+                    } else if (titleRhs == null) {
+                        return -1;
+                    }
+                    return titleLhs.compareToIgnoreCase(titleRhs);
+                };
+                break;
+
             default:
                 final Map<Long, Long> recentPubDates = adapter.getMostRecentItemDates();
                 comparator = (lhs, rhs) -> {

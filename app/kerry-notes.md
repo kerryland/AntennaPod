@@ -58,6 +58,8 @@ See `DBWriter.removeQueueItemSynchronous`
 
 BulkDownloader
 
+```
+
 DownloadServiceInterfaceImpl
    .download  -- puts download into the queue (BulkDownloader, multi, Automatic)
    .downloadNow (click in DownloadActionButton)
@@ -70,6 +72,7 @@ EpisodeDownloadWorker.performDownload (synchronous)
 DefaultDownloaderFactory
 |
 (actual download)
+```
 
 ## UI
 
@@ -139,7 +142,9 @@ HomeSection
 ItemPagerFragment
 CompletedDownloadsFragment
 SearchFragment
-SubscriptionFragment
+SubscriptionFragment - subscription page
+FeedSettingsPreferenceFragment - more subscription settings
+
 - fragment_subscriptions.xml
 - subscription_grid_item.xml
 

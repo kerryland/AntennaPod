@@ -1,10 +1,8 @@
 package de.danoeh.antennapod.ui.screen.subscriptions;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.text.InputType;
 import android.util.Log;
 import android.view.ActionMode;
 import android.view.ContextMenu;
@@ -13,7 +11,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
 import android.widget.ProgressBar;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -27,7 +24,6 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.appbar.MaterialToolbar;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.activity.MainActivity;
@@ -46,6 +42,7 @@ import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.MenuItemUtils;
 import de.danoeh.antennapod.ui.screen.AddFeedFragment;
 import de.danoeh.antennapod.ui.screen.SearchFragment;
+import de.danoeh.antennapod.ui.screen.feed.FeedPriorityDialog;
 
 import de.danoeh.antennapod.ui.view.EmptyViewHandler;
 import de.danoeh.antennapod.ui.view.ItemOffsetDecoration;
@@ -459,26 +456,10 @@ public class SubscriptionFragment extends Fragment
     }
 
     private void showEditPriorityDialog(Feed feed) {
-        MaterialAlertDialogBuilder dialog = new MaterialAlertDialogBuilder(requireContext());
-        dialog.setTitle(R.string.edit_priority);
-        EditText input = new EditText(requireContext());
-        input.setInputType(InputType.TYPE_CLASS_NUMBER);
-        input.setText(String.valueOf(feed.getPreferences().getPriority()));
-        dialog.setView(input);
-        dialog.setPositiveButton(android.R.string.ok, (d, which) -> {
-            String value = input.getText().toString();
-            try {
-                int priority = Integer.parseInt(value);
-                feed.getPreferences().setPriority(priority);
-                suppressNextFeedListEvent = true;
-                DBWriter.setFeedPreferences(feed.getPreferences());
-                subscriptionAdapter.moveItemToPriorityPosition(feed);
-            } catch (NumberFormatException ignored) {
-                // Keep the previous priority
-            }
+        FeedPriorityDialog.show(requireContext(), feed, () -> {
+            suppressNextFeedListEvent = true;
+            subscriptionAdapter.moveItemToPriorityPosition(feed);
         });
-        dialog.setNegativeButton(android.R.string.cancel, (d, which) -> d.dismiss());
-        dialog.show();
     }
 
     private void onDragDropped(int position) {

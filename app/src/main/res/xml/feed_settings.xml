@@ -22,14 +22,11 @@
     <PreferenceCategory
         android:title="@string/update_pref">
 
-        <androidx.preference.SeekBarPreference
+        <Preference
             android:icon="@drawable/ic_download"
             android:key="feedPriority"
             android:title="@string/feed_priority_label"
-            android:summary="@string/feed_priority_summary"
-            android:defaultValue="5"
-            android:max="10"
-            android:min="0" />
+            android:summary="@string/feed_priority_summary" />
 
         <androidx.preference.ListPreference
             android:icon="@drawable/ic_download"

@@ -22,7 +22,6 @@ import androidx.core.content.ContextCompat;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
-import androidx.preference.SeekBarPreference;
 import androidx.preference.SwitchPreferenceCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -42,6 +41,7 @@ import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.storage.database.FeedDatabaseWriter;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.preferences.screen.synchronization.AuthenticationDialog;
+import de.danoeh.antennapod.ui.screen.feed.FeedPriorityDialog;
 import de.danoeh.antennapod.ui.screen.feed.RenameFeedDialog;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -250,11 +250,8 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
             return false;
         });
 
-        SeekBarPreference priorityPreference = findPreference(PREF_PRIORITY);
-        priorityPreference.setValue(feedPreferences.getPriority());
-        priorityPreference.setOnPreferenceChangeListener((preference, newValue) -> {
-            feedPreferences.setPriority((Integer) newValue);
-            DBWriter.setFeedPreferences(feedPreferences);
+        findPreference(PREF_PRIORITY).setOnPreferenceClickListener(preference -> {
+            FeedPriorityDialog.show(getContext(), feed);
             return true;
         });
 

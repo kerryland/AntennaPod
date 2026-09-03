@@ -18,7 +18,9 @@ import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.model.feed.FeedMedia;
 import de.danoeh.antennapod.model.feed.FeedOrder;
+import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.model.feed.SortOrder;
+import de.danoeh.antennapod.model.feed.VolumeAdaptionSetting;
 import de.danoeh.antennapod.model.download.DownloadResult;
 import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.database.DBWriter;
@@ -188,6 +190,66 @@ public class DbReaderTest {
             for (int i = 0; i < savedItems.size(); i++) {
                 assertEquals(savedItems.get(i).getId(), items.get(i).getId());
             }
+        }
+
+        @Test
+        public void testGetEpisodesByPriorityOldestFirst() {
+            final int numFeeds = 1;
+            final int numItems = 10;
+
+            // given a feed with 10 episodes that is played oldest first
+            Feed feed = saveFeedlist(numFeeds, numItems, false).get(0);
+            List<FeedItem> items = feed.getItems();
+            feed.setItems(null);
+            Collections.sort(items, (o1, o2) ->
+                    Long.compare(o1.getPubDate().getTime(), o2.getPubDate().getTime()));
+            setFeedPlaybackOrder(feed.getId(), FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST);
+
+            // when we get the episodes
+            List<FeedItem> savedItems = DBReader.getEpisodes(0, Integer.MAX_VALUE,
+                    FeedItemFilter.unfiltered(), SortOrder.PRIORITY_PLAYBACK_DATE);
+            assertNotNull(savedItems);
+
+            assertEquals(10, savedItems.size());
+            for (int i = 0; i < savedItems.size(); i++) {
+                assertEquals(savedItems.get(i).getId(), items.get(i).getId());
+            }
+        }
+
+        @Test
+        public void testGetEpisodesByPriorityNewestFirst() {
+            final int numFeeds = 1;
+            final int numItems = 10;
+
+            // given a feed with 10 episodes that is played newest first
+            Feed feed = saveFeedlist(numFeeds, numItems, false).get(0);
+            List<FeedItem> items = feed.getItems();
+            feed.setItems(null);
+            Collections.sort(items, (o1, o2) ->
+                    Long.compare(o2.getPubDate().getTime(), o1.getPubDate().getTime()));
+            setFeedPlaybackOrder(feed.getId(), FeedPreferences.PlaybackOrderSetting.NEWEST_FIRST);
+
+            // when we get the episodes
+            List<FeedItem> savedItems = DBReader.getEpisodes(0, Integer.MAX_VALUE,
+                    FeedItemFilter.unfiltered(), SortOrder.PRIORITY_PLAYBACK_DATE);
+            assertNotNull(savedItems);
+
+            assertEquals(10, savedItems.size());
+            for (int i = 0; i < savedItems.size(); i++) {
+                assertEquals(savedItems.get(i).getId(), items.get(i).getId());
+            }
+        }
+
+        private static void setFeedPlaybackOrder(long feedId, FeedPreferences.PlaybackOrderSetting playbackOrder) {
+            FeedPreferences preferences = new FeedPreferences(feedId, FeedPreferences.AutoDownloadSetting.DISABLED,
+                    FeedPreferences.AutoDeleteAction.ALWAYS, VolumeAdaptionSetting.OFF,
+                    FeedPreferences.NewEpisodesAction.ADD_TO_INBOX, "", "");
+            preferences.setPlaybackOrder(playbackOrder);
+            preferences.setPriority(5);
+            PodDBAdapter adapter = PodDBAdapter.getInstance();
+            adapter.open();
+            adapter.setFeedPreferences(preferences);
+            adapter.close();
         }
 
         @SuppressWarnings("SameParameterValue")

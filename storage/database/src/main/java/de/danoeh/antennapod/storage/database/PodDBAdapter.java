@@ -1215,7 +1215,8 @@ public class PodDBAdapter {
                     , ROW_NUMBER() OVER (
                          PARTITION BY
             """ + TABLE_NAME_FEED_ITEMS + "." + KEY_FEED +
-            " ORDER BY CASE WHEN " + TABLE_NAME_FEEDS + "." + KEY_FEED_PRIORITY  + " = 0 THEN " +
+            " ORDER BY CASE WHEN " + TABLE_NAME_FEEDS + "." + KEY_PLAYBACK_ORDER + " = " +
+                    FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST.code + " THEN " +
                     TABLE_NAME_FEED_ITEMS + "." + KEY_PUBDATE +
                     " ELSE -" + TABLE_NAME_FEED_ITEMS + "." + KEY_PUBDATE + " END ASC) AS row_num " +
                  " FROM " + TABLE_NAME_FEED_ITEMS +

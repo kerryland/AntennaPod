@@ -161,7 +161,7 @@
     <string name="feed_new_episodes_action_snackbar">Cannot be changed when automatic download is enabled.</string>
     <string name="feed_playback_order_action_oldest_first">Oldest First</string>
     <string name="feed_playback_order_action_newest_first">Newest First</string>
-    <string name="feed_playback_order_title">Episode Download Order</string>
+    <string name="feed_playback_order_title">Episode Playback Order</string>
     <string name="episode_cleanup_never">Never</string>
     <string name="episode_cleanup_except_favorite_removal">When not favorited</string>
     <string name="episode_cleanup_queue_removal">When not in queue</string>
@@ -432,6 +432,7 @@
     <string name="random">Random</string>
     <string name="smart_shuffle">Smart shuffle</string>
     <string name="priority">Priority</string>
+    <string name="playback_order">Playback Order</string>
     <string name="edit_priority">Edit Priority</string>
     <string name="finished">Finished</string>
     <string name="size">Size</string>

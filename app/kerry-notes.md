@@ -171,7 +171,7 @@ Available Global Sort Orders:
 - Episode title (asc + desc)
 - Duration (asc + desc)
 - Date (asc + desc)
-- Priority (asc) and Date (asc or desc depending on "Episode Download Order"). See below
+- Priority (asc) and Date (asc or desc depending on "Episode Playback Order"). See below
 
 ## Download/Inbox addition order (Priority)
 Episodes are added to the inbox (or automatically downloaded) based
@@ -180,7 +180,7 @@ on the podcast-specific settings:
 | Setting                | Values                     | Meaning                              |
 |------------------------|----------------------------|--------------------------------------|
 | Priority               | 1 (high) to 5 (low)        | How important this podcast is to you |
-| Episode Download Order | Newest First, Oldest First | Do you want old or new episodes?     |
+| Episode Playback Order | Newest First, Oldest First | Do you want old or new episodes?     |
 
 ## Queue Order
 Queue order is determined by the order in which items are added to the queue .

@@ -1,8 +1,6 @@
 package de.danoeh.antennapod.ui.episodeslist;
 
 import android.app.Activity;
-import android.content.res.ColorStateList;
-import android.graphics.Color;
 import android.text.Layout;
 import android.text.format.Formatter;
 import android.util.Log;
@@ -16,12 +14,6 @@ import android.widget.TextView;
 import androidx.cardview.widget.CardView;
 import androidx.core.graphics.ColorUtils;
 import androidx.recyclerview.widget.RecyclerView;
-
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.InsetDrawable;
-import android.graphics.drawable.RippleDrawable;
-import android.graphics.drawable.StateListDrawable;
 
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.model.feed.Feed;
@@ -75,6 +67,7 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
     public final CardView coverHolder;
 
     private final Activity activity;
+    private final int defaultColor;
     private FeedItem item;
 
     public EpisodeItemViewHolder(Activity activity, ViewGroup parent) {
@@ -104,6 +97,8 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
         coverHolder = itemView.findViewById(R.id.coverHolder);
         leftPadding = itemView.findViewById(R.id.left_padding);
         itemView.setTag(this);
+
+        defaultColor = pubDate.getCurrentTextColor();
     }
 
     public void bind(FeedItem item) {
@@ -124,7 +119,7 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
         isPermanent.setVisibility(item.isTagged(FeedItem.TAG_QUEUE_PERMANENT) ? View.VISIBLE : View.GONE);
 
         container.setAlpha(item.isPlayed() ? 0.5f : 1.0f);
-        setFreshBackground();
+        highlightIfRecent(pubDate, feedTitle);
 
         ItemActionButton actionButton = ItemActionButton.forItem(item);
         actionButton.configure(secondaryActionButton, secondaryActionIcon, activity);
@@ -227,6 +222,7 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
         title.setText("███████");
         feedTitle.setText("");
         pubDate.setText("████");
+        pubDate.setTextColor(defaultColor);
         duration.setText("████");
         secondaryActionProgress.setPercentage(0, null);
         secondaryActionProgress.setIndeterminate(false);
@@ -245,55 +241,20 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
         }
     }
 
-    /**
-     * Highlights items that were added to the inbox or queue today (or yesterday, in a lighter
-     * shade). The background is built programmatically so no drawable resources are duplicated.
-     */
-    private void setFreshBackground() {
+    private void highlightIfRecent(TextView... textViews) {
         Date added = item.getAddedToInboxOrQueue();
-        if (added == null) {
-            container.setBackgroundResource(R.drawable.bg_episode_list_item);
-            return;
+        int color = defaultColor;
+        if (added != null) {
+            int accent = ThemeUtils.getColorFromAttr(activity, R.attr.colorPrimary);
+            if (DateUtils.isToday(added)) {
+                color = accent;
+            } else if (DateUtils.isYesterday(added)) {
+                color = ColorUtils.blendARGB(accent, defaultColor, 0.5f);
+            }
         }
-        int color = ThemeUtils.getColorFromAttr(activity, R.attr.colorBackgroundFloating);
-        color = ColorUtils.blendARGB(color, Color.WHITE, 0.8f);
-
-        if (DateUtils.isToday(added)) {
-            container.setBackground(buildFreshBackground(ColorUtils.setAlphaComponent(color, 20)));
-        } else if (DateUtils.isYesterday(added)) {
-            container.setBackground(buildFreshBackground(ColorUtils.setAlphaComponent(color, 10)));
-        } else {
-            container.setBackgroundResource(R.drawable.bg_episode_list_item);
+        for (TextView textView : textViews) {
+            textView.setTextColor(color);
         }
-    }
-
-    private Drawable buildFreshBackground(int color) {
-        float density = activity.getResources().getDisplayMetrics().density;
-        int cornerRadius = (int) (12 * density);
-        int insetH = (int) (4 * density);
-        int insetV = (int) (2 * density);
-
-        GradientDrawable normalShape = new GradientDrawable();
-        normalShape.setCornerRadius(cornerRadius);
-        normalShape.setColor(color);
-
-        GradientDrawable selectedShape = new GradientDrawable();
-        selectedShape.setCornerRadius(cornerRadius);
-        selectedShape.setColor(ThemeUtils.getColorFromAttr(activity, R.attr.colorSecondaryContainer));
-
-        StateListDrawable content = new StateListDrawable();
-        content.addState(new int[]{android.R.attr.state_activated}, selectedShape);
-        content.addState(new int[]{android.R.attr.state_selected}, selectedShape);
-        content.addState(new int[]{}, normalShape);
-
-        GradientDrawable mask = new GradientDrawable();
-        mask.setCornerRadius(cornerRadius);
-        mask.setColor(0xFF000000);
-
-        RippleDrawable ripple = new RippleDrawable(
-                ColorStateList.valueOf(ThemeUtils.getColorFromAttr(activity, R.attr.colorControlHighlight)),
-                content, mask);
-        return new InsetDrawable(ripple, insetH, insetV, insetH, insetV);
     }
 
     private void updateDuration(PlaybackPositionEvent event) {

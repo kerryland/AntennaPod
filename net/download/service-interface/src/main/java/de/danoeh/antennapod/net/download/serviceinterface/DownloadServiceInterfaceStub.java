@@ -4,6 +4,8 @@ import android.content.Context;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedMedia;
 
+import java.util.List;
+
 public class DownloadServiceInterfaceStub extends DownloadServiceInterface {
 
     @Override
@@ -12,6 +14,11 @@ public class DownloadServiceInterfaceStub extends DownloadServiceInterface {
 
     @Override
     public void download(Context context, FeedItem item) {
+    }
+
+    @Override
+    public int downloadAll(Context context, List<FeedItem> items) {
+        return 0;
     }
 
     @Override

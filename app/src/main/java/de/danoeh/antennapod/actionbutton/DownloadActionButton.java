@@ -17,7 +17,7 @@ import de.danoeh.antennapod.model.feed.FeedMedia;
 import de.danoeh.antennapod.storage.preferences.UsageStatistics;
 import de.danoeh.antennapod.net.common.NetworkUtils;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
-import de.danoeh.antennapod.ui.VpnLauncherHelper;
+import de.danoeh.antennapod.net.download.service.feed.remote.VpnLauncherHelper;
 
 public class DownloadActionButton extends ItemActionButton {
     private static final int TIMEOUT_NETWORK_WARN_SECONDS = 300;

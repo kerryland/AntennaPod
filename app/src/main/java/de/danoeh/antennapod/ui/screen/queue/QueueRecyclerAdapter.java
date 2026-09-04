@@ -27,6 +27,7 @@ public class QueueRecyclerAdapter extends EpisodeItemListAdapter {
         super(mainActivity);
         this.swipeActions = swipeActions;
         dragDropEnabled = ! (UserPreferences.isQueueKeepSorted() || UserPreferences.isQueueLocked());
+        setShowNoAutoDownloadIndicator(true);
     }
 
     public void updateDragDropEnabled() {

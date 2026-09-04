@@ -52,4 +52,8 @@ public class AutoDownloadManagerImpl extends AutoDownloadManager {
     public void performAutoCleanup(final Context context) {
         EpisodeCleanupAlgorithmFactory.build().performCleanup(context);
     }
+
+    public boolean dontNeedToPromptForVpn(Context context) {
+        return downloadAlgorithm.dontNeedToPromptForVpn(context);
+    }
 }

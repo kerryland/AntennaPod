@@ -6,6 +6,7 @@ import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedMedia;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public abstract class DownloadServiceInterface {
@@ -38,6 +39,15 @@ public abstract class DownloadServiceInterface {
      * Download when device seems fit.
      */
     public abstract void download(Context context, FeedItem item);
+
+    /**
+     * Queue a batch of episodes for download when the device seems fit.
+     * Episodes that are already downloaded or have no media are skipped.
+     * If 'VPN for downloads' is enabled but no VPN is connected, nothing is queued.
+     *
+     * @return the number of episodes that were queued
+     */
+    public abstract int downloadAll(Context context, List<FeedItem> items);
 
     public abstract void cancel(Context context, FeedMedia media);
 

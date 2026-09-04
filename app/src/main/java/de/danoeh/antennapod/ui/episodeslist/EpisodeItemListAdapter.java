@@ -40,6 +40,7 @@ public class EpisodeItemListAdapter extends SelectableAdapter<EpisodeItemViewHol
     private FeedItem longPressedItem;
     int longPressedPosition = 0; // used to init actionMode
     private int dummyViews = 0;
+    private boolean showNoAutoDownloadIndicator = false;
     private MenuItem.OnMenuItemClickListener contextMenuClickListener;
 
     public EpisodeItemListAdapter(FragmentActivity mainActivity) {
@@ -134,7 +135,24 @@ public class EpisodeItemListAdapter extends SelectableAdapter<EpisodeItemViewHol
         }
 
         afterBindViewHolder(holder, pos);
+        updateNoAutoDownloadIndicator(holder, pos);
         holder.hideSeparatorIfNecessary();
+    }
+
+    /**
+     * Enables the indicator that an episode will not be downloaded automatically.
+     */
+    protected void setShowNoAutoDownloadIndicator(boolean show) {
+        this.showNoAutoDownloadIndicator = show;
+    }
+
+    private void updateNoAutoDownloadIndicator(EpisodeItemViewHolder holder, int pos) {
+        boolean show = false;
+        if (showNoAutoDownloadIndicator) {
+            FeedItem item = episodes.get(pos);
+            show = item != null && item.hasMedia() && !item.isDownloaded() && !item.isAutoDownloadEnabled();
+        }
+        holder.setNoAutoDownloadIndicatorVisible(show);
     }
 
     protected void beforeBindViewHolder(EpisodeItemViewHolder holder, int pos) {

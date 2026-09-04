@@ -371,8 +371,18 @@ public class DBWriter {
             }
 
             adapter.close();
-            AutoDownloadManager.getInstance().autodownloadUndownloadedItems(context);
+            autoDownloadNewEpisodes(context);
         });
+    }
+
+    private static void autoDownloadNewEpisodes(Context context) {
+        // Don't randomly prompt the user to connect the VPN just because something is added or removed from
+        // the queue -- it's jarring. Better to have something like a cron job?
+        // I hate that this is called when we are in the process of downloading
+        // new episodes!!
+        if (AutoDownloadManager.getInstance().dontNeedToPromptForVpn(context)) {
+            AutoDownloadManager.getInstance().autodownloadUndownloadedItems(context);
+        }
     }
 
     /**
@@ -432,7 +442,7 @@ public class DBWriter {
                 DBWriter.markItemsPlayed(FeedItem.UNPLAYED, false, markAsUnplayed);
             }
             adapter.close();
-            AutoDownloadManager.getInstance().autodownloadUndownloadedItems(context);
+            autoDownloadNewEpisodes(context);
         });
     }
 
@@ -541,7 +551,7 @@ public class DBWriter {
         }
         adapter.close();
         if (performAutoDownload) {
-            AutoDownloadManager.getInstance().autodownloadUndownloadedItems(context);
+            autoDownloadNewEpisodes(context);
         }
     }
 

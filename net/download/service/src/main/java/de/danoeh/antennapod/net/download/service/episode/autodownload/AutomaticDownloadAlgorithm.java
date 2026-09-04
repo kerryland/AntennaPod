@@ -14,6 +14,8 @@ import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.model.feed.SortOrder;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedPreferences;
+import de.danoeh.antennapod.net.download.service.feed.remote.VpnDownloadPrompt;
+import de.danoeh.antennapod.net.download.service.feed.remote.VpnMonitor;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
 import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
@@ -40,7 +42,9 @@ public class AutomaticDownloadAlgorithm {
         return () -> {
 
             // true if we should auto download based on network status
-            boolean networkShouldAutoDl = NetworkUtils.isAutoDownloadAllowed();
+            boolean vpnAllowsAutoDl = UserPreferences.isVpnDownload()
+                    && VpnMonitor.getInstance(context).isVpnConnected();
+            boolean networkShouldAutoDl = NetworkUtils.isAutoDownloadAllowed() || vpnAllowsAutoDl;
 
             // true if we should auto download based on power status
             boolean powerShouldAutoDl = deviceCharging(context) || UserPreferences.isEnableAutodownloadOnBattery();
@@ -99,13 +103,18 @@ public class AutomaticDownloadAlgorithm {
                     episodeSpaceLeft = episodeCacheSize - (downloadedEpisodes - deletedEpisodes);
                 }
 
-                List<FeedItem> itemsToDownload = candidates.subList(0, episodeSpaceLeft);
+                int toIndex = Math.min(Math.max(episodeSpaceLeft, 0), candidates.size());
+                List<FeedItem> itemsToDownload = candidates.subList(0, toIndex);
                 if (!itemsToDownload.isEmpty()) {
+                    if (UserPreferences.isVpnDownload() && !VpnMonitor.getInstance(context).isVpnConnected()) {
+                        VpnDownloadPrompt.notifyVpnRequired(context, autoDownloadUndownloadedItems(context));
+                        return;
+                    }
                     Log.d(TAG, "Enqueueing " + itemsToDownload.size() + " items for download");
 
-                    for (FeedItem episode : itemsToDownload) {
-                        DownloadServiceInterface.get().download(context, episode);
-                    }
+                    DownloadServiceInterface.get().downloadAll(context, itemsToDownload);
+                } else if (!candidates.isEmpty()) {
+                    EpisodeCacheFullPrompt.notifyCacheFull(context);
                 }
             }
         };
@@ -123,5 +132,15 @@ public class AutomaticDownloadAlgorithm {
         return (status == BatteryManager.BATTERY_STATUS_CHARGING
                 || status == BatteryManager.BATTERY_STATUS_FULL);
 
+    }
+
+    /**
+     * @return true if we don't need to prompt for the VPN
+     */
+    public boolean dontNeedToPromptForVpn(Context context) {
+        if (!UserPreferences.isVpnDownload()) {
+            return true;
+        }
+        return VpnMonitor.getInstance(context).isVpnConnected();
     }
 }

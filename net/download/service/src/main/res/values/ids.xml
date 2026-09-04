@@ -3,4 +3,6 @@
     <item name="notification_updating_feeds" type="id"/>
     <item name="notification_download_report" type="id"/>
     <item name="notification_auto_download_report" type="id"/>
+    <item name="notification_vpn_required" type="id"/>
+    <item name="notification_episode_cache_full" type="id"/>
 </resources>

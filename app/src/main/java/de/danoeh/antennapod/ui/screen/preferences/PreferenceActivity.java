@@ -177,7 +177,8 @@ public class PreferenceActivity extends ToolbarActivity implements SearchPrefere
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEventMainThread(MessageEvent event) {
         Log.d(FRAGMENT_TAG, "onEvent(" + event + ")");
-        Snackbar s = Snackbar.make(binding.getRoot(), event.message, Snackbar.LENGTH_LONG);
+        int duration = event.indefinite ? Snackbar.LENGTH_INDEFINITE : Snackbar.LENGTH_LONG;
+        Snackbar s = Snackbar.make(binding.getRoot(), event.message, duration);
         if (event.action != null) {
             s.setAction(event.actionText, v -> event.action.accept(this));
         }

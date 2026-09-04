@@ -36,4 +36,11 @@ public abstract class AutoDownloadManager {
      * @param context Used for accessing the DB.
      */
     public abstract void performAutoCleanup(final Context context);
+
+    /**
+     * @return true if we don't need to prompt for the VPN
+     */
+    public boolean dontNeedToPromptForVpn(Context context) {
+        return true;
+    }
 }

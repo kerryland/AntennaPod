@@ -11,6 +11,7 @@ import java.util.List;
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.net.download.service.feed.remote.VpnMonitor;
+import de.danoeh.antennapod.net.download.service.feed.remote.VpnLauncherHelper;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.common.ConfirmationDialog;
@@ -42,9 +43,7 @@ public class BulkDownloader {
         return instance;
     }
     private void actuallyDownload(Context context, List<FeedItem> downloadList) {
-        for (FeedItem episode : downloadList) {
-            DownloadServiceInterface.get().download(context, episode);
-        }
+        DownloadServiceInterface.get().downloadAll(context, downloadList);
     }
 
     public void downloadAll(Context context, List<FeedItem> episodes) {

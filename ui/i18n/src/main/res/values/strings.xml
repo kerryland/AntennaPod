@@ -382,6 +382,11 @@
     <string name="already_downloaded">Episode is already downloaded</string>
     <string name="vpn_download_complete">You may disconnect the VPN if you wish.</string>
     <string name="vpn_download_timeout">Download failed because did not connect to VPN within %d seconds.</string>
+    <string name="vpn_required_download_title">VPN required for downloads</string>
+    <string name="vpn_required_download_message">Downloads are waiting for a VPN connection. Connect to a VPN to continue.</string>
+    <string name="connect_vpn_label">Connect VPN</string>
+    <string name="episode_cache_full_notification_title">Episode cache is full</string>
+    <string name="episode_cache_full_notification_message">Unable to Auto-download paused — increase the download limit.</string>
 
 
     <!-- Mediaplayer messages -->
@@ -835,6 +840,7 @@
     <string name="is_favorite_label">Marked as favorite</string>
     <string name="is_permanent_label">Permanent</string>
     <string name="is_inbox_label">In the inbox</string>
+    <string name="not_auto_downloaded_label">Will not be downloaded automatically</string>
     <string name="is_played">Played</string>
     <string name="load_next_page_label">Load next page</string>
     <string name="position">Position: %1$s</string>

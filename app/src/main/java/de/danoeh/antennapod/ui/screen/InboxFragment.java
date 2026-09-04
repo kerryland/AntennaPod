@@ -65,6 +65,11 @@ public class InboxFragment extends EpisodesListFragment {
         return UserPreferences.getInboxSortedOrder();
     }
 
+    @Override
+    protected boolean showNoAutoDownloadIndicator() {
+        return true;
+    }
+
     @NonNull
     @Override
     protected List<FeedItem> loadMoreData(int page) {

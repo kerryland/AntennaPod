@@ -55,6 +55,21 @@ public class DownloadServiceInterfaceImpl extends DownloadServiceInterface {
         enqueueDownloadRequest(context, item, workRequest);
     }
 
+    @Override
+    public int downloadAll(Context context, List<FeedItem> items) {
+        if (UserPreferences.isVpnDownload() && !VpnMonitor.getInstance(context).isVpnConnected()) {
+            return 0;
+        }
+        int queued = 0;
+        for (FeedItem item : items) {
+            if (item.hasMedia() && !item.isDownloaded()) {
+                download(context, item);
+                queued++;
+            }
+        }
+        return queued;
+    }
+
     private static OneTimeWorkRequest.Builder createDownloadRequest(Context context, FeedItem item) {
         OneTimeWorkRequest.Builder workRequest = new OneTimeWorkRequest.Builder(EpisodeDownloadWorker.class)
                 .setInitialDelay(0L, TimeUnit.MILLISECONDS)

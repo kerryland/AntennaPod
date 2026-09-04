@@ -55,6 +55,7 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
     private final TextView size;
     public final ImageView isInbox;
     public final ImageView isInQueue;
+    public final ImageView isNoAutoDownload;
     private final ImageView isPermanent;
     private final ImageView isVideo;
     public final ImageView isFavorite;
@@ -85,6 +86,7 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
         duration = itemView.findViewById(R.id.txtvDuration);
         progressBar = itemView.findViewById(R.id.progressBar);
         isInQueue = itemView.findViewById(R.id.ivInPlaylist);
+        isNoAutoDownload = itemView.findViewById(R.id.isNoAutoDownload);
         isPermanent = itemView.findViewById(R.id.isPermanent);
         isVideo = itemView.findViewById(R.id.ivIsVideo);
         isInbox = itemView.findViewById(R.id.statusInbox);
@@ -116,6 +118,7 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
         isInbox.setVisibility(item.isNew() ? View.VISIBLE : View.GONE);
         isFavorite.setVisibility(item.isTagged(FeedItem.TAG_FAVORITE) ? View.VISIBLE : View.GONE);
         isInQueue.setVisibility(item.isTagged(FeedItem.TAG_QUEUE) ? View.VISIBLE : View.GONE);
+        isNoAutoDownload.setVisibility(View.GONE);
         isPermanent.setVisibility(item.isTagged(FeedItem.TAG_QUEUE_PERMANENT) ? View.VISIBLE : View.GONE);
 
         container.setAlpha(item.isPlayed() ? 0.5f : 1.0f);
@@ -218,6 +221,7 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
         isVideo.setVisibility(View.GONE);
         isFavorite.setVisibility(View.GONE);
         isInQueue.setVisibility(View.GONE);
+        isNoAutoDownload.setVisibility(View.GONE);
         isPermanent.setVisibility(View.GONE);
         title.setText("███████");
         feedTitle.setText("");
@@ -293,11 +297,19 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
     }
 
     /**
+     * Shows or hides the indicator that the episode will not be downloaded automatically.
+     */
+    public void setNoAutoDownloadIndicatorVisible(boolean visible) {
+        isNoAutoDownload.setVisibility(visible ? View.VISIBLE : View.GONE);
+    }
+
+    /**
      * Hides the separator dot between icons and text if there are no icons.
      */
     public void hideSeparatorIfNecessary() {
         boolean hasIcons = isInbox.getVisibility() == View.VISIBLE
                 || isInQueue.getVisibility() == View.VISIBLE
+                || isNoAutoDownload.getVisibility() == View.VISIBLE
                 || isPermanent.getVisibility() == View.VISIBLE
                 || isVideo.getVisibility() == View.VISIBLE
                 || isFavorite.getVisibility() == View.VISIBLE

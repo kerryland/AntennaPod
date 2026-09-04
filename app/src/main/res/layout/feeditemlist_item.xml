@@ -137,6 +137,14 @@
                     app:tint="?attr/colorOnSurfaceVariant"
                     app:srcCompat="@drawable/ic_playlist_play" />
 
+                <ImageView
+                    android:id="@+id/isNoAutoDownload"
+                    android:layout_width="12sp"
+                    android:layout_height="12sp"
+                    android:visibility="gone"
+                    android:contentDescription="@string/not_auto_downloaded_label"
+                    app:srcCompat="@drawable/ic_no_autodownload" />
+
                 <!-- Little dot separator -->
                 <TextView
                     android:id="@+id/separatorIcons"

@@ -187,6 +187,7 @@ public abstract class EpisodesListFragment extends Fragment
                 super.onSelectedItemsUpdated();
             }
         };
+        listAdapter.setShowNoAutoDownloadIndicator(showNoAutoDownloadIndicator());
         listAdapter.setContextMenuClickListener(EpisodesListFragment.this::onContextItemSelected);
         listAdapter.setOnSelectModeListener(this);
         swipeActions.setSelectedItemsProvider(listAdapter::getSelectedItems);
@@ -447,6 +448,14 @@ public abstract class EpisodesListFragment extends Fragment
     protected abstract SortOrder getSortOrder();
 
     protected abstract String getFragmentTag();
+
+    /**
+     * Whether the episode rows in this list should show an indicator when an episode
+     * will not be downloaded automatically.
+     */
+    protected boolean showNoAutoDownloadIndicator() {
+        return false;
+    }
 
     protected void updateToolbar() {
     }

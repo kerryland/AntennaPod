@@ -22,7 +22,7 @@ import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 
 /**
- * Implementation of the EpisodeCleanupAlgorithm interface used by AntennaPod.
+ * Cleanup Episodes more than X hours after they were last played
  */
 public class APCleanupAlgorithm extends EpisodeCleanupAlgorithm {
 

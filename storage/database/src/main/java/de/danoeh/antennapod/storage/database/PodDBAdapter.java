@@ -1203,6 +1203,11 @@ public class PodDBAdapter {
     }
 
 
+    /**
+     * Returns feeditems sorted by:
+     * - priority ascending
+     * - pub_date ascending (if playback_order preference OLDEST_FIRST) or descending (NEWEST_FIRST)
+     */
     private Cursor getEpisodesByPriority(int offset, int limit, FeedItemFilter filter, boolean useMaxEpisodes) {
         String query =
             """

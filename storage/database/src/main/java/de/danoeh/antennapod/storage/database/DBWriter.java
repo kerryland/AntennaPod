@@ -16,7 +16,6 @@ import de.danoeh.antennapod.event.DownloadLogEvent;
 
 import de.danoeh.antennapod.event.InboxEvent;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
-import de.danoeh.antennapod.net.download.serviceinterface.AutoDownloadManager;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
 import de.danoeh.antennapod.net.download.serviceinterface.FeedUpdateManager;
 import de.danoeh.antennapod.net.sync.serviceinterface.SynchronizationQueue;
@@ -113,7 +112,7 @@ public class DBWriter {
             EventBus.getDefault().post(new FeedItemEvent(media.getItem() != null
                     ? Collections.singletonList(media.getItem()) : Collections.emptyList(), false));
             if (UserPreferences.shouldDeleteRemoveFromQueue()) {
-                DBWriter.removeQueueItemSynchronous(context, false, media.getItemId());
+                DBWriter.removeQueueItemSynchronous(media.getItemId());
             }
         });
     }
@@ -371,18 +370,7 @@ public class DBWriter {
             }
 
             adapter.close();
-            autoDownloadNewEpisodes(context);
         });
-    }
-
-    private static void autoDownloadNewEpisodes(Context context) {
-        // Don't randomly prompt the user to connect the VPN just because something is added or removed from
-        // the queue -- it's jarring. Better to have something like a cron job?
-        // I hate that this is called when we are in the process of downloading
-        // new episodes!!
-        if (AutoDownloadManager.getInstance().dontNeedToPromptForVpn(context)) {
-            AutoDownloadManager.getInstance().autodownloadUndownloadedItems(context);
-        }
     }
 
     /**
@@ -442,7 +430,6 @@ public class DBWriter {
                 DBWriter.markItemsPlayed(FeedItem.UNPLAYED, false, markAsUnplayed);
             }
             adapter.close();
-            autoDownloadNewEpisodes(context);
         });
     }
 
@@ -489,23 +476,17 @@ public class DBWriter {
     /**
      * Removes a FeedItem object from the queue.
      *
-     * @param context             A context that is used for opening a database connection.
-     * @param performAutoDownload true if an auto-download process should be started after the operation.
-     * @param item                FeedItem that should be removed.
+     * @param item FeedItem that should be removed.
      */
-    public static Future<?> removeQueueItem(final Context context,
-                                            final boolean performAutoDownload, final FeedItem item) {
-        return runOnDbThread(() -> removeQueueItemSynchronous(context, performAutoDownload, item.getId()));
+    public static Future<?> removeQueueItem(final FeedItem item) {
+        return runOnDbThread(() -> removeQueueItemSynchronous(item.getId()));
     }
 
-    public static Future<?> removeQueueItem(final Context context, final boolean performAutoDownload,
-                                            final long... itemIds) {
-        return runOnDbThread(() -> removeQueueItemSynchronous(context, performAutoDownload, itemIds));
+    public static Future<?> removeQueueItem(final long... itemIds) {
+        return runOnDbThread(() -> removeQueueItemSynchronous(itemIds));
     }
 
-    private static void removeQueueItemSynchronous(final Context context,
-                                                   final boolean performAutoDownload,
-                                                   final long... itemIds) {
+    private static void removeQueueItemSynchronous(final long... itemIds) {
         if (itemIds.length < 1) {
             return;
         }
@@ -550,9 +531,6 @@ public class DBWriter {
             Log.w(TAG, "Queue was not modified by call to removeQueueItem");
         }
         adapter.close();
-        if (performAutoDownload) {
-            autoDownloadNewEpisodes(context);
-        }
     }
 
     public static Future<?> toggleFavoriteItem(final FeedItem item) {

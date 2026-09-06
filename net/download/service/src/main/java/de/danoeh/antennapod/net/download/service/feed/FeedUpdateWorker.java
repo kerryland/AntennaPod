@@ -45,7 +45,6 @@ import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.notifications.NotificationUtils;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -66,6 +65,7 @@ public class FeedUpdateWorker extends Worker {
     @Override
     @NonNull
     public Result doWork() {
+        Log.d(TAG, "Starting feed update worker.");
         newEpisodesNotification.loadCountersBeforeRefresh();
 
         List<Feed> toUpdateExternally = new ArrayList<>();
@@ -82,18 +82,17 @@ public class FeedUpdateWorker extends Worker {
         if (feedId == -1) { // Update all
             List<Feed> feeds = DBReader.getFeedList();
             findFeedsToRefresh(feeds, toUpdateExternally, toUpdateFromDB);
-            Iterator<Feed> itr = toUpdateExternally.iterator();
-            while (itr.hasNext()) {
-                Feed feed = itr.next();
+            for (int i = toUpdateExternally.size() - 1; i >= 0; i--) {
+                Feed feed = toUpdateExternally.get(i);
                 if (!feed.getPreferences().getKeepUpdated() || feed.getState() != Feed.STATE_SUBSCRIBED) {
-                    itr.remove();
+                    toUpdateExternally.remove(i);
                     continue;
                 }
                 if (isAutomaticRefresh && isAutomaticRefreshEnabled
                         && feed.getLastRefreshAttempt() > System.currentTimeMillis() - JOB_SCHEDULE_TIME_VARIATION
                             - TimeUnit.MINUTES.toMillis(UserPreferences.getUpdateInterval())) {
                     // Recently updated, no need to automatically check again
-                    itr.remove();
+                    toUpdateExternally.remove(i);;
                     continue;
                 }
                 if (!feed.isLocalFeed()) {
@@ -126,9 +125,9 @@ public class FeedUpdateWorker extends Worker {
         if (!ignoreRss) {
             refreshFeeds(toUpdateExternally, force);
         }
-        Log.d(TAG, "Populate inbox from UNREAD in DB:");
+        Log.d(TAG, "Populate inbox from UNREAD in DB: " + toUpdateFromDB.size());
         DestinationSelector.populateInboxOrQueue(getApplicationContext(), toUpdateFromDB);
-        Log.d(TAG, "Populate inbox from RSS:");
+        Log.d(TAG, "Populate inbox from RSS: " + toUpdateExternally.size());
         DestinationSelector.populateInboxOrQueue(getApplicationContext(), toUpdateExternally);
 
         if (!ignoreRss) {
@@ -266,7 +265,9 @@ public class FeedUpdateWorker extends Worker {
         downloader.call();
 
         if (!downloader.getResult().isSuccessful()) {
-            if (downloader.cancelled || downloader.getResult().getReason() == DownloadError.ERROR_DOWNLOAD_CANCELLED) {
+            if (downloader.cancelled
+                    || downloader.getResult().getReason() == DownloadError.ERROR_DOWNLOAD_CANCELLED
+                    || downloader.getResult().getReason() == DownloadError.ERROR_NOT_MODIFIED) {
                 return null;
             }
             DBWriter.setFeedLastUpdateFailed(request.getFeedfileId(), true);

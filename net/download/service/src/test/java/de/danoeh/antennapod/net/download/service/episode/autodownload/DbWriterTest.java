@@ -657,7 +657,7 @@ public class DbWriterTest {
             adapter.setQueue(feed.getItems());
             adapter.close();
 
-            DBWriter.removeQueueItem(context, false, item).get(TIMEOUT, TimeUnit.SECONDS);
+            DBWriter.removeQueueItem(item).get(TIMEOUT, TimeUnit.SECONDS);
             adapter = PodDBAdapter.getInstance();
             adapter.open();
             Cursor queue = adapter.getQueueIDCursor();
@@ -692,21 +692,21 @@ public class DbWriterTest {
         // Use array rather than List to make codes more succinct
         Long[] itemIds = toItemIds(feed.getItems()).toArray(new Long[0]);
 
-        DBWriter.removeQueueItem(context, false,
+        DBWriter.removeQueueItem(
                 itemIds[1], itemIds[3]).get(TIMEOUT, TimeUnit.SECONDS);
         assertQueueByItemIds("Average case - 2 items removed successfully",
                 itemIds[0], itemIds[2]);
 
-        DBWriter.removeQueueItem(context, false).get(TIMEOUT, TimeUnit.SECONDS);
+        DBWriter.removeQueueItem().get(TIMEOUT, TimeUnit.SECONDS);
         assertQueueByItemIds("Boundary case - no items supplied. queue should see no change",
                 itemIds[0], itemIds[2]);
 
-        DBWriter.removeQueueItem(context, false,
+        DBWriter.removeQueueItem(
                 itemIds[0], itemIds[4], -1L).get(TIMEOUT, TimeUnit.SECONDS);
         assertQueueByItemIds("Boundary case - items not in queue ignored",
                 itemIds[2]);
 
-        DBWriter.removeQueueItem(context, false,
+        DBWriter.removeQueueItem(
                 itemIds[2], -1L).get(TIMEOUT, TimeUnit.SECONDS);
         assertQueueByItemIds("Boundary case - invalid itemIds ignored"); // the queue is empty
     }

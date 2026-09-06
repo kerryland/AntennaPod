@@ -39,7 +39,7 @@ public class FeedUpdateManagerImpl extends FeedUpdateManager {
     public static final String EXTRA_NEXT_PAGE = "next_page";
     public static final String EXTRA_EVEN_ON_MOBILE = "even_on_mobile";
     public static final String EXTRA_MANUAL = "manual";
-    private static final String TAG = "AutoUpdateManager";
+    private static final String TAG = "FeedUpdateManagerImpl";
     private static long lastManualRefreshTime = 0;
     private static long lastManualRefreshFeedId = -1;
     private static final long REFRESH_COOLDOWN_MS = 20_000;
@@ -54,7 +54,7 @@ public class FeedUpdateManagerImpl extends FeedUpdateManager {
      * Start / restart periodic auto feed refresh
      * @param context Context
      */
-    public void restartUpdateAlarm(Context context, boolean replace) {
+    public void restartUpdateAlarm(Context context) {
         if (UserPreferences.isAutoUpdateDisabled()) {
             WorkManager.getInstance(context).cancelUniqueWork(WORK_ID_FEED_UPDATE);
         } else {
@@ -64,9 +64,9 @@ public class FeedUpdateManagerImpl extends FeedUpdateManager {
                         .setRequiredNetworkType(UserPreferences.isAllowMobileFeedRefresh()
                             ? NetworkType.CONNECTED : NetworkType.UNMETERED).build())
                     .build();
+            // Executes FeedUpdateWorker immediately, and again every hour
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(WORK_ID_FEED_UPDATE,
-                    replace ? ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE
-                            : ExistingPeriodicWorkPolicy.KEEP, workRequest);
+                    ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE, workRequest);
         }
     }
 

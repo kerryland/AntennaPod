@@ -182,7 +182,7 @@ public class PreferenceUpgrader {
         if (oldVersion < 3100000) {
             // Migrate refresh interval from hours to minutes
             UserPreferences.setUpdateInterval(60L * UserPreferences.getUpdateInterval());
-            FeedUpdateManager.getInstance().restartUpdateAlarm(context, true);
+            FeedUpdateManager.getInstance().restartUpdateAlarm(context);
         }
     }
 }

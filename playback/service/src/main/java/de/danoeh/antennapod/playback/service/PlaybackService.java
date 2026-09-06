@@ -1216,7 +1216,7 @@ public class PlaybackService extends MediaBrowserServiceCompat {
                 DBWriter.markItemsPlayed(FeedItem.PLAYED, ended || (skipped && almostEnded),
                         Collections.singletonList(item));
                 // don't know if it actually matters to not autodownload when smart mark as played is triggered
-                DBWriter.removeQueueItem(PlaybackService.this, ended, item);
+                DBWriter.removeQueueItem(item);
                 // Delete episode if enabled
                 FeedPreferences.AutoDeleteAction action =
                         item.getFeed().getPreferences().getCurrentAutoDelete();

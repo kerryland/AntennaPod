@@ -18,7 +18,6 @@ import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterfa
 import de.danoeh.antennapod.net.sync.serviceinterface.EpisodeAction;
 import de.danoeh.antennapod.net.sync.serviceinterface.SynchronizationQueue;
 import de.danoeh.antennapod.playback.service.PlaybackServiceInterface;
-import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.storage.preferences.PlaybackPreferences;
@@ -132,7 +131,7 @@ public class EpisodeMultiSelectActionHandler {
 
     private void removeFromQueueChecked(List<FeedItem> items) {
         long[] checkedIds = getSelectedIds(items);
-        DBWriter.removeQueueItem(activity, true, checkedIds);
+        DBWriter.removeQueueItem(checkedIds);
         showMessage(R.plurals.removed_from_queue_message, checkedIds.length);
     }
 
@@ -153,7 +152,7 @@ public class EpisodeMultiSelectActionHandler {
             item.setRemoved(true);
         }
         DBWriter.markItemsPlayed(FeedItem.PLAYED, true, items);
-        DBWriter.removeQueueItem(activity, true,  getSelectedIds(items));
+        DBWriter.removeQueueItem(getSelectedIds(items));
 
         for (FeedItem item : items) {
             if (!item.getFeed().isLocalFeed() && item.getFeed().getState() != Feed.STATE_NOT_SUBSCRIBED

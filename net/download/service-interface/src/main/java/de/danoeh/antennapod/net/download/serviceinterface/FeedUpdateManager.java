@@ -16,7 +16,7 @@ public abstract class FeedUpdateManager {
         FeedUpdateManager.instance = instance;
     }
 
-    public abstract void restartUpdateAlarm(Context context, boolean replace);
+    public abstract void restartUpdateAlarm(Context context);
 
     public abstract void runOnce(Context context);
 

@@ -256,7 +256,7 @@ public class FeedItemMenuHandler {
                     .subscribe(queue -> {
                         MenuItemAssistant.skipIfPlaying(context, Collections.singletonList(selectedItem), () ->
                                 {
-                                    DBWriter.removeQueueItem(context, true, selectedItem);
+                                    DBWriter.removeQueueItem(selectedItem);
                                     EventBus.getDefault().post(new MessageEvent(
                                             fragment.getResources().getQuantityString(R.plurals.removed_from_queue_message, 1, 1),
                                             xcontext -> {

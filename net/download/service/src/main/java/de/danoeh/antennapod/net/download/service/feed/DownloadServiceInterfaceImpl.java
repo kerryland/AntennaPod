@@ -117,7 +117,7 @@ public class DownloadServiceInterfaceImpl extends DownloadServiceInterface {
                     workInfos -> {
                         for (WorkInfo info : workInfos) {
                             if (info.getTags().contains(DownloadServiceInterface.WORK_DATA_WAS_QUEUED)) {
-                                DBWriter.removeQueueItem(context, false, media.getItem());
+                                DBWriter.removeQueueItem(media.getItem());
                             }
                         }
                         WorkManager.getInstance(context).cancelAllWorkByTag(tag);

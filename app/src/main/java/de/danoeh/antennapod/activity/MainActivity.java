@@ -222,7 +222,6 @@ public class MainActivity extends CastEnabledActivity implements NavigationToolb
         sheetBehavior.addBottomSheetCallback(bottomSheetCallback);
         bottomSheetBackPressedCallback = new BottomSheetBackPressedCallback(false, sheetBehavior, bottomSheet);
 
-        FeedUpdateManager.getInstance().restartUpdateAlarm(this, false);
         SynchronizationQueue.getInstance().syncIfNotSyncedRecently();
         AutomaticDatabaseExportWorker.enqueueIfNeeded(this, false);
         DatabaseMaintenanceWorker.enqueueIfNeeded(this);
@@ -375,7 +374,7 @@ public class MainActivity extends CastEnabledActivity implements NavigationToolb
     private void checkFirstLaunch() {
         SharedPreferences prefs = getSharedPreferences(PREF_NAME, MODE_PRIVATE);
         if (prefs.getBoolean(PREF_IS_FIRST_LAUNCH, true)) {
-            FeedUpdateManager.getInstance().restartUpdateAlarm(this, true);
+            FeedUpdateManager.getInstance().restartUpdateAlarm(this);
 
             SharedPreferences.Editor edit = prefs.edit();
             edit.putBoolean(PREF_IS_FIRST_LAUNCH, false);
@@ -608,6 +607,7 @@ public class MainActivity extends CastEnabledActivity implements NavigationToolb
         new RatingDialogManager(this).showIfNeeded();
         getOnBackPressedDispatcher().addCallback(this, openDefaultPageBackPressedCallback);
         getOnBackPressedDispatcher().addCallback(this, bottomSheetBackPressedCallback);
+        FeedUpdateManager.getInstance().restartUpdateAlarm(this);
     }
 
     @Override

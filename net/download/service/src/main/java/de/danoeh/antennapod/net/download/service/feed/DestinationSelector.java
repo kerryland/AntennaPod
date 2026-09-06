@@ -115,7 +115,7 @@ public class DestinationSelector {
         for (int i = 0; i < queueRemovals.size(); i++) {
             removeFromQueueItemIds[i] = queueRemovals.get(i).getId();
         }
-        DBWriter.removeQueueItem(context, false, removeFromQueueItemIds);
+        DBWriter.removeQueueItem(removeFromQueueItemIds);
         DBWriter.addQueueItem(context, queueAdditions.toArray(new FeedItem[0]));
 
         Log.d(TAG, "Inbox changes: " + inboxStateChanges.size() + ". Queue changes: " + (queueRemovals.size() + queueAdditions.size()));

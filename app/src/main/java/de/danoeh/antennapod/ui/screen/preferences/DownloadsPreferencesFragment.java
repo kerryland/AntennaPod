@@ -114,7 +114,7 @@ public class DownloadsPreferencesFragment extends AnimatedPreferenceFragment
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         if (UserPreferences.PREF_UPDATE_INTERVAL_MINUTES.equals(key)
                 || UserPreferences.PREF_MOBILE_UPDATE.equals(key)) {
-            FeedUpdateManager.getInstance().restartUpdateAlarm(getContext(), true);
+            FeedUpdateManager.getInstance().restartUpdateAlarm(getContext());
         }
 
         if (UserPreferences.PREF_VPN_DOWNLOAD.equals(key) && UserPreferences.isVpnDownload() && !Settings.canDrawOverlays(getContext())) {

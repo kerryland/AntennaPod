@@ -40,10 +40,10 @@ public class ExceptFavoriteCleanupAlgorithm extends EpisodeCleanupAlgorithm {
         List<FeedItem> candidates = getCandidates();
         List<FeedItem> delete;
 
-        // in the absence of better data, we'll sort by item publication date
+        // Look for by 'least recently used' date
         Collections.sort(candidates, (lhs, rhs) -> {
-            Date l = lhs.getPubDate();
-            Date r = rhs.getPubDate();
+            Date l = mostRecentDate(lhs);
+            Date r = mostRecentDate(rhs);
 
             if (l != null && r != null) {
                 return l.compareTo(r);

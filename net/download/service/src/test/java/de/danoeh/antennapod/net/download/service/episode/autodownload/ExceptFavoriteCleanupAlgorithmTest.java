@@ -1,6 +1,8 @@
 package de.danoeh.antennapod.net.download.service.episode.autodownload;
 
 import de.danoeh.antennapod.net.download.serviceinterface.AutoDownloadManager;
+
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -8,6 +10,7 @@ import org.robolectric.RobolectricTestRunner;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import de.danoeh.antennapod.model.feed.Feed;
@@ -38,11 +41,18 @@ public class ExceptFavoriteCleanupAlgorithmTest extends DbCleanupTests {
         populateItems(numberOfItems, feed, items, files, FeedItem.UNPLAYED, false, false);
 
         AutoDownloadManager.getInstance().performAutoCleanup(context);
+
+        Date oldestUndeleted = new Date();
         for (int i = 0; i < files.size(); i++) {
             if (i < EPISODE_CACHE_SIZE) {
-                assertTrue("Only enough items should be deleted", files.get(i).exists());
+                assertTrue(files.get(i).exists());
+                if (items.get(i).getPubDate().before(oldestUndeleted)) {
+                    oldestUndeleted = items.get(i).getPubDate();
+                }
             } else {
-                assertFalse("Expected episode to be deleted", files.get(i).exists());
+                assertFalse(files.get(i).exists());
+                Assert.assertTrue("Should delete older items first",
+                        items.get(i).getPubDate().before(oldestUndeleted));
             }
         }
     }

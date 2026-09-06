@@ -2,6 +2,10 @@ package de.danoeh.antennapod.net.download.service.episode.autodownload;
 
 import android.content.Context;
 
+import java.util.Arrays;
+import java.util.Date;
+
+import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
@@ -62,5 +66,19 @@ public abstract class EpisodeCleanupAlgorithm {
             }
         }
         return 0;
+    }
+
+    protected Date mostRecentDate(FeedItem feedItem) {
+        Date result = null;
+        for (Date date : Arrays.asList(
+                feedItem.getPubDate(),
+                feedItem.getAddedToInboxOrQueue(),
+                feedItem.getMedia().getLastPlayedTimeHistory()))
+        {
+            if (date != null && (result == null || date.after(result))) {
+                result = date;
+            }
+        }
+        return result;
     }
 }

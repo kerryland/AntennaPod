@@ -7,6 +7,7 @@ import androidx.preference.PreferenceManager;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -125,16 +126,20 @@ public class DbCleanupTests {
     }
 
     @SuppressWarnings("SameParameterValue")
+    // Make a list of FeedItems, sorted newest to oldest.
     void populateItems(final int numItems, Feed feed, List<FeedItem> items,
                        List<File> files, int itemState, boolean addToQueue,
                        boolean addToFavorites) throws IOException {
+        Calendar firstDate = Calendar.getInstance();
+        firstDate.set(2011, Calendar.FEBRUARY, 1);
         for (int i = 0; i < numItems; i++) {
-            Date itemDate = new Date(numItems - i);
+            firstDate.add(Calendar.DAY_OF_YEAR, -1);
+            Date itemDate = firstDate.getTime();
             Date lastPlayedTimeHistory = null;
             if (itemState == FeedItem.PLAYED) {
                 lastPlayedTimeHistory = itemDate;
             }
-            FeedItem item = new FeedItem(0, "title", "id" + i, "link", itemDate, itemState, feed);
+            FeedItem item = new FeedItem(0, "title" + i, "id" + i, "link", itemDate, itemState, feed);
 
             File f = new File(destFolder, "file " + i);
             assertTrue(f.createNewFile());

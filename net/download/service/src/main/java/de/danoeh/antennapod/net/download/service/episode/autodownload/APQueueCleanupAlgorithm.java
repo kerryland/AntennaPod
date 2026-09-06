@@ -38,10 +38,10 @@ public class APQueueCleanupAlgorithm extends EpisodeCleanupAlgorithm {
         List<FeedItem> candidates = getCandidates();
         List<FeedItem> delete;
 
-        // in the absence of better data, we'll sort by item publication date
+        // Look for oldest episodes first
         Collections.sort(candidates, (lhs, rhs) -> {
-            Date l = lhs.getPubDate();
-            Date r = rhs.getPubDate();
+            Date l = mostRecentDate(lhs);
+            Date r = mostRecentDate(rhs);
 
             if (l == null) {
                 l = new Date();

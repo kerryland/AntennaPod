@@ -114,6 +114,9 @@ public class DestinationSelector {
         long[] removeFromQueueItemIds = new long[queueRemovals.size()];
         for (int i = 0; i < queueRemovals.size(); i++) {
             removeFromQueueItemIds[i] = queueRemovals.get(i).getId();
+            if (UserPreferences.isAutoDelete()) {
+                DBWriter.deleteFeedMediaOfItem(context, queueRemovals.get(i).getMedia());
+            }
         }
         DBWriter.removeQueueItem(removeFromQueueItemIds);
         DBWriter.addQueueItem(context, queueAdditions.toArray(new FeedItem[0]));

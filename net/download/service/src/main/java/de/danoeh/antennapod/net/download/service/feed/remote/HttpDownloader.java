@@ -110,7 +110,7 @@ public class HttpDownloader extends Downloader {
             Log.d(TAG, "Response code is " + response.code());
             if (!response.isSuccessful() && response.code() == HttpURLConnection.HTTP_NOT_MODIFIED) {
                 Log.d(TAG, "Feed '" + request.getSource() + "' not modified since last update, Download canceled");
-                onCancelled();
+                onFail(DownloadError.ERROR_NOT_MODIFIED, null);
                 return;
             } else if (!response.isSuccessful() || response.body() == null) {
                 callOnFailByResponseCode(response);

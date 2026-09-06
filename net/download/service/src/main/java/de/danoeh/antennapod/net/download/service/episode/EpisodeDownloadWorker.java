@@ -186,6 +186,9 @@ public class EpisodeDownloadWorker extends Worker {
         }
 
         DownloadResult status = downloader.getResult();
+        if (status.getReason() == DownloadError.ERROR_NOT_MODIFIED) {
+            return Result.success();
+        }
         if (status.isSuccessful()) {
             MediaDownloadedHandler handler = new MediaDownloadedHandler(
                     getApplicationContext(), downloader.getResult(), request);

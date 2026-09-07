@@ -63,7 +63,7 @@ public class DownloadServiceInterfaceImpl extends DownloadServiceInterface {
         }
         int queued = 0;
         for (FeedItem item : items) {
-            if (item.hasMedia() && !item.isDownloaded()) {
+            if (item.hasMedia() && (!item.isDownloaded() || !item.getMedia().fileExists())) {
                 download(context, item);
                 queued++;
             }

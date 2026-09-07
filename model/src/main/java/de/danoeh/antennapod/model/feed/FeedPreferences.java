@@ -2,7 +2,6 @@ package de.danoeh.antennapod.model.feed;
 
 import androidx.annotation.NonNull;
 import android.text.TextUtils;
-import android.util.Log;
 
 import java.io.Serializable;
 import java.util.HashSet;

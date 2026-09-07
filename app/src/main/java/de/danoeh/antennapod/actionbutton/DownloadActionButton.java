@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.net.download.service.feed.remote.VpnMonitor;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
@@ -118,13 +119,11 @@ public class DownloadActionButton extends ItemActionButton {
             @Override
             public void onResult(boolean success) {
                 if (success) {
-                    DownloadServiceInterface.get().notifyDownloadsComplete(context.getApplicationContext(), new Runnable() {
-                        @Override
-                        public void run() {
-                            if (UserPreferences.isVpnDownload() && vpnMonitor.isVpnConnected()) {
-                                VpnLauncherHelper.launchVpnAndReturnOnDisconnect(context, 60000);
-                            }
-                        }});
+                    DownloadServiceInterface.get().notifyDownloadsComplete(context.getApplicationContext(), () -> {
+                        if (UserPreferences.isVpnDownload() && vpnMonitor.isVpnConnected()) {
+                            VpnLauncherHelper.launchVpnAndReturnOnDisconnect(context, 60000);
+                        }
+                    });
 
                     downloadNow(context, true);
                 }

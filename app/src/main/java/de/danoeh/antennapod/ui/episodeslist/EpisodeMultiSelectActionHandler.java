@@ -68,6 +68,7 @@ public class EpisodeMultiSelectActionHandler {
     private void skipIfPlaying(List<FeedItem> items, Runnable callback) {
         MenuItemAssistant.skipIfPlaying(activity, items, callback);
     }
+
     public void handleAction(List<FeedItem> items) {
         if (actionId == R.id.add_to_queue_item) {
             queueChecked(items, queueAdditionsArePermanent, false);
@@ -87,7 +88,8 @@ public class EpisodeMultiSelectActionHandler {
             downloadChecked(items);
         } else if (actionId == R.id.remove_item) {
             skipIfPlaying(items, () ->
-                    LocalDeleteModal.showLocalFeedDeleteWarningIfNecessary(activity, items, () -> deleteChecked(items)));
+                    LocalDeleteModal.showLocalFeedDeleteWarningIfNecessary(activity, items,
+                            () -> deleteChecked(items)));
         } else if (actionId == R.id.add_to_favorites_item) {
             addToFavoritesChecked(items);
         } else if (actionId == R.id.remove_from_favorites_item) {

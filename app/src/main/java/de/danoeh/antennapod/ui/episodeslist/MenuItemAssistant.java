@@ -27,7 +27,6 @@ public class MenuItemAssistant {
     /**
      * Do something {@code callback} after we have found a podcast to play if the currently playing one
      * is in {@code feedItems}
-     *
      * If the currently playing item is in {@code feedItems}, it is skipped first and the
      * {@code callback} is only invoked once the player has actually transitioned to the next item.
      * Waiting for the transition is important because the player determines the next queue item
@@ -41,8 +40,9 @@ public class MenuItemAssistant {
     }
 
     @OptIn(markerClass = UnstableApi.class)
-    static void skipIfPlaying(MediaController controller, Context context, List<FeedItem> feedItems, Runnable callback) {
-        final long mediaIdToSkip= getPlayingMediaId(controller);
+    static void skipIfPlaying(MediaController controller, Context context, List<FeedItem> feedItems,
+                              Runnable callback) {
+        final long mediaIdToSkip = getPlayingMediaId(controller);
         if (mediaIdToSkip == -1 || !isMediaIdInList(feedItems, mediaIdToSkip)) {
             // Nothing relevant is playing, nothing to skip
             if (callback != null) {

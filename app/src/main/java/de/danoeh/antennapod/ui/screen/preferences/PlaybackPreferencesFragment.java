@@ -6,10 +6,12 @@ import android.app.Activity;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
+
 import androidx.annotation.NonNull;
 import androidx.collection.ArrayMap;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
+
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.playback.service.PlaybackController;
 import de.danoeh.antennapod.playback.service.internal.MediaLibrarySessionCallback;
@@ -42,19 +44,17 @@ public class PlaybackPreferencesFragment extends AnimatedPreferenceFragment {
     private void setupPlaybackScreen() {
         final Activity activity = getActivity();
 
-        findPreference(PREF_PAUSE_ON_HEADSET_DISCONNECT).setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-            @Override
-            public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
-                boolean pauseOnHeadsetDisconnect = (Boolean)newValue;
+        findPreference(PREF_PAUSE_ON_HEADSET_DISCONNECT)
+                .setOnPreferenceChangeListener((preference, newValue) -> {
+                    boolean pauseOnHeadsetDisconnect = (Boolean) newValue;
 
-                PlaybackController.bindToMedia3Service(getActivity(), mediaController -> {
-                    mediaController.sendCustomCommand(
-                            MediaLibrarySessionCallback.PAUSE_ON_DISCONNECT,
-                            MediaLibrarySessionCallback.createBundle(pauseOnHeadsetDisconnect));
+                    PlaybackController.bindToMedia3Service(getActivity(), mediaController -> {
+                        mediaController.sendCustomCommand(
+                                MediaLibrarySessionCallback.PAUSE_ON_DISCONNECT,
+                                MediaLibrarySessionCallback.createBundle(pauseOnHeadsetDisconnect));
+                    });
+                    return true;
                 });
-                return true;
-            }
-        });
 
         findPreference(PREF_PLAYBACK_SPEED_LAUNCHER).setOnPreferenceClickListener(preference -> {
             new VariableSpeedDialog().show(getChildFragmentManager(), null);

@@ -34,7 +34,8 @@ public class QueueUseCase {
         QueueUseCase.instance = instance;
     }
 
-    public void moveToPlayNext(Context context, List<FeedItem> items, @Nullable CurrentPositionCallback uiUpdateCallback) {
+    public void moveToPlayNext(Context context, List<FeedItem> items,
+                               @Nullable CurrentPositionCallback uiUpdateCallback) {
         Observable.fromCallable(() -> DBReader.getQueue())
                 .subscribeOn(Schedulers.computation())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -55,7 +56,8 @@ public class QueueUseCase {
         void onCurrentPosition(int position);
     }
 
-    private static void findCurrentlyPlayingPosition(Context context, List<FeedItem> queue, final CurrentPositionCallback callback) {
+    private static void findCurrentlyPlayingPosition(Context context, List<FeedItem> queue,
+                                                     final CurrentPositionCallback callback) {
         PlaybackController.bindToMedia3Service(context, controller -> {
             for (int element = 0; element < queue.size(); element++) {
                 FeedItem feedItem = queue.get(element);

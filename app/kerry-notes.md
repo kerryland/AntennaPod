@@ -199,3 +199,4 @@ The Inbox menu also allows adhoc selection of each of these options
 
 ## Tests
 .\gradlew :app:testPlayDebugUnitTest
+.\gradlew checkstyle

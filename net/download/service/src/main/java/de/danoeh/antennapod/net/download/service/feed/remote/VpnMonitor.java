@@ -183,7 +183,7 @@ public class VpnMonitor {
             for (NetworkInterface networkInterface : Collections.list(NetworkInterface.getNetworkInterfaces())) {
                 if (networkInterface.isUp()) {
                     iface = networkInterface.getName();
-                    if ( iface.startsWith("tun") || iface.startsWith("ppp") || iface.startsWith("pptp")) {
+                    if (iface.startsWith("tun") || iface.startsWith("ppp") || iface.startsWith("pptp")) {
                         return true;
                     }
                 }

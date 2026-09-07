@@ -28,6 +28,7 @@ import de.danoeh.antennapod.model.feed.SortOrder;
 import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.ui.screen.SearchFragment;
 import de.danoeh.antennapod.net.download.serviceinterface.FeedUpdateManager;
+
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -246,18 +247,18 @@ public abstract class EpisodesListFragment extends Fragment
             return false;
         }
         Completable.fromAction(
-                () -> {
-                    handler.handleAction(listAdapter.getSelectedItems());
-                    if (listAdapter.shouldSelectLazyLoadedItems()) {
-                        int applyPage = page + 1;
-                        List<FeedItem> nextPage;
-                        do {
-                            nextPage = loadMoreData(applyPage);
-                            handler.handleAction(nextPage);
-                            applyPage++;
-                        } while (nextPage.size() == EPISODES_PER_PAGE);
-                    }
-                })
+                        () -> {
+                            handler.handleAction(listAdapter.getSelectedItems());
+                            if (listAdapter.shouldSelectLazyLoadedItems()) {
+                                int applyPage = page + 1;
+                                List<FeedItem> nextPage;
+                                do {
+                                    nextPage = loadMoreData(applyPage);
+                                    handler.handleAction(nextPage);
+                                    applyPage++;
+                                } while (nextPage.size() == EPISODES_PER_PAGE);
+                            }
+                        })
                 .subscribeOn(Schedulers.computation())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(() -> listAdapter.endSelectMode(),
@@ -443,6 +444,7 @@ public abstract class EpisodesListFragment extends Fragment
     protected int loadTotalItemCount() {
         return DBReader.getTotalEpisodeCount(getFilter());
     }
+
     protected abstract FeedItemFilter getFilter();
 
     protected abstract SortOrder getSortOrder();

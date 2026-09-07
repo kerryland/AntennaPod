@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
@@ -22,10 +23,12 @@ import androidx.media3.session.SessionCommand;
 import androidx.media3.session.SessionCommands;
 import androidx.media3.session.SessionError;
 import androidx.media3.session.SessionResult;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+
 import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
@@ -38,7 +41,9 @@ import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.preferences.PlaybackPreferences;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.event.playback.SleepTimerUpdatedEvent;
+
 import org.greenrobot.eventbus.EventBus;
+
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -319,7 +324,8 @@ public class MediaLibrarySessionCallback implements MediaLibraryService.MediaLib
     @Override
     @NonNull
     public ListenableFuture<List<MediaItem>> onAddMediaItems(@NonNull MediaSession mediaSession,
-                                                             @NonNull MediaSession.ControllerInfo controller, @NonNull List<MediaItem> mediaItems) {
+                                                             @NonNull MediaSession.ControllerInfo controller,
+                                                             @NonNull List<MediaItem> mediaItems) {
 
         if (mediaItems.isEmpty()) {
             return Futures.immediateFuture(Collections.emptyList());
@@ -346,24 +352,25 @@ public class MediaLibrarySessionCallback implements MediaLibraryService.MediaLib
         Log.d(TAG, "onPlaybackResumption() called");
         SettableFuture<MediaSession.MediaItemsWithStartPosition> future = SettableFuture.create();
         Single.fromCallable(() -> {
-            FeedMedia media = DBReader.getFeedMedia(PlaybackPreferences.getCurrentlyPlayingFeedMediaId());
-            // If there is no media to resume, media3 crashes. So instead of crashing, just play something random.
-            if (media == null) {
-                Log.d(TAG, "onPlaybackResumption: trying paused queue now");
-                List<FeedItem> recentQueue = DBReader.getPausedQueue(1);
-                if (!recentQueue.isEmpty()) {
-                    media = recentQueue.get(0).getMedia();
-                }
-            }
-            if (media == null) {
-                Log.d(TAG, "onPlaybackResumption: trying recent episodes now");
-                List<FeedItem> items = DBReader.getEpisodes(0, 1, FeedItemFilter.unfiltered(), UserPreferences.getPrefGlobalSortedOrder());
-                if (!items.isEmpty()) {
-                    media = items.get(0).getMedia();
-                }
-            }
-            return media;
-        })
+                    FeedMedia media = DBReader.getFeedMedia(PlaybackPreferences.getCurrentlyPlayingFeedMediaId());
+                    // If there is no media to resume, media3 crashes. So instead just play something random.
+                    if (media == null) {
+                        Log.d(TAG, "onPlaybackResumption: trying paused queue now");
+                        List<FeedItem> recentQueue = DBReader.getPausedQueue(1);
+                        if (!recentQueue.isEmpty()) {
+                            media = recentQueue.get(0).getMedia();
+                        }
+                    }
+                    if (media == null) {
+                        Log.d(TAG, "onPlaybackResumption: trying recent episodes now");
+                        List<FeedItem> items = DBReader.getEpisodes(0, 1, FeedItemFilter.unfiltered(),
+                                UserPreferences.getPrefGlobalSortedOrder());
+                        if (!items.isEmpty()) {
+                            media = items.get(0).getMedia();
+                        }
+                    }
+                    return media;
+                })
                 .subscribeOn(Schedulers.io())
                 .subscribe(
                         media -> {

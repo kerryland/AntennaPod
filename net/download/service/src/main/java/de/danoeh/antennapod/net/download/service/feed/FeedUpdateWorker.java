@@ -99,7 +99,8 @@ public class FeedUpdateWorker extends Worker {
                     allAreLocal = false;
                 }
             }
-            Collections.shuffle(toUpdateExternally); // If the worker gets cancelled early, every feed has a chance to be updated
+            // If the worker gets cancelled early, every feed has a chance to be updated
+            Collections.shuffle(toUpdateExternally);
         } else {
             // Update just one feed
             Feed feed = DBReader.getFeed(feedId, false, 0, Integer.MAX_VALUE);
@@ -107,7 +108,8 @@ public class FeedUpdateWorker extends Worker {
                 return Result.success();
             }
             findFeedsToRefresh(List.of(feed), new ArrayList<>(), toUpdateFromDB);
-            // When user refreshes a specific feed, always update feed from RSS, even though we have "enough" in the DB
+            // When user refreshes a specific feed, always update feed from RSS,
+            // even though we have "enough" in the DB
             toUpdateExternally.add(feed);
 
             if (!feed.isLocalFeed()) {
@@ -149,7 +151,8 @@ public class FeedUpdateWorker extends Worker {
 
             } else if (feed.getPreferences().getPlaybackOrder() == FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST) {
                 // We might already have some old episodes, so we don't need to get more via RSS
-                FeedItemFilter feedItemFilter = new FeedItemFilter(FeedItemFilter.UNPLAYED, FeedItemFilter.NEW, FeedItemFilter.EXCLUDE_REMOVED);
+                FeedItemFilter feedItemFilter = new FeedItemFilter(FeedItemFilter.UNPLAYED,
+                        FeedItemFilter.NEW, FeedItemFilter.EXCLUDE_REMOVED);
                 int availableEpisodes = DBReader.getFeedItemList(feed, feedItemFilter,
                         SortOrder.PRIORITY_PLAYBACK_DATE, 0, feed.getPreferences().getMaxEpisodes()).size();
 

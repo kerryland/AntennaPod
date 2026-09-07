@@ -17,6 +17,7 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.OutOfQuotaPolicy;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
+
 import de.danoeh.antennapod.net.download.service.episode.EpisodeDownloadWorker;
 import de.danoeh.antennapod.net.download.service.feed.remote.VpnMonitor;
 import de.danoeh.antennapod.storage.database.DBWriter;
@@ -114,17 +115,17 @@ public class DownloadServiceInterfaceImpl extends DownloadServiceInterface {
                 .subscribeOn(Schedulers.computation())
                 .observeOn(Schedulers.computation())
                 .subscribe(
-                    workInfos -> {
-                        for (WorkInfo info : workInfos) {
-                            if (info.getTags().contains(DownloadServiceInterface.WORK_DATA_WAS_QUEUED)) {
-                                DBWriter.removeQueueItem(media.getItem());
+                        workInfos -> {
+                            for (WorkInfo info : workInfos) {
+                                if (info.getTags().contains(DownloadServiceInterface.WORK_DATA_WAS_QUEUED)) {
+                                    DBWriter.removeQueueItem(media.getItem());
+                                }
                             }
-                        }
-                        WorkManager.getInstance(context).cancelAllWorkByTag(tag);
-                    }, exception -> {
-                        WorkManager.getInstance(context).cancelAllWorkByTag(tag);
-                        exception.printStackTrace();
-                    });
+                            WorkManager.getInstance(context).cancelAllWorkByTag(tag);
+                        }, exception -> {
+                            WorkManager.getInstance(context).cancelAllWorkByTag(tag);
+                            exception.printStackTrace();
+                        });
     }
 
     @Override
@@ -158,10 +159,12 @@ public class DownloadServiceInterfaceImpl extends DownloadServiceInterface {
                 public void onChanged(List<WorkInfo> workInfos) {
                     Integer activeCount = countActiveDownloads(workInfos);
                     Log.d(TAG, "Active download count = " + activeCount);
-                    if (activeCount == null) return;
+                    if (activeCount == null) {
+                        return;
+                    }
 
                     if (activeCount == 0 && downloadStarted) {
-                      //  liveData.removeObserver(this);
+                        //  liveData.removeObserver(this);
                         if (onComplete != null) {
                             onComplete.run();
                         }
@@ -173,7 +176,9 @@ public class DownloadServiceInterfaceImpl extends DownloadServiceInterface {
 
     @Nullable
     private static Integer countActiveDownloads(List<WorkInfo> workInfos) {
-        if (workInfos == null) return null;
+        if (workInfos == null) {
+            return null;
+        }
 
         int activeCount = 0;
         for (WorkInfo info : workInfos) {

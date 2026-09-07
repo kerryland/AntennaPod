@@ -351,7 +351,8 @@ public class CompletedDownloadsFragment extends Fragment
             EventBus.getDefault().post(new MessageEvent(getString(R.string.no_items_selected_message)));
             return false;
         }
-        EpisodeMultiSelectActionHandler handler = new EpisodeMultiSelectActionHandler(getActivity(), menuItem.getItemId());
+        EpisodeMultiSelectActionHandler handler =
+                new EpisodeMultiSelectActionHandler(getActivity(), menuItem.getItemId());
         if (handler.isHandlingAction()) {
             handler.handleAction(adapter.getSelectedItems());
             adapter.endSelectMode();

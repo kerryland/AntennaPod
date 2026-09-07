@@ -245,7 +245,8 @@ public class FeedItemMenuHandler {
                     .handleAction(Collections.singletonList(selectedItem));
 
         } else if (menuItemId == R.id.add_to_queue_item || menuItemId == R.id.add_to_queue_play_next_item) {
-            EpisodeMultiSelectActionHandler menuHandler = new EpisodeMultiSelectActionHandler(fragment.getActivity(), menuItemId);
+            EpisodeMultiSelectActionHandler menuHandler =
+                    new EpisodeMultiSelectActionHandler(fragment.getActivity(), menuItemId);
             menuHandler.setQueueAdditionsArePermanent(!(fragment instanceof InboxFragment));
             menuHandler.handleAction(Collections.singletonList(selectedItem));
 
@@ -254,11 +255,12 @@ public class FeedItemMenuHandler {
                     .subscribeOn(Schedulers.computation())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(queue -> {
-                        MenuItemAssistant.skipIfPlaying(context, Collections.singletonList(selectedItem), () ->
-                                {
+                        MenuItemAssistant.skipIfPlaying(context, Collections.singletonList(selectedItem), () -> {
                                     DBWriter.removeQueueItem(selectedItem);
                                     EventBus.getDefault().post(new MessageEvent(
-                                            fragment.getResources().getQuantityString(R.plurals.removed_from_queue_message, 1, 1),
+                                            fragment.getResources()
+                                                    .getQuantityString(R.plurals.removed_from_queue_message,
+                                                            1, 1),
                                             xcontext -> {
                                                 for (int index = 0; index < queue.size(); index++) {
                                                     FeedItem queueItem = queue.get(index);

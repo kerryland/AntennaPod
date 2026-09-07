@@ -21,6 +21,7 @@ public class BulkDownloader {
     private static BulkDownloader instance;
 
     private static final long VPN_DIALOG_WAIT_TIMEOUT_MS = 60000;
+    private static final int DOWNLOAD_WARN_LEVEL = 20;
 
     private BulkDownloader(Context context) {
         // Disconnect from VPN when downloads complete
@@ -42,6 +43,7 @@ public class BulkDownloader {
         }
         return instance;
     }
+
     private void actuallyDownload(Context context, List<FeedItem> downloadList) {
         DownloadServiceInterface.get().downloadAll(context, downloadList);
     }
@@ -73,7 +75,9 @@ public class BulkDownloader {
                         confirmAndDownload(context, episodes);
                     } else {
                         Log.d(TAG, "vpn timeout happened");
-                        Toast.makeText(context, context.getString(R.string.vpn_download_timeout, VPN_DIALOG_WAIT_TIMEOUT_MS / 1000), Toast.LENGTH_LONG).show();
+                        Toast.makeText(context, context.getString(R.string.vpn_download_timeout,
+                                        VPN_DIALOG_WAIT_TIMEOUT_MS / 1000),
+                                Toast.LENGTH_LONG).show();
                     }
                 }
             });
@@ -89,7 +93,6 @@ public class BulkDownloader {
                 downloadList.add(episode);
             }
         }
-        final int DOWNLOAD_WARN_LEVEL = 20;
 
         if (downloadList.size() > DOWNLOAD_WARN_LEVEL) {
             // make sure the user really wants to clear the queue

@@ -13,8 +13,6 @@ import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.episodeslist.EpisodesListFragment;
 
-import java.util.List;
-
 public class FavoritesFragment extends EpisodesListFragment {
     public static final String TAG = "FavoritesFragment";
     private static final FeedItemFilter FILTER_FAVORITES = new FeedItemFilter(

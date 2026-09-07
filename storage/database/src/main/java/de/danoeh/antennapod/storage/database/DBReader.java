@@ -129,7 +129,7 @@ public final class DBReader {
      */
     public static synchronized List<FeedItem> getFeedItemList(final Feed feed,
                                              final FeedItemFilter filter, SortOrder sortOrder, int offset, int limit) {
-        Log.d(TAG, "getFeedItemList() called with: " + "feedId = [" + feed.getId() + "] " + feed.getTitle() );
+        Log.d(TAG, "getFeedItemList() called with: " + "feedId = [" + feed.getId() + "] " + feed.getTitle());
 
         PodDBAdapter adapter = PodDBAdapter.getInstance();
         adapter.open();
@@ -237,10 +237,12 @@ public final class DBReader {
     private static synchronized List<FeedItem> getEpisodes(int offset, int limit,
                                                           FeedItemFilter filter, SortOrder sortOrder,
                                                           boolean useMaxEpisodes) {
-        Log.d(TAG, "getEpisodes() called with: " + sortOrder + " offset=" + offset + ", limit=" + limit + " useMaxEpisodes=" + useMaxEpisodes);
+        Log.d(TAG, "getEpisodes() called with: " + sortOrder + " offset=" + offset
+                + ", limit=" + limit + " useMaxEpisodes=" + useMaxEpisodes);
         PodDBAdapter adapter = PodDBAdapter.getInstance();
         adapter.open();
-        try (FeedItemCursor cursor = new FeedItemCursor(adapter.getEpisodesCursor(offset, limit, filter, sortOrder, useMaxEpisodes))) {
+        try (FeedItemCursor cursor = new FeedItemCursor(
+                adapter.getEpisodesCursor(offset, limit, filter, sortOrder, useMaxEpisodes))) {
             List<FeedItem> items = extractItemlistFromCursor(cursor);
             loadFeedDataOfFeedItemList(items);
             return items;

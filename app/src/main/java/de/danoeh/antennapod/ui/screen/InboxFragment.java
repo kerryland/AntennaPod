@@ -85,7 +85,7 @@ public class InboxFragment extends EpisodesListFragment {
     @Override
     // When we add items to the queue from the inbox, they should not be permanent
     protected void customiseEpisodeMultiSelectActionHandler(EpisodeMultiSelectActionHandler handler) {
-       handler.setQueueAdditionsArePermanent(false);
+        handler.setQueueAdditionsArePermanent(false);
     }
 
     @Override

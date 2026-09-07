@@ -406,8 +406,7 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
             } else if (itemId == R.id.move_to_play_next_item) {
                 QueueUseCase.getInstance().moveToPlayNext(getContext(),
                         Collections.singletonList(selectedItem), newPosition ->
-                                recyclerAdapter.notifyItemMoved(position, newPosition ));
-
+                                recyclerAdapter.notifyItemMoved(position, newPosition));
                 return true;
             }
         }
@@ -498,7 +497,8 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
             EventBus.getDefault().post(new MessageEvent(getString(R.string.no_items_selected_message)));
             return false;
         }
-        EpisodeMultiSelectActionHandler handler = new EpisodeMultiSelectActionHandler(getActivity(), menuItem.getItemId());
+        EpisodeMultiSelectActionHandler handler =
+                new EpisodeMultiSelectActionHandler(getActivity(), menuItem.getItemId());
         if (handler.isHandlingAction()) {
             handler.handleAction(recyclerAdapter.getSelectedFeedItemsInOrder());
             recyclerAdapter.endSelectMode();

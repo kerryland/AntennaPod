@@ -82,21 +82,21 @@ public class FeedUpdateManagerImpl extends FeedUpdateManager {
         runOnce(context, feed, nextPage, false);
     }
 
-    private void runOnce(Context context, Feed feed, boolean nextPage, boolean ignoreRSS) {
+    private void runOnce(Context context, Feed feed, boolean nextPage, boolean ignoreRss) {
         lastManualRefreshTime = System.currentTimeMillis();
         lastManualRefreshFeedId = feed != null ? feed.getId() : -1;
         OneTimeWorkRequest.Builder workRequest = new OneTimeWorkRequest.Builder(FeedUpdateWorker.class)
                 .setInitialDelay(0L, TimeUnit.MILLISECONDS)
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .addTag(WORK_TAG_FEED_UPDATE);
-        if (!ignoreRSS && (feed == null || !feed.isLocalFeed())) {
+        if (!ignoreRss && (feed == null || !feed.isLocalFeed())) {
             workRequest.setConstraints(new Constraints.Builder()
                     .setRequiredNetworkType(NetworkType.CONNECTED).build());
         }
         Data.Builder builder = new Data.Builder();
         builder.putBoolean(EXTRA_EVEN_ON_MOBILE, true);
         builder.putBoolean(EXTRA_MANUAL, true);
-        builder.putBoolean(EXTRA_IGNORE_RSS, ignoreRSS);
+        builder.putBoolean(EXTRA_IGNORE_RSS, ignoreRss);
         if (feed != null) {
             builder.putLong(EXTRA_FEED_ID, feed.getId());
             builder.putBoolean(EXTRA_NEXT_PAGE, nextPage);

@@ -58,9 +58,9 @@ public class QueueEvent {
 
     @Override
     public String toString() {
-        return "QueueEvent{" +
-                "item=" + item +
-                ", action=" + action +
-                '}';
+        return "QueueEvent{"
+                + "item=" + item
+                + ", action=" + action
+                + '}';
     }
 }

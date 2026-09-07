@@ -32,12 +32,10 @@ import de.danoeh.antennapod.storage.preferences.UserPreferences;
 /**
  * When a Bluetooth device connects, we want to resume playback. When it disconnects,
  * we want to pause it.
- *
  * The receiver is registered in the manifest as a static receiver so that it can pick up
  * ACL connect/disconnect events even when the application has been closed. Because a static
  * receiver is instantiated by the system without a constructor context, all of the logic
  * operates on the {@link Context} passed into {@link #onReceive(Context, Intent)}.
- *
  * When the playback service is running, an {@link AudioDeviceCallback} is additionally
  * registered (via {@link #register()}/{@link #unregister()}) to react to the exact moment a
  * Bluetooth device is added/removed from the audio routing, and to support LE-audio device
@@ -468,6 +466,7 @@ public class BluetoothReconnectPlayer extends BroadcastReceiver {
         try {
             context.unregisterReceiver(audioBecomingNoisy);
         } catch (IllegalArgumentException ignored) {
+            Log.e(TAG, "Ignored failed to unregister audio-becoming-noisy receiver");
         }
     }
 }

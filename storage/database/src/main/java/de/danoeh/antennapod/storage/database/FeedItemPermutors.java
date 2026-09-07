@@ -101,8 +101,8 @@ public class FeedItemPermutors {
                                 return 0;
                             }
 
-                            if (o1.getFeed().getPreferences().getPlaybackOrder() ==
-                                    FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST) {
+                            if (o1.getFeed().getPreferences().getPlaybackOrder()
+                                    == FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST) {
                                 return o1.getPubDate().compareTo(o2.getPubDate());
                             } else {
                                 return o2.getPubDate().compareTo(o1.getPubDate());

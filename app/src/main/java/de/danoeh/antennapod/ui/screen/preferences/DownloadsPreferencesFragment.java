@@ -49,6 +49,7 @@ public class DownloadsPreferencesFragment extends AnimatedPreferenceFragment
                 .setNegativeButton(R.string.cancel_label, null)
                 .show();
     }
+
     @Override
     public void onStart() {
         super.onStart();
@@ -117,7 +118,8 @@ public class DownloadsPreferencesFragment extends AnimatedPreferenceFragment
             FeedUpdateManager.getInstance().restartUpdateAlarm(getContext());
         }
 
-        if (UserPreferences.PREF_VPN_DOWNLOAD.equals(key) && UserPreferences.isVpnDownload() && !Settings.canDrawOverlays(getContext())) {
+        if (UserPreferences.PREF_VPN_DOWNLOAD.equals(key) && UserPreferences.isVpnDownload()
+                && !Settings.canDrawOverlays(getContext())) {
             showVpnOnTopPermissionDialog(getContext());
         }
     }

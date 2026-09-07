@@ -34,7 +34,8 @@ public class ItemEnqueuePositionCalculator {
      * @param curQueue           the queue to which the item is to be inserted
      * @param currentPlaying     the currently playing media
      */
-    public int calcPosition(@NonNull List<FeedItem> curQueue, @NonNull FeedItem item, @Nullable Playable currentPlaying) {
+    public int calcPosition(@NonNull List<FeedItem> curQueue, @NonNull FeedItem item,
+                            @Nullable Playable currentPlaying) {
         switch (enqueueLocation) {
             case PRIORITY:
                 return calcPriorityPosition(curQueue, item);
@@ -79,7 +80,8 @@ public class ItemEnqueuePositionCalculator {
             for (int index : sameFeedIndices) {
                 FeedItem existingItem = queue.get(index);
 
-                if (newItem.getFeed().getPreferences().getPlaybackOrder() == FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST) {
+                if (newItem.getFeed().getPreferences().getPlaybackOrder()
+                        == FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST) {
                     if (isAfter(existingItem.getPubDate(), newItem.getPubDate())) {
                         return index;
                     }
@@ -133,12 +135,16 @@ public class ItemEnqueuePositionCalculator {
     }
 
     private boolean isAfter(Date d1, Date d2) {
-        if (d1 == null || d2 == null) return false;
+        if (d1 == null || d2 == null) {
+            return false;
+        }
         return d1.after(d2);
     }
 
     private boolean isBefore(Date d1, Date d2) {
-        if (d1 == null || d2 == null) return false;
+        if (d1 == null || d2 == null) {
+            return false;
+        }
         return d1.before(d2);
     }
 

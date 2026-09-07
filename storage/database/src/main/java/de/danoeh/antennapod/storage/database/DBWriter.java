@@ -1028,8 +1028,12 @@ public class DBWriter {
      */
     public static void waitForDatabase() {
         try {
-            runOnDbThread(() -> {
-           }).get();
+            runOnDbThread(new Runnable() {
+                @Override
+                public void run() {
+                    // formatted to make checkstyle happy
+                }
+            }).get();
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         } catch (InterruptedException e) {

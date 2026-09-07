@@ -21,6 +21,7 @@ import de.danoeh.antennapod.storage.preferences.UserPreferences;
 
 public class DestinationSelector {
     private static String TAG = "DestinationSelector";
+
     /**
      * Decide where to put feed items, based on Feed Priority, Playback Order, and Max Episodes
      */
@@ -39,16 +40,16 @@ public class DestinationSelector {
                 continue;
             }
 
-            boolean feedIsOldestFirst = feed.getPreferences().getPlaybackOrder() == FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST;
+            boolean feedIsOldestFirst = feed.getPreferences().getPlaybackOrder()
+                    == FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST;
             SortOrder sortOrder = feedIsOldestFirst
                     ? SortOrder.DATE_OLD_NEW
                     : SortOrder.DATE_NEW_OLD;
 
-            List<FeedItem> feedItems = DBReader.getFeedItemList(
-                    feed, new FeedItemFilter(FeedItemFilter.UNPLAYED, FeedItemFilter.NEW
-                            , FeedItemFilter.EXCLUDE_REMOVED
-                    ),
-                    sortOrder, 0, Integer.MAX_VALUE // .getPreferences().getMaxEpisodes()
+            List<FeedItem> feedItems = DBReader.getFeedItemList(feed,
+                    new FeedItemFilter(FeedItemFilter.UNPLAYED, FeedItemFilter.NEW,
+                            FeedItemFilter.EXCLUDE_REMOVED),
+                    sortOrder, 0, Integer.MAX_VALUE
             );
 
             FeedPreferences.NewEpisodesAction episodeDestination = feed.getPreferences().getNewEpisodesAction();
@@ -121,6 +122,7 @@ public class DestinationSelector {
         DBWriter.removeQueueItem(removeFromQueueItemIds);
         DBWriter.addQueueItem(context, queueAdditions.toArray(new FeedItem[0]));
 
-        Log.d(TAG, "Inbox changes: " + inboxStateChanges.size() + ". Queue changes: " + (queueRemovals.size() + queueAdditions.size()));
+        Log.d(TAG, "Inbox changes: " + inboxStateChanges.size()
+                + ". Queue changes: "  + (queueRemovals.size() + queueAdditions.size()));
     }
 }

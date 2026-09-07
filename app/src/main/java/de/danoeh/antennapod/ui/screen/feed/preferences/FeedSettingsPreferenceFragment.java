@@ -400,8 +400,10 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
         }
         ListPreference playbackOrderPreference = findPreference(PREF_PLAYBACK_ORDER);
         String summary = switch (feedPreferences.getPlaybackOrder()) {
-            case FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST -> getString(R.string.feed_playback_order_action_oldest_first);
-            case FeedPreferences.PlaybackOrderSetting.NEWEST_FIRST -> getString(R.string.feed_playback_order_action_newest_first);
+            case FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST ->
+                    getString(R.string.feed_playback_order_action_oldest_first);
+            case FeedPreferences.PlaybackOrderSetting.NEWEST_FIRST ->
+                    getString(R.string.feed_playback_order_action_newest_first);
         };
 
         playbackOrderPreference.setSummary(summary);

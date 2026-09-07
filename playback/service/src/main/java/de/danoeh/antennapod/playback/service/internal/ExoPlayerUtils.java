@@ -2,6 +2,7 @@ package de.danoeh.antennapod.playback.service.internal;
 
 import android.content.Context;
 import android.net.Uri;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.OptIn;
 import androidx.media3.common.AudioAttributes;
@@ -18,7 +19,9 @@ import androidx.media3.datasource.ResolvingDataSource;
 import androidx.media3.datasource.cache.CacheDataSource;
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor;
 import androidx.media3.datasource.cache.SimpleCache;
+
 import de.danoeh.antennapod.net.common.RedirectChecker;
+
 import androidx.media3.exoplayer.DefaultLoadControl;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.SeekParameters;
@@ -28,11 +31,11 @@ import androidx.media3.exoplayer.source.MediaSource;
 import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy;
 import androidx.media3.extractor.DefaultExtractorsFactory;
 import androidx.media3.extractor.mp3.Mp3Extractor;
+
 import de.danoeh.antennapod.net.common.NetworkUtils;
 import de.danoeh.antennapod.net.common.UserAgentInterceptor;
 import de.danoeh.antennapod.playback.base.MediaItemAdapter;
 import de.danoeh.antennapod.playback.service.R;
-import de.danoeh.antennapod.storage.preferences.UserPreferences;
 
 import java.io.File;
 import java.util.Collections;
@@ -69,8 +72,7 @@ public class ExoPlayerUtils {
                         .build(), true)
                 .setMediaSourceFactory(new ApMediaSourceFactory(context, simpleCache))
                 .setSeekParameters(SeekParameters.EXACT)
-                .setHandleAudioBecomingNoisy(false)
-//              .setHandleAudioBecomingNoisy(UserPreferences.isPauseOnHeadsetDisconnect())
+                .setHandleAudioBecomingNoisy(false) // was (UserPreferences.isPauseOnHeadsetDisconnect())
                 .build();
     }
 
@@ -164,7 +166,7 @@ public class ExoPlayerUtils {
             httpDataSourceFactory.setKeepPostFor302Redirects(true);
             String authHeader = mediaItem.requestMetadata.extras != null
                     ? mediaItem.requestMetadata.extras.getString(
-                            MediaItemAdapter.KEY_AUTHORIZATION_HEADER)
+                    MediaItemAdapter.KEY_AUTHORIZATION_HEADER)
                     : null;
             if (authHeader != null) {
                 httpDataSourceFactory.setDefaultRequestProperties(

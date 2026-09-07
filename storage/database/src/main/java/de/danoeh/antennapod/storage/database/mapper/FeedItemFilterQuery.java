@@ -57,8 +57,8 @@ public class FeedItemFilterQuery {
             statements.add(keyItemId + " NOT IN (SELECT " + keyFeedItem + " FROM " + tableQueue + ") ");
         }
         if (filter.excludePermanent) {
-            statements.add(keyItemId + " NOT IN (SELECT " + keyFeedItem + " FROM " + tableQueue +
-                    " WHERE " + KEY_PERMANENT + " = 1) ");
+            statements.add(keyItemId + " NOT IN (SELECT " + keyFeedItem + " FROM " + tableQueue
+                    + " WHERE " + KEY_PERMANENT + " = 1) ");
         }
         String localFeedCondition = keyFeedId + " IN (SELECT " + PodDBAdapter.KEY_ID
                 + " FROM " + PodDBAdapter.TABLE_NAME_FEEDS

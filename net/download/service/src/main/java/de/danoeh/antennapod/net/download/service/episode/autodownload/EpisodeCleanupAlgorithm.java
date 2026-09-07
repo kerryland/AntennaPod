@@ -58,11 +58,9 @@ public abstract class EpisodeCleanupAlgorithm {
         if (amountOfRoomNeeded >= 0
                 && UserPreferences.getEpisodeCacheSize() != UserPreferences.EPISODE_CACHE_SIZE_UNLIMITED) {
             int downloadedEpisodes = DBReader.getTotalEpisodeCount(new FeedItemFilter(FeedItemFilter.DOWNLOADED));
-            if (downloadedEpisodes + amountOfRoomNeeded >= UserPreferences
-                    .getEpisodeCacheSize()) {
+            if (downloadedEpisodes + amountOfRoomNeeded >= UserPreferences.getEpisodeCacheSize()) {
 
-                return downloadedEpisodes + amountOfRoomNeeded
-                        - UserPreferences.getEpisodeCacheSize();
+                return downloadedEpisodes + amountOfRoomNeeded - UserPreferences.getEpisodeCacheSize();
             }
         }
         return 0;
@@ -70,11 +68,8 @@ public abstract class EpisodeCleanupAlgorithm {
 
     protected Date mostRecentDate(FeedItem feedItem) {
         Date result = null;
-        for (Date date : Arrays.asList(
-                feedItem.getPubDate(),
-                feedItem.getAddedToInboxOrQueue(),
-                feedItem.getMedia().getLastPlayedTimeHistory()))
-        {
+        for (Date date : Arrays.asList(feedItem.getPubDate(), feedItem.getAddedToInboxOrQueue(),
+                feedItem.getMedia().getLastPlayedTimeHistory())) {
             if (date != null && (result == null || date.after(result))) {
                 result = date;
             }

@@ -68,7 +68,6 @@ public abstract class WidgetUpdater {
         }
 
         PendingIntent startMediaPlayer;
-        // Not sure VIDEO media needs to be a special case
         if (widgetState.media != null && widgetState.media.getMediaType() == MediaType.VIDEO) {
             startMediaPlayer = new VideoPlayerActivityStarter(context).getPendingIntent();
         } else {

@@ -18,7 +18,6 @@ public class PlayerWidget extends AppWidgetProvider {
     private static final String TAG = "PlayerWidget";
     public static final String PREFS_NAME = "PlayerWidgetPrefs";
     private static final String KEY_WORKAROUND_ENABLED = "WorkaroundEnabled";
-    private static final String KEY_ENABLED = "WidgetEnabled";
     public static final String KEY_WIDGET_COLOR = "widget_color";
     public static final String KEY_WIDGET_PLAYBACK_SPEED = "widget_playback_speed";
     public static final String KEY_WIDGET_SKIP = "widget_skip";
@@ -32,7 +31,6 @@ public class PlayerWidget extends AppWidgetProvider {
     public void onEnabled(Context context) {
         super.onEnabled(context);
         Log.d(TAG, "Widget enabled");
-        setEnabled(context, true);
         WidgetUpdaterWorker.enqueueWork(context);
         scheduleWorkaround(context);
     }
@@ -61,7 +59,6 @@ public class PlayerWidget extends AppWidgetProvider {
     public void onDisabled(Context context) {
         super.onDisabled(context);
         Log.d(TAG, "Widget disabled");
-        setEnabled(context, false);
     }
 
     @Override
@@ -97,12 +94,8 @@ public class PlayerWidget extends AppWidgetProvider {
     }
 
     public static boolean isEnabled(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        return prefs.getBoolean(KEY_ENABLED, false);
-    }
-
-    private void setEnabled(Context context, boolean enabled) {
-        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        prefs.edit().putBoolean(KEY_ENABLED, enabled).apply();
+        AppWidgetManager manager = AppWidgetManager.getInstance(context);
+        int[] widgetIds = manager.getAppWidgetIds(new ComponentName(context, PlayerWidget.class));
+        return widgetIds.length > 0;
     }
 }

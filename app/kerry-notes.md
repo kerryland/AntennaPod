@@ -73,6 +73,24 @@ DefaultDownloaderFactory
 |
 (actual download)
 ```
+### Autodownloads
+Are controlled by user preference but are a bit weird.
+- UserPrefences.isEnableAutodownloadGlobal (prefEnableAutoDl) : allows inbox items to be downloaded automatically
+- UserPreferences.isEnableAutodownloadQueue (prefEnableAutoDlQueue) : allows queue items to be downloaded automatically, BUT DEPENDS ON prefEnableAutoDl
+- FeedItem.autoDownloadEnabled : stop item from being automatically downloaded multiple times
+- FeedPreferences.autoDownload (enabled/disabled/global -- i.e. prefEnableAutoDl)
+- AutomaticDownloadAlgorithm.autoDownloadUndownloadedItems() : downloads everything in the inbox,
+  then everything in the queue (if prefEnableAutoDlQueue) -- assuming FeedPreferences.autoDownload
+  and FeedItem.autoDownload
+
+Potential changes:
+- UserPreferences.isEnableAutodownloadGlobal becomes isEnableAutodownloadInbox
+- UserPreferences.isEnableAutodownloadQueue becomes independent of isEnableAutodownloadInbox
+- SubscriptionsExecutorFilter filters on isEnableAutodownloadInboxGlobal OR isEnableAutodownloadQueue
+- AutomaticDownloadAlgorithm.autoDownloadUndownloadedItems treats Inbox and Queue independently
+
+
+
 
 ## UI
 

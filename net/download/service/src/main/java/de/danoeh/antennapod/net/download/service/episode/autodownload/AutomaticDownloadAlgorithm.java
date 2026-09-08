@@ -40,7 +40,7 @@ public class AutomaticDownloadAlgorithm {
      */
     public Runnable autoDownloadUndownloadedItems(final Context context) {
         return () -> {
-
+            Log.d(TAG, "autoDownloadUndownloadedItems");
             // true if we should auto download based on network status
             boolean vpnAllowsAutoDl = UserPreferences.isVpnDownload()
                     && VpnMonitor.getInstance(context).isVpnConnected();
@@ -51,7 +51,6 @@ public class AutomaticDownloadAlgorithm {
 
             // we should only auto download if both network AND power are happy
             if (networkShouldAutoDl && powerShouldAutoDl) {
-
                 Log.d(TAG, "Performing auto-dl of undownloaded episodes");
 
                 final List<FeedItem> newItems = DBReader.getEpisodes(0, Integer.MAX_VALUE,
@@ -107,7 +106,7 @@ public class AutomaticDownloadAlgorithm {
                 List<FeedItem> itemsToDownload = candidates.subList(0, toIndex);
                 if (!itemsToDownload.isEmpty()) {
                     if (UserPreferences.isVpnDownload() && !VpnMonitor.getInstance(context).isVpnConnected()) {
-                        VpnDownloadPrompt.notifyVpnRequired(context, autoDownloadUndownloadedItems(context));
+                        VpnDownloadPrompt.notifyVpnRequired(context, () -> autoDownloadUndownloadedItems(context));
                         return;
                     }
                     Log.d(TAG, "Enqueueing " + itemsToDownload.size() + " items for download");

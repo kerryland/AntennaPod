@@ -9,6 +9,7 @@ import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -83,6 +84,7 @@ import de.danoeh.antennapod.ui.screen.feed.FeedItemlistFragment;
 import de.danoeh.antennapod.ui.screen.home.HomeFragment;
 import de.danoeh.antennapod.ui.screen.playback.audio.AudioPlayerFragment;
 import de.danoeh.antennapod.ui.screen.preferences.PreferenceActivity;
+import de.danoeh.antennapod.ui.screen.preferences.DownloadsPreferencesFragment;
 import de.danoeh.antennapod.ui.screen.queue.QueueFragment;
 import de.danoeh.antennapod.ui.screen.rating.RatingDialogManager;
 import de.danoeh.antennapod.ui.screen.subscriptions.SubscriptionFragment;
@@ -375,6 +377,10 @@ public class MainActivity extends CastEnabledActivity implements NavigationToolb
         SharedPreferences prefs = getSharedPreferences(PREF_NAME, MODE_PRIVATE);
         if (prefs.getBoolean(PREF_IS_FIRST_LAUNCH, true)) {
             FeedUpdateManager.getInstance().restartUpdateAlarm(this);
+
+            if (UserPreferences.isVpnDownload() && !Settings.canDrawOverlays(this)) {
+                DownloadsPreferencesFragment.showVpnOnTopPermissionDialog(this);
+            }
 
             SharedPreferences.Editor edit = prefs.edit();
             edit.putBoolean(PREF_IS_FIRST_LAUNCH, false);
@@ -703,6 +709,19 @@ public class MainActivity extends CastEnabledActivity implements NavigationToolb
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEventMainThread(MessageEvent event) {
         Log.d(TAG, "onEvent(" + event + ")");
+        if (event.dismissText != null) {
+            new MaterialAlertDialogBuilder(this)
+                    .setMessage(event.message)
+                    .setPositiveButton(event.actionText, (dialog, which) -> {
+                        if (event.action != null) {
+                            event.action.accept(this);
+                        }
+                    })
+                    .setNegativeButton(event.dismissText, (dialog, which) -> dialog.dismiss())
+                    .show();
+            return;
+        }
+
         int duration = event.indefinite ? Snackbar.LENGTH_INDEFINITE : Snackbar.LENGTH_LONG;
         Snackbar snackbar;
         if (getBottomSheet().getState() == BottomSheetBehavior.STATE_EXPANDED) {

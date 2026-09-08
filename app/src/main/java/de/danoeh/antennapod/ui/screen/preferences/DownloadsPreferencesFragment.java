@@ -34,7 +34,7 @@ public class DownloadsPreferencesFragment extends AnimatedPreferenceFragment
         setupNetworkScreen();
     }
 
-    private static void showVpnOnTopPermissionDialog(Context context) {
+    public static void showVpnOnTopPermissionDialog(Context context) {
         new AlertDialog.Builder(context)
                 .setTitle(R.string.pref_permission_title)
                 .setMessage(R.string.pref_permission_on_top_explanation)

@@ -37,19 +37,20 @@ public class VpnDownloadPrompt {
      * @param callback code to execute once a VPN connection is available
      */
     public static void notifyVpnRequired(Context context, Runnable callback) {
-        awaitVpnConnection(context, callback);
-
         long now = System.currentTimeMillis();
         if (now - lastPrompt < COOLDOWN_MS) {
             return;
         }
         lastPrompt = now;
 
+        awaitVpnConnection(context, callback);
+
         String message = context.getString(R.string.vpn_required_download_message);
         if (EventBus.getDefault().hasSubscriberForEvent(MessageEvent.class)) {
             EventBus.getDefault().post(new MessageEvent(message,
                     VpnDownloadPrompt::connectVpnAndReturnToApp,
-                    context.getString(R.string.connect_vpn_label), true));
+                    context.getString(R.string.connect_vpn_label),
+                    context.getString(R.string.cancel_label), true));
             return;
         }
 
@@ -84,7 +85,7 @@ public class VpnDownloadPrompt {
             return;
         }
         resumeArmed = true;
-        VpnMonitor.getInstance(context).onVpnConnect(0, success -> {
+        VpnMonitor.getInstance(context).onVpnConnect(60000, success -> {
             resumeArmed = false;
             if (success) {
                 NotificationManagerCompat.from(context).cancel(R.id.notification_vpn_required);

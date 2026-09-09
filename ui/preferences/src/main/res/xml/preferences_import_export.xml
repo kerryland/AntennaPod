@@ -15,6 +15,9 @@
                 android:summary="@string/automatic_database_export_summary"
                 android:defaultValue="false" />
         <Preference
+                android:key="prefLastBackupTime"
+                android:title="@string/last_database_backup_label"/>
+        <Preference
                 android:key="prefDatabaseImport"
                 search:keywords="@string/import_export_search_keywords"
                 android:title="@string/database_import_label"

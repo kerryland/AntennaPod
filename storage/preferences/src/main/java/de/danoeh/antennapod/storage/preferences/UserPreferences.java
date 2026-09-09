@@ -120,6 +120,7 @@ public abstract class UserPreferences {
     public static final String PREF_DELETE_REMOVES_FROM_QUEUE = "prefDeleteRemovesFromQueue";
     public static final String PREF_DOWNLOADS_BUTTON_ACTION = "prefDownloadsButtonAction";
     private static final String PREF_AUTOMATIC_EXPORT_FOLDER = "prefAutomaticExportFolder";
+    private static final String PREF_LAST_BACKUP_TIME = "prefLastBackupTime";
 
     // Mediaplayer
     private static final String PREF_PLAYBACK_SPEED = "prefPlaybackSpeed";
@@ -339,6 +340,14 @@ public abstract class UserPreferences {
 
     public static void setAutomaticExportFolder(@Nullable String folder) {
         prefs.edit().putString(PREF_AUTOMATIC_EXPORT_FOLDER, folder).apply();
+    }
+
+    public static long getLastBackupTime() {
+        return prefs.getLong(PREF_LAST_BACKUP_TIME, 0);
+    }
+
+    public static void setLastBackupTime(long time) {
+        prefs.edit().putLong(PREF_LAST_BACKUP_TIME, time).apply();
     }
 
     /**

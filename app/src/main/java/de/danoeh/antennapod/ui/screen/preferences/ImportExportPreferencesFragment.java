@@ -20,6 +20,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.documentfile.provider.DocumentFile;
+import androidx.preference.Preference;
 import androidx.preference.SwitchPreferenceCompat;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.core.app.ShareCompat;
@@ -64,6 +65,7 @@ public class ImportExportPreferencesFragment extends AnimatedPreferenceFragment 
     private static final String PREF_DATABASE_EXPORT = "prefDatabaseExport";
     private static final String PREF_AUTOMATIC_DATABASE_EXPORT = "prefAutomaticDatabaseExport";
     private static final String PREF_FAVORITE_EXPORT = "prefFavoritesExport";
+    private static final String PREF_LAST_BACKUP_TIME = "prefLastBackupTime";
     private static final String DEFAULT_OPML_OUTPUT_NAME = "antennapod-feeds-%s.opml";
     private static final String CONTENT_TYPE_OPML = "text/x-opml";
     private static final String DEFAULT_HTML_OUTPUT_NAME = "antennapod-feeds-%s.html";
@@ -95,6 +97,8 @@ public class ImportExportPreferencesFragment extends AnimatedPreferenceFragment 
     private final ActivityResultLauncher<Uri> automaticBackupLauncher =
             registerForActivityResult(new PickWritableFolder(), this::setupAutomaticBackup);
 
+    private boolean automaticBackupReselectTriggered;
+
     private Disposable disposable;
     private ProgressDialog progressDialog;
 
@@ -111,6 +115,17 @@ public class ImportExportPreferencesFragment extends AnimatedPreferenceFragment 
     public void onStart() {
         super.onStart();
         ((PreferenceActivity) getActivity()).getSupportActionBar().setTitle(R.string.import_export_pref);
+        if (!automaticBackupReselectTriggered
+                && getActivity().getIntent().getBooleanExtra(PreferenceActivity.OPEN_AUTOMATIC_BACKUP, false)
+                && UserPreferences.getAutomaticExportFolder() != null) {
+            automaticBackupReselectTriggered = true;
+            try {
+                automaticBackupLauncher.launch(null);
+            } catch (ActivityNotFoundException e) {
+                Snackbar.make(getView(), R.string.unable_to_start_system_file_manager, Snackbar.LENGTH_LONG)
+                        .show();
+            }
+        }
     }
 
     @Override
@@ -122,6 +137,7 @@ public class ImportExportPreferencesFragment extends AnimatedPreferenceFragment 
     }
 
     private void setupStorageScreen() {
+        updateLastBackupSummary();
         findPreference(PREF_OPML_EXPORT).setOnPreferenceClickListener(
                 preference -> {
                     openExportPathPicker(Export.OPML, chooseOpmlExportPathLauncher);
@@ -268,6 +284,17 @@ public class ImportExportPreferencesFragment extends AnimatedPreferenceFragment 
                 }, this::showImportErrorDialog);
     }
 
+    private void updateLastBackupSummary() {
+        long lastBackupTime = UserPreferences.getLastBackupTime();
+        String summary = lastBackupTime > 0
+                ? new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(new Date(lastBackupTime))
+                : getString(R.string.last_database_backup_never);
+        Preference lastBackupPreference = findPreference(PREF_LAST_BACKUP_TIME);
+        if (lastBackupPreference != null) {
+            lastBackupPreference.setSummary(summary);
+        }
+    }
+
     private void backupDatabaseResult(final Uri uri) {
         if (uri == null) {
             return;
@@ -279,6 +306,7 @@ public class ImportExportPreferencesFragment extends AnimatedPreferenceFragment 
                 .subscribe(() -> {
                     showExportSuccessSnackbar(uri, "application/x-sqlite3");
                     progressDialog.dismiss();
+                    updateLastBackupSummary();
                 }, this::showExportErrorDialog);
     }
 

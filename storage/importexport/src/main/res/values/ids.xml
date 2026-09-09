@@ -2,4 +2,6 @@
 <resources>
     <item name="pending_intent_backup_error" type="id" />
     <item name="notification_id_backup_error" type="id" />
+    <item name="pending_intent_backup_reselect" type="id" />
+    <item name="notification_id_backup_reselect" type="id" />
 </resources>

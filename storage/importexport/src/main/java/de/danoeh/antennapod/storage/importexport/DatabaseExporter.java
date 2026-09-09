@@ -8,6 +8,7 @@ import android.os.ParcelFileDescriptor;
 import android.text.format.Formatter;
 import android.util.Log;
 import de.danoeh.antennapod.storage.database.PodDBAdapter;
+import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
@@ -40,6 +41,7 @@ public class DatabaseExporter {
                     Formatter.formatShortFileSize(context, bytesCopied),
                     Formatter.formatShortFileSize(context, resultingFileSize)));
         }
+        UserPreferences.setLastBackupTime(System.currentTimeMillis());
     }
 
     public static int exportToStream(FileOutputStream outFileStream, Context context) throws IOException {

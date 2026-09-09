@@ -41,7 +41,7 @@ public class AutomaticDatabaseExportWorker extends Worker {
             WorkManager.getInstance(context).cancelUniqueWork(WORK_ID_AUTOMATIC_DATABASE_EXPORT);
         } else {
             PeriodicWorkRequest workRequest = new PeriodicWorkRequest.Builder(
-                        AutomaticDatabaseExportWorker.class, 3, TimeUnit.DAYS)
+                        AutomaticDatabaseExportWorker.class, 1, TimeUnit.DAYS)
                     .build();
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(WORK_ID_AUTOMATIC_DATABASE_EXPORT,
                     replace ? ExistingPeriodicWorkPolicy.REPLACE : ExistingPeriodicWorkPolicy.KEEP, workRequest);
@@ -71,7 +71,8 @@ public class AutomaticDatabaseExportWorker extends Worker {
     private void export(String folderUri) throws IOException {
         DocumentFile documentFolder = DocumentFile.fromTreeUri(getApplicationContext(), Uri.parse(folderUri));
         if (documentFolder == null || !documentFolder.exists() || !documentFolder.canWrite()) {
-            throw new IOException("Unable to open export folder");
+            promptFolderReselection();
+            return;
         }
         String filename = String.format("AntennaPodBackup-%s.db",
                 new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date()));
@@ -98,6 +99,41 @@ public class AutomaticDatabaseExportWorker extends Worker {
         }
         if (hasDeletionFailed) {
             throw new IOException("Unable to delete some database backup files");
+        }
+    }
+
+    private void promptFolderReselection() {
+        String folderUri = UserPreferences.getAutomaticExportFolder();
+        if (folderUri == null) {
+            return;
+        }
+        Intent intent = new Intent();
+        intent.setClassName(getApplicationContext(),
+                "de.danoeh.antennapod.ui.screen.preferences.PreferenceActivity");
+        intent.putExtra("OpenAutomaticBackup", true);
+        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(),
+                R.id.pending_intent_backup_reselect, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        Notification notification = new NotificationCompat.Builder(getApplicationContext(),
+                        NotificationUtils.CHANNEL_ID_USER_ACTION)
+                .setContentTitle(getApplicationContext().getString(
+                        R.string.automatic_database_export_folder_inaccessible))
+                .setContentText(getApplicationContext().getString(
+                        R.string.automatic_database_export_reselect_folder))
+                .setContentIntent(pendingIntent)
+                .setSmallIcon(R.drawable.ic_notification_sync_error)
+                .setAutoCancel(true)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .build();
+        NotificationManager nm = (NotificationManager) getApplicationContext()
+                .getSystemService(Context.NOTIFICATION_SERVICE);
+        if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.POST_NOTIFICATIONS)
+                == PackageManager.PERMISSION_GRANTED) {
+            nm.notify(R.id.notification_id_backup_reselect, notification);
+        } else {
+            Toast.makeText(getApplicationContext(),
+                    getApplicationContext().getString(R.string.automatic_database_export_reselect_folder),
+                    Toast.LENGTH_LONG).show();
         }
     }
 

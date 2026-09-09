@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -32,7 +33,6 @@ import de.danoeh.antennapod.ui.episodeslist.EpisodeItemViewHolder;
 import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
 public class SwipeActions extends ItemTouchHelper.SimpleCallback implements LifecycleObserver {
-    public static final String PREF_NAME = "SwipeActionsPrefs";
     public static final String KEY_PREFIX_SWIPEACTIONS = "PrefSwipeActions";
     public static final String KEY_PREFIX_NO_ACTION = "PrefNoSwipeAction";
 
@@ -98,7 +98,7 @@ public class SwipeActions extends ItemTouchHelper.SimpleCallback implements Life
     }
 
     private static Actions getPrefs(Context context, String tag, String defaultActions) {
-        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         String prefsString = prefs.getString(KEY_PREFIX_SWIPEACTIONS + tag, defaultActions);
 
         return new Actions(prefsString);
@@ -136,7 +136,7 @@ public class SwipeActions extends ItemTouchHelper.SimpleCallback implements Life
     }
 
     public static boolean isSwipeActionEnabled(Context context, String tag) {
-        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         return prefs.getBoolean(KEY_PREFIX_NO_ACTION + tag, true);
     }
 

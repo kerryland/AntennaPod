@@ -153,6 +153,13 @@ public class InboxFragment extends EpisodesListFragment {
         }
 
         @Override
+        protected void populateList() {
+            super.populateList();
+            onAddItem(R.string.added_to_inbox_date, SortOrder.ADDED_DATE_OLD_NEW,
+                    SortOrder.ADDED_DATE_NEW_OLD, false);
+        }
+
+        @Override
         protected void onSelectionChanged() {
             super.onSelectionChanged();
             UserPreferences.setInboxSortedOrder(sortOrder);

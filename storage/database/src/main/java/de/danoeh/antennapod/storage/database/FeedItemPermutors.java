@@ -51,6 +51,12 @@ public class FeedItemPermutors {
             case DATE_NEW_OLD:
                 comparator = (f1, f2) -> pubDate(f2).compareTo(pubDate(f1));
                 break;
+            case ADDED_DATE_OLD_NEW:
+                comparator = (f1, f2) -> addedDate(f1).compareTo(addedDate(f2));
+                break;
+            case ADDED_DATE_NEW_OLD:
+                comparator = (f1, f2) -> addedDate(f2).compareTo(addedDate(f1));
+                break;
             case DURATION_SHORT_LONG:
                 comparator = (f1, f2) -> Integer.compare(duration(f1), duration(f2));
                 break;
@@ -125,6 +131,12 @@ public class FeedItemPermutors {
     @NonNull
     private static Date pubDate(@Nullable FeedItem item) {
         return (item != null && item.getPubDate() != null) ? item.getPubDate() : new Date(0);
+    }
+
+    @NonNull
+    private static Date addedDate(@Nullable FeedItem item) {
+        return (item != null && item.getAddedToInboxOrQueue() != null)
+                ? item.getAddedToInboxOrQueue() : new Date(0);
     }
 
     @NonNull

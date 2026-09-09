@@ -27,6 +27,10 @@ public class FeedItemSortQuery {
                         + PodDBAdapter.KEY_LAST_PLAYED_TIME_HISTORY + " " + "DESC";
             case DATE_OLD_NEW:
                 return PodDBAdapter.TABLE_NAME_FEED_ITEMS + "." + PodDBAdapter.KEY_PUBDATE + " " + "ASC";
+            case ADDED_DATE_OLD_NEW:
+                return PodDBAdapter.TABLE_NAME_FEED_ITEMS + "." + PodDBAdapter.KEY_ADDED_TO_INBOX_OR_QUEUE + " " + "ASC";
+            case ADDED_DATE_NEW_OLD:
+                return PodDBAdapter.TABLE_NAME_FEED_ITEMS + "." + PodDBAdapter.KEY_ADDED_TO_INBOX_OR_QUEUE + " " + "DESC";
             case EPISODE_FILENAME_A_Z:
                 return PodDBAdapter.TABLE_NAME_FEED_ITEMS + "." + PodDBAdapter.KEY_LINK + " " + "ASC";
             case EPISODE_FILENAME_Z_A:

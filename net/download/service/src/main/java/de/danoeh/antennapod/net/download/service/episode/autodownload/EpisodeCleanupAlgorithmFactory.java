@@ -9,11 +9,11 @@ public abstract class EpisodeCleanupAlgorithmFactory {
             case UserPreferences.EPISODE_CLEANUP_EXCEPT_FAVORITE:
                 return new ExceptFavoriteCleanupAlgorithm();
             case UserPreferences.EPISODE_CLEANUP_QUEUE:
-                return new APQueueCleanupAlgorithm();
+                return new EpisodeCountCleanupAlgorithm();
             case UserPreferences.EPISODE_CLEANUP_NULL:
-                return new APNullCleanupAlgorithm();
+                return new NoOpCleanupAlgorithm();
             default:
-                return new APCleanupAlgorithm(cleanupValue);
+                return new TimeCleanupAlgorithm(cleanupValue);
         }
     }
 }

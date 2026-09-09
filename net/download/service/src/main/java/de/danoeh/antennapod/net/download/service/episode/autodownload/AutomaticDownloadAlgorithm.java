@@ -102,6 +102,15 @@ public class AutomaticDownloadAlgorithm {
                     episodeSpaceLeft = episodeCacheSize - (downloadedEpisodes - deletedEpisodes);
                 }
 
+                Log.d(TAG,
+                        "downloadedEpisodes = " + downloadedEpisodes +
+                        ", deletedEpisodes = " + deletedEpisodes +
+                        ", episodeSpaceLeft = " + episodeSpaceLeft +
+                        ", autoDownloadableEpisodes = " + autoDownloadableEpisodes +
+                        ", episodeCacheSize = " + episodeCacheSize +
+                                ", episodeSpaceLeft = " + episodeSpaceLeft
+                );
+
                 int toIndex = Math.min(Math.max(episodeSpaceLeft, 0), candidates.size());
                 List<FeedItem> itemsToDownload = candidates.subList(0, toIndex);
                 if (!itemsToDownload.isEmpty()) {

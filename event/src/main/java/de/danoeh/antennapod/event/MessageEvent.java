@@ -22,7 +22,7 @@ public class MessageEvent {
     public final boolean indefinite;
 
     public MessageEvent(String message) {
-        this(message, null, null, null, false);
+        this(message, null, null, null, true);
     }
 
     public MessageEvent(String message, Consumer<Context> action, String actionText) {

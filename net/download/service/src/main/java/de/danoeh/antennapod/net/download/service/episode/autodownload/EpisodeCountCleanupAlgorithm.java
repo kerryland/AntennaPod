@@ -20,11 +20,11 @@ import de.danoeh.antennapod.storage.preferences.UserPreferences;
 
 /**
  * A cleanup algorithm that removes any item that isn't in the queue and isn't a favorite
- * but only if space is needed.
+ * but only if space is needed. This seems to be the only one that is actually used
  */
-public class APQueueCleanupAlgorithm extends EpisodeCleanupAlgorithm {
+public class EpisodeCountCleanupAlgorithm extends EpisodeCleanupAlgorithm {
 
-    private static final String TAG = "APQueueCleanupAlgorithm";
+    private static final String TAG = "EpisodeCountCleanupAlgorithm";
 
     /**
      * @return the number of episodes that *could* be cleaned up, if needed
@@ -35,6 +35,8 @@ public class APQueueCleanupAlgorithm extends EpisodeCleanupAlgorithm {
 
     @Override
     public int performCleanup(Context context, int numberOfEpisodesToDelete) {
+        Log.d(TAG, "Want to cleanup/delete " + numberOfEpisodesToDelete);
+
         List<FeedItem> candidates = getCandidates();
         List<FeedItem> delete;
 
@@ -51,6 +53,10 @@ public class APQueueCleanupAlgorithm extends EpisodeCleanupAlgorithm {
             }
             return l.compareTo(r);
         });
+
+        for (FeedItem candidate : candidates) {
+            Log.d(TAG, "Candidate: " + mostRecentDate(candidate) + " " + candidate.getTitle() );
+        }
 
         if (candidates.size() > numberOfEpisodesToDelete) {
             delete = candidates.subList(0, numberOfEpisodesToDelete);

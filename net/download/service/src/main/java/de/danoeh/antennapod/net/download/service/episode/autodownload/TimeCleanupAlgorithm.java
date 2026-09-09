@@ -24,14 +24,14 @@ import de.danoeh.antennapod.storage.preferences.UserPreferences;
 /**
  * Cleanup Episodes more than X hours after they were last played
  */
-public class APCleanupAlgorithm extends EpisodeCleanupAlgorithm {
+public class TimeCleanupAlgorithm extends EpisodeCleanupAlgorithm {
 
-    private static final String TAG = "APCleanupAlgorithm";
+    private static final String TAG = "TimeCleanupAlgorithm";
     /** the number of days after playback to wait before an item is eligible to be cleaned up.
         Fractional for number of hours, e.g., 0.5 = 12 hours, 0.0416 = 1 hour.  */
     private final int numberOfHoursAfterPlayback;
 
-    public APCleanupAlgorithm(int numberOfHoursAfterPlayback) {
+    public TimeCleanupAlgorithm(int numberOfHoursAfterPlayback) {
         this.numberOfHoursAfterPlayback = numberOfHoursAfterPlayback;
     }
 
@@ -59,6 +59,10 @@ public class APCleanupAlgorithm extends EpisodeCleanupAlgorithm {
             }
             return l.compareTo(r);
         });
+
+        for (FeedItem candidate : candidates) {
+            Log.d(TAG, "Candidate: " + mostRecentDate(candidate) + " " + candidate.getTitle() );
+        }
 
         if (candidates.size() > numberOfEpisodesToDelete) {
             delete = candidates.subList(0, numberOfEpisodesToDelete);

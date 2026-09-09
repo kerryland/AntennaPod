@@ -11,9 +11,9 @@ import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.ui.screen.preferences.PreferenceActivity;
-import de.danoeh.antennapod.net.download.service.episode.autodownload.APCleanupAlgorithm;
-import de.danoeh.antennapod.net.download.service.episode.autodownload.APNullCleanupAlgorithm;
-import de.danoeh.antennapod.net.download.service.episode.autodownload.APQueueCleanupAlgorithm;
+import de.danoeh.antennapod.net.download.service.episode.autodownload.TimeCleanupAlgorithm;
+import de.danoeh.antennapod.net.download.service.episode.autodownload.NoOpCleanupAlgorithm;
+import de.danoeh.antennapod.net.download.service.episode.autodownload.EpisodeCountCleanupAlgorithm;
 import de.danoeh.antennapod.net.download.service.episode.autodownload.EpisodeCleanupAlgorithm;
 import de.danoeh.antennapod.net.download.service.episode.autodownload.EpisodeCleanupAlgorithmFactory;
 import de.danoeh.antennapod.net.download.service.episode.autodownload.ExceptFavoriteCleanupAlgorithm;
@@ -302,7 +302,7 @@ public class PreferencesTest {
         onView(withId(R.id.select_dialog_listview)).perform(swipeDown());
         onView(withText(R.string.episode_cleanup_queue_removal)).perform(click());
         Awaitility.await().atMost(1000, MILLISECONDS)
-                .until(() -> EpisodeCleanupAlgorithmFactory.build() instanceof APQueueCleanupAlgorithm);
+                .until(() -> EpisodeCleanupAlgorithmFactory.build() instanceof EpisodeCountCleanupAlgorithm);
     }
 
     @Test
@@ -313,7 +313,7 @@ public class PreferencesTest {
         onView(withId(R.id.select_dialog_listview)).perform(swipeUp());
         onView(withText(R.string.episode_cleanup_never)).perform(click());
         Awaitility.await().atMost(1000, MILLISECONDS)
-                .until(() -> EpisodeCleanupAlgorithmFactory.build() instanceof APNullCleanupAlgorithm);
+                .until(() -> EpisodeCleanupAlgorithmFactory.build() instanceof NoOpCleanupAlgorithm);
     }
 
     @Test
@@ -326,8 +326,8 @@ public class PreferencesTest {
         Awaitility.await().atMost(1000, MILLISECONDS)
                 .until(() -> {
                     EpisodeCleanupAlgorithm alg = EpisodeCleanupAlgorithmFactory.build();
-                    if (alg instanceof APCleanupAlgorithm) {
-                        APCleanupAlgorithm cleanupAlg = (APCleanupAlgorithm) alg;
+                    if (alg instanceof TimeCleanupAlgorithm) {
+                        TimeCleanupAlgorithm cleanupAlg = (TimeCleanupAlgorithm) alg;
                         return cleanupAlg.getNumberOfHoursAfterPlayback() == 0;
                     }
                     return false;
@@ -345,8 +345,8 @@ public class PreferencesTest {
         Awaitility.await().atMost(1000, MILLISECONDS)
                 .until(() -> {
                     EpisodeCleanupAlgorithm alg = EpisodeCleanupAlgorithmFactory.build();
-                    if (alg instanceof APCleanupAlgorithm) {
-                        APCleanupAlgorithm cleanupAlg = (APCleanupAlgorithm) alg;
+                    if (alg instanceof TimeCleanupAlgorithm) {
+                        TimeCleanupAlgorithm cleanupAlg = (TimeCleanupAlgorithm) alg;
                         return cleanupAlg.getNumberOfHoursAfterPlayback() == 72; // 5 days
                     }
                     return false;

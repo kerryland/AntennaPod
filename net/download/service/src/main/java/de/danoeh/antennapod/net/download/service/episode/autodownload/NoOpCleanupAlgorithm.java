@@ -6,9 +6,9 @@ import android.util.Log;
 /**
  * A cleanup algorithm that never removes anything
  */
-public class APNullCleanupAlgorithm extends EpisodeCleanupAlgorithm {
+public class NoOpCleanupAlgorithm extends EpisodeCleanupAlgorithm {
 
-    private static final String TAG = "APNullCleanupAlgorithm";
+    private static final String TAG = "NoOpCleanupAlgorithm";
 
     @Override
     public int performCleanup(Context context, int parameter) {

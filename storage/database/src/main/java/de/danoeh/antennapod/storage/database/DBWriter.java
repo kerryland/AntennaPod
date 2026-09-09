@@ -108,6 +108,7 @@ public class DBWriter {
             if (media == null) {
                 return;
             }
+            Log.d(TAG, "Deleting media " + media.getEpisodeTitle());
             deleteFeedMediaSynchronous(context, media);
             EventBus.getDefault().post(new FeedItemEvent(media.getItem() != null
                     ? Collections.singletonList(media.getItem()) : Collections.emptyList(), false));

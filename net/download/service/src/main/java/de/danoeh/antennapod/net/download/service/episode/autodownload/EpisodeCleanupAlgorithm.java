@@ -59,7 +59,6 @@ public abstract class EpisodeCleanupAlgorithm {
                 && UserPreferences.getEpisodeCacheSize() != UserPreferences.EPISODE_CACHE_SIZE_UNLIMITED) {
             int downloadedEpisodes = DBReader.getTotalEpisodeCount(new FeedItemFilter(FeedItemFilter.DOWNLOADED));
             if (downloadedEpisodes + amountOfRoomNeeded >= UserPreferences.getEpisodeCacheSize()) {
-
                 return downloadedEpisodes + amountOfRoomNeeded - UserPreferences.getEpisodeCacheSize();
             }
         }

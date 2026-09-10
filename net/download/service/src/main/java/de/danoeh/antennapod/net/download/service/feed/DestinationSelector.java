@@ -47,8 +47,7 @@ public class DestinationSelector {
                     : SortOrder.DATE_NEW_OLD;
 
             List<FeedItem> feedItems = DBReader.getFeedItemList(feed,
-                    new FeedItemFilter(FeedItemFilter.UNPLAYED, FeedItemFilter.NEW,
-                            FeedItemFilter.EXCLUDE_REMOVED),
+                    new FeedItemFilter(FeedItemFilter.UNPLAYED, FeedItemFilter.NEW),
                     sortOrder, 0, Integer.MAX_VALUE
             );
 
@@ -73,12 +72,13 @@ public class DestinationSelector {
                     continue;
                 }
 
+                boolean isRemoved = feedItem.isRemoved();
                 boolean isInQueue = currentQueue.contains(feedItem);
 
                 if (addCount < maxEpisodes) {
                     addCount++;
 
-                    if (isInQueue) {
+                    if (isRemoved || isInQueue) {
                         continue;
                     }
 

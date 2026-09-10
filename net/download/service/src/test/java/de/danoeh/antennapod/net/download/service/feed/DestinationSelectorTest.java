@@ -362,8 +362,8 @@ public class DestinationSelectorTest {
     }
 
     @Test
-    // Make sure "OLDEST_FIRST" feed items that are 'removed' via 'remove from inbox' are not added back into the inbox
-    public void testInboxPopulated_Oldest_First_Ignores_Unplayed_Removed() {
+    // Make sure "OLDEST_FIRST" feed items that are 'removed' via 'remove from inbox' still count toward maxEpisodes
+    public void testInboxPopulated_Oldest_First_Removed_Counts_Toward_MaxEpisodes() {
         List<FeedItem> feedItems = new ArrayList<>();
         List<FeedItem> queueItems = new ArrayList<>();
 
@@ -389,16 +389,15 @@ public class DestinationSelectorTest {
 
         DBWriter.waitForDatabase(); // Make sure the database is updated
 
-        // Then we should see episode 20 and 21 have been ignored, and only 21 added to the inbox
+        // Then removed items (20, 22) count toward maxEpisodes=2, so only episode 18 is added
         List<FeedItem> inbox = DBReader.getFeedItemList(feed, new FeedItemFilter(FeedItemFilter.NEW), SortOrder.DATE_OLD_NEW, 0, Integer.MAX_VALUE);
-        assertEquals(2, inbox.size());
+        assertEquals(1, inbox.size());
         assertEquals("EPISODE 18", inbox.get(0).getTitle());
-        assertEquals("EPISODE 21", inbox.get(1).getTitle());
     }
 
     @Test
-    // Make sure "NEWEST_FIRST" feed items that are 'removed' via 'remove from inbox' are not added back into the inbox
-    public void testInboxPopulated_Newest_First_Ignores_Unplayed_Removed() {
+    // Make sure "NEWEST_FIRST" feed items that are 'removed' via 'remove from inbox' still count toward maxEpisodes
+    public void testInboxPopulated_Newest_First_Removed_Counts_Toward_MaxEpisodes() {
         List<FeedItem> feedItems = new ArrayList<>();
         List<FeedItem> queueItems = new ArrayList<>();
 
@@ -426,11 +425,10 @@ public class DestinationSelectorTest {
 
         DBWriter.waitForDatabase(); // Make sure the database is updated
 
-        // Then we should see episode 20 and 21 have been ignored, and only 21 added to the inbox
-        List<FeedItem> inbox = DBReader.getFeedItemList(feed, new FeedItemFilter(FeedItemFilter.NEW), SortOrder.DATE_OLD_NEW, 0, Integer.MAX_VALUE);
-        assertEquals(2, inbox.size());
-        assertEquals("EPISODE 21", inbox.get(0).getTitle());
-        assertEquals("EPISODE 23", inbox.get(1).getTitle());
+        // Then removed items (20, 22) count toward maxEpisodes=2, so only episode 23 is added
+        List<FeedItem> inbox = DBReader.getFeedItemList(feed, new FeedItemFilter(FeedItemFilter.NEW), SortOrder.DATE_NEW_OLD, 0, Integer.MAX_VALUE);
+        assertEquals(1, inbox.size());
+        assertEquals("EPISODE 23", inbox.get(0).getTitle());
     }
 
     private Feed prepareTestData(FeedPreferences.NewEpisodesAction newEpisodesAction,

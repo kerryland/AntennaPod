@@ -11,6 +11,9 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
+import de.danoeh.antennapod.storage.preferences.UserPreferences;
+
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Collections;
@@ -19,7 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class VpnMonitor {
 
-    private static String TAG = "VpnMonitor";
+    private static final String TAG = "VpnMonitor";
 
     /**
      * Custom interface to pass the boolean result back to the caller.
@@ -43,6 +46,7 @@ public class VpnMonitor {
     }
 
     private static volatile VpnMonitor instance;
+    private final Context appContext;
     private final ConnectivityManager connectivityManager;
     private final Handler mainHandler;
 
@@ -53,7 +57,8 @@ public class VpnMonitor {
     private boolean isCurrentlyConnected;
 
     private VpnMonitor(Context context) {
-        connectivityManager = (ConnectivityManager) context.getApplicationContext()
+        appContext = context.getApplicationContext();
+        connectivityManager = (ConnectivityManager) appContext
                 .getSystemService(Context.CONNECTIVITY_SERVICE);
         mainHandler = new Handler(Looper.getMainLooper());
 
@@ -161,7 +166,7 @@ public class VpnMonitor {
     }
 
     private void notifyConnect() {
-        // Iterate, trigger success, and clear to ensure one-shot behavior
+        Log.d(TAG, "VPN Connected");
         for (PendingRequest req : pendingConnects) {
             mainHandler.removeCallbacks(req.timeoutTask); // Cancel the timeout
             mainHandler.post(() -> req.callback.onResult(true));
@@ -170,19 +175,25 @@ public class VpnMonitor {
     }
 
     private void notifyDisconnect() {
+        Log.d(TAG, "VPN Disconnected");
         for (PendingRequest req : pendingDisconnects) {
             mainHandler.removeCallbacks(req.timeoutTask); // Cancel the timeout
             mainHandler.post(() -> req.callback.onResult(true));
         }
         pendingDisconnects.clear();
+
+        // If downloads are configured to require a VPN, cancel any in-progress downloads
+        // once the VPN is no longer connected.
+        if (UserPreferences.isVpnDownload()) {
+            DownloadServiceInterface.get().cancelAll(appContext);
+        }
     }
 
     private boolean checkVpnLive() {
-        String iface = "";
         try {
             for (NetworkInterface networkInterface : Collections.list(NetworkInterface.getNetworkInterfaces())) {
                 if (networkInterface.isUp()) {
-                    iface = networkInterface.getName();
+                    String iface = networkInterface.getName();
                     if (iface.startsWith("tun") || iface.startsWith("ppp") || iface.startsWith("pptp")) {
                         return true;
                     }

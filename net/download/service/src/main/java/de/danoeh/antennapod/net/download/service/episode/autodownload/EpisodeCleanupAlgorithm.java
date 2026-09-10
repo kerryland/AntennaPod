@@ -7,6 +7,7 @@ import java.util.Date;
 
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
+import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
 import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 
@@ -42,7 +43,7 @@ public abstract class EpisodeCleanupAlgorithm {
      * @return The number of epiosdes that were deleted
      */
     public int makeRoomForEpisodes(Context context, int amountOfRoomNeeded) {
-        return performCleanup(context, getNumEpisodesToCleanup(amountOfRoomNeeded));
+        return performCleanup(context, getNumEpisodesToCleanup(context, amountOfRoomNeeded));
     }
 
     /**
@@ -54,10 +55,13 @@ public abstract class EpisodeCleanupAlgorithm {
      * @param amountOfRoomNeeded the number of episodes we want to download
      * @return the number of episodes to delete in order to make room
      */
-    int getNumEpisodesToCleanup(final int amountOfRoomNeeded) {
+    int getNumEpisodesToCleanup(Context context, final int amountOfRoomNeeded) {
         if (amountOfRoomNeeded >= 0
                 && UserPreferences.getEpisodeCacheSize() != UserPreferences.EPISODE_CACHE_SIZE_UNLIMITED) {
             int downloadedEpisodes = DBReader.getTotalEpisodeCount(new FeedItemFilter(FeedItemFilter.DOWNLOADED));
+            if (context != null) {
+                downloadedEpisodes += DownloadServiceInterface.get().getNumberOfActiveDownloads(context);
+            }
             if (downloadedEpisodes + amountOfRoomNeeded >= UserPreferences.getEpisodeCacheSize()) {
                 return downloadedEpisodes + amountOfRoomNeeded - UserPreferences.getEpisodeCacheSize();
             }

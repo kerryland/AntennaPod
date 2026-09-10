@@ -122,7 +122,7 @@ public class TimeCleanupAlgorithm extends EpisodeCleanupAlgorithm {
 
     @Override
     public int getDefaultCleanupParameter() {
-        return getNumEpisodesToCleanup(0);
+        return getNumEpisodesToCleanup(null, 0);
     }
 
     @VisibleForTesting

@@ -155,6 +155,19 @@ HomeFragment loads:
 - SubscriptionsSection
 - DownloadsSection
 
+ItemListFragment - Displays a list of FeedItems
+which uses FeedItemListFragmentBinding (via magic) to load feed_item_list_fragment.xml
+which loads feeditemlist_header.xml (subscribe buttons etc) for a episode detail and subscription.
+
+## Feed Items
+episodes_list_fragment.xml	Episodes list fragment ???
+queue_fragment.xml	Queue (playlist) fragment
+fragment_subscriptions.xml	Subscriptions list fragment
+feeditemlist_item.xml	Item in a feed episode list
+
+feed_item_list_fragment.xml	Fragment displaying a list of feed items
+
+## ...
 AudioPlayerFragment
 HomeSection
 ItemPagerFragment

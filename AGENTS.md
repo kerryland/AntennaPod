@@ -28,6 +28,9 @@ Several functional areas use a service-interface/service split: consumers depend
 The app uses greenrobot EventBus heavily for cross-component communication, and DB writes go through `DBWriter`, which runs on a background DB thread (`runOnDbThread`) and returns a `Future`. UI updates normally happen in response to posted events (e.g. `FeedListUpdateEvent`), not from DB call return values.
 
 Never look in any `strings.xml` file except ui/i18n/src/main/res/values/strings.xml
+Never consult the original project's github pages.
+Do not duplicate existing code. Refactor it and reuse it.
+Write useful tests for new code.
 
 # Coding Style
 

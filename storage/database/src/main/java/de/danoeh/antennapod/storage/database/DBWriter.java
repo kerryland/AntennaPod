@@ -97,6 +97,23 @@ public class DBWriter {
         }
     }
 
+    static boolean shouldAutoDeleteEpisode(@NonNull FeedItem item) {
+        FeedPreferences.AutoDeleteAction action = item.getFeed().getPreferences().getCurrentAutoDelete();
+        boolean autoDeleteEnabledGlobally = UserPreferences.isAutoDelete()
+                && (!item.getFeed().isLocalFeed() || UserPreferences.isAutoDeleteLocal());
+        boolean shouldAutoDelete = action == FeedPreferences.AutoDeleteAction.ALWAYS
+                || (action == FeedPreferences.AutoDeleteAction.GLOBAL && autoDeleteEnabledGlobally);
+        return shouldAutoDelete && (!item.isTagged(FeedItem.TAG_FAVORITE)
+                || !UserPreferences.shouldFavoriteKeepEpisode());
+    }
+
+    public static void deleteFeedMediaIfAutoDeleteEnabled(@NonNull Context context, @NonNull FeedItem item) {
+        FeedMedia media = item.getMedia();
+        if (media != null && media.isDownloaded() && shouldAutoDeleteEpisode(item)) {
+            deleteFeedMediaOfItem(context, media);
+        }
+    }
+
     /**
      * Deletes a downloaded FeedMedia file from the storage device.
      *

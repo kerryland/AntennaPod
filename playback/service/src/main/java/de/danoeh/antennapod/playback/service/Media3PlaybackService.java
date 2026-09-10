@@ -603,12 +603,7 @@ public class Media3PlaybackService extends MediaLibraryService {
             }
             if (ended || almostEnded || (skipped && !UserPreferences.shouldSkipKeepEpisode())) {
                 DBWriter.removeQueueItem(item);
-                FeedPreferences.AutoDeleteAction action = item.getFeed().getPreferences().getCurrentAutoDelete();
-                boolean autoDeleteEnabledGlobally = UserPreferences.isAutoDelete() && (!item.getFeed().isLocalFeed() || UserPreferences.isAutoDeleteLocal());
-                boolean shouldAutoDelete = action == FeedPreferences.AutoDeleteAction.ALWAYS || (action == FeedPreferences.AutoDeleteAction.GLOBAL && autoDeleteEnabledGlobally);
-                if (shouldAutoDelete && (!item.isTagged(FeedItem.TAG_FAVORITE) || !UserPreferences.shouldFavoriteKeepEpisode())) {
-                    DBWriter.deleteFeedMediaOfItem(this, media);
-                }
+                DBWriter.deleteFeedMediaIfAutoDeleteEnabled(this, item);
             }
         }
         if (ended || skipped || playingNext) {

@@ -48,6 +48,7 @@ import org.greenrobot.eventbus.EventBus;
 public class FeedItemMenuHandler {
 
     private static final String TAG = "FeedItemMenuHandler";
+    private static final long DELETE_MEDIA_UNDO_WINDOW_MS = 5000;
 
     private FeedItemMenuHandler() {
     }
@@ -256,12 +257,17 @@ public class FeedItemMenuHandler {
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(queue -> {
                         MenuItemAssistant.skipIfPlaying(context, Collections.singletonList(selectedItem), () -> {
+                                    Handler handler = new Handler(context.getMainLooper());
+                                    Runnable deleteDownload =
+                                            () -> DBWriter.deleteFeedMediaIfAutoDeleteEnabled(context, selectedItem);
                                     DBWriter.removeQueueItem(selectedItem);
                                     EventBus.getDefault().post(new MessageEvent(
                                             fragment.getResources()
                                                     .getQuantityString(R.plurals.removed_from_queue_message,
                                                             1, 1),
                                             xcontext -> {
+                                                // Add the episode back if user hits "Undo"
+                                                handler.removeCallbacks(deleteDownload);
                                                 for (int index = 0; index < queue.size(); index++) {
                                                     FeedItem queueItem = queue.get(index);
                                                     if (queueItem.equals(selectedItem)) {
@@ -271,6 +277,7 @@ public class FeedItemMenuHandler {
                                                 }
                                             },
                                             fragment.getString(R.string.undo)));
+                                    handler.postDelayed(deleteDownload, DELETE_MEDIA_UNDO_WINDOW_MS);
                                 }
                         );
                     });

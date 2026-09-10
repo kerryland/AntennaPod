@@ -134,6 +134,9 @@ public class EpisodeMultiSelectActionHandler {
     private void removeFromQueueChecked(List<FeedItem> items) {
         long[] checkedIds = getSelectedIds(items);
         DBWriter.removeQueueItem(checkedIds);
+        for (FeedItem item : items) {
+            DBWriter.deleteFeedMediaIfAutoDeleteEnabled(activity, item);
+        }
         showMessage(R.plurals.removed_from_queue_message, checkedIds.length);
     }
 

@@ -1,15 +1,20 @@
 package de.danoeh.antennapod.ui.swipeactions;
 
 import android.content.Context;
+import android.util.Log;
 
 import androidx.fragment.app.Fragment;
 
+import java.util.Collections;
+
 import de.danoeh.antennapod.R;
-import de.danoeh.antennapod.ui.episodeslist.FeedItemMenuHandler;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
+import de.danoeh.antennapod.storage.database.DBWriter;
 
 public class RemoveFromInboxSwipeAction implements SwipeAction {
+
+    private static final String TAG = "RemoveFromInboxSwipe";
 
     @Override
     public String getId() {
@@ -34,7 +39,9 @@ public class RemoveFromInboxSwipeAction implements SwipeAction {
     @Override
     public void performAction(FeedItem item, Fragment fragment, FeedItemFilter filter) {
         if (item.isNew()) {
-            FeedItemMenuHandler.onMenuItemClicked(fragment, R.id.add_to_queue_play_next_item, item);
+            item.setRemoved(true);
+            DBWriter.markItemsPlayed(FeedItem.UNPLAYED, false, Collections.singletonList(item));
+            Log.d(TAG, "Removed " + item.getTitle() + " from inbox");
         }
     }
 

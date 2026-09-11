@@ -334,7 +334,9 @@ public class FeedItemMenuHandler {
             return;
         }
 
-        Log.d(TAG, "markReadWithUndo(" + item.getId() + ")");
+        int oldState = item.getPlayState();
+
+        Log.d(TAG, "markReadWithUndo(" + item.getId() + ") From " + item.getPlayState() + " to " + playState);
 
         // we're marking it as [un]played since the user didn't actually play it
         // but they don't want it considered 'NEW' anymore
@@ -382,9 +384,12 @@ public class FeedItemMenuHandler {
             EventBus.getDefault().post(new MessageEvent(message,
                     ctx -> {
                         item.setRemoved(false);
-                        DBWriter.markItemsPlayed(item.getPlayState(), false, Collections.singletonList(item));
-                        // don't forget to cancel the thing that's going to remove the media
+                        Log.d(TAG, "markReadWithUndo(" + item.getId() + ") revert to " +oldState);
+
+                        DBWriter.markItemsPlayed(oldState, false, Collections.singletonList(item));
+                        // cancel the thing that's going to remove the media
                         h.removeCallbacks(r);
+
                     }, fragment.getString(R.string.undo)));
         }
         h.postDelayed(r, 2000);

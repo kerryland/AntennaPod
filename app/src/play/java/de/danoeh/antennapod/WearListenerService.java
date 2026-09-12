@@ -3,7 +3,7 @@ package de.danoeh.antennapod;
 import android.util.Log;
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Wearable;
-import de.danoeh.antennapod.playback.service.PlaybackService;
+import de.danoeh.antennapod.playback.service.Media3PlaybackService;
 import de.danoeh.antennapod.storage.preferences.PlaybackPreferences;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -46,7 +46,7 @@ public class WearListenerService extends WearableListenerService {
                 if (media == null) {
                     return;
                 }
-                if (!PlaybackService.isRunning) {
+                if (!Media3PlaybackService.isRunning) {
                     reply(sourceNodeId, WearDataPaths.NOW_PLAYING,
                             WearSerializer.nowPlayingToBytes(media.getItem(), false));
                     return;
@@ -118,7 +118,6 @@ public class WearListenerService extends WearableListenerService {
         }
         Log.d(TAG, "Starting playback for: " + item.getTitle());
         new PlaybackServiceStarter(this, item.getMedia())
-                .callEvenIfRunning(true)
                 .start();
     }
 

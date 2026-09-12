@@ -365,7 +365,7 @@ public class FeedItemMenuHandler {
         switch (playState) {
             default:
             case FeedItem.UNPLAYED:
-                if (item.getPlayState() == FeedItem.NEW) {
+                if (oldState == FeedItem.NEW) {
                     //was new
                     message = fragment.getString(R.string.removed_from_inbox_message);
                 } else {

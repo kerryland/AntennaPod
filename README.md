@@ -27,7 +27,8 @@ Can now browse Apple's podcast directory to find new podcasts.
 - Added words to Swipe Actions to supplement icons
 - Added icons to Menus to supplement words.
 - The "speed dial" floating menu is replaced with a traditional menu because it's easier to read and navigate.
-- New icon on episodes to indicate when they are never going to automatically download. Changed some icons. 
+- New icon on episodes to indicate when they are never going to automatically download.
+- Changed some icons and made sizes consistent 
 
 ## Other
 - Skip forward/back buttons added to bottom of each page.

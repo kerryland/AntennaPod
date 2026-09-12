@@ -46,6 +46,8 @@ import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedMedia;
 import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.model.feed.VolumeAdaptionSetting;
+import de.danoeh.antennapod.model.playback.MediaType;
+import de.danoeh.antennapod.model.playback.Playable;
 import de.danoeh.antennapod.net.common.NetworkUtils;
 import de.danoeh.antennapod.net.sync.serviceinterface.SynchronizationQueue;
 import de.danoeh.antennapod.playback.base.MediaItemAdapter;
@@ -67,6 +69,7 @@ import de.danoeh.antennapod.storage.preferences.SleepTimerPreferences;
 import de.danoeh.antennapod.storage.preferences.SleepTimerType;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.appstartintent.MainActivityStarter;
+import de.danoeh.antennapod.ui.appstartintent.VideoPlayerActivityStarter;
 import de.danoeh.antennapod.ui.chapters.ChapterUtils;
 import de.danoeh.antennapod.ui.episodes.PlaybackSpeedUtils;
 import de.danoeh.antennapod.ui.notifications.NotificationUtils;
@@ -106,6 +109,14 @@ public class Media3PlaybackService extends MediaLibraryService {
     private LoudnessEnhancer loudnessEnhancer = null;
     private float volumeAdaptionFactor = 1.0f;
     private boolean isReleased = false;
+
+    public static Intent getPlayerActivityIntent(Context context, Playable media) {
+        if (media.getMediaType() == MediaType.VIDEO) {
+            return new VideoPlayerActivityStarter(context).getIntent();
+        } else {
+            return new MainActivityStarter(context).withClearBackStack().withOpenPlayer().getIntent();
+        }
+    }
 
     @UnstableApi
     @Override
@@ -313,6 +324,11 @@ public class Media3PlaybackService extends MediaLibraryService {
         }
     };
 
+    /**
+     * Is true if service is running.
+     */
+    public static boolean isRunning = false;
+
     @UnstableApi
     private final Player.Listener playerListener = new Player.Listener() {
         private boolean wasTemporarilySuspended = false;
@@ -337,7 +353,7 @@ public class Media3PlaybackService extends MediaLibraryService {
         public void onPlaybackStateChanged(int playbackState) {
             if (playbackState == Player.STATE_BUFFERING) {
                 EventBus.getDefault().post(BufferUpdateEvent.started());
-                PlaybackService.isRunning = player.getPlayWhenReady(); // Immediately show as playing
+                isRunning = player.getPlayWhenReady(); // Immediately show as playing
                 updatePlaybackPreferences();
             } else {
                 EventBus.getDefault().post(BufferUpdateEvent.ended());
@@ -352,8 +368,8 @@ public class Media3PlaybackService extends MediaLibraryService {
 
         @Override
         public void onIsPlayingChanged(boolean isPlaying) {
-            PlaybackService.isRunning = !Util.shouldShowPlayButton(player);
-            if (PlaybackService.isRunning) {
+            isRunning = !Util.shouldShowPlayButton(player);
+            if (isRunning) {
                 lastPositionSaveTime = System.currentTimeMillis();
                 setupPositionObserver();
             } else {
@@ -367,7 +383,7 @@ public class Media3PlaybackService extends MediaLibraryService {
             updatePlaybackPreferences();
 
             // Auto-enable sleep timer when playback starts
-            if (PlaybackService.isRunning && sleepTimer == null && SleepTimerPreferences.autoEnable()) {
+            if (isRunning && sleepTimer == null && SleepTimerPreferences.autoEnable()) {
                 int currentHour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
                 if (SleepTimerPreferences.isInTimeRange(SleepTimerPreferences.autoEnableFrom(), SleepTimerPreferences.autoEnableTo(), currentHour)) {
                     startSleepTimer(SleepTimerPreferences.timerMillisOrEpisodes());
@@ -398,7 +414,7 @@ public class Media3PlaybackService extends MediaLibraryService {
 
         @Override
         public void onPlayerError(@NonNull PlaybackException error) {
-            PlaybackService.isRunning = false;
+            isRunning = false;
             EventBus.getDefault().post(new PlayerErrorEvent(ExoPlayerUtils.translateErrorReason(error, Media3PlaybackService.this)));
             EventBus.getDefault().post(new PlayerStatusEvent());
         }
@@ -414,7 +430,7 @@ public class Media3PlaybackService extends MediaLibraryService {
     @Override
     public void onDestroy() {
         isReleased = true;
-        PlaybackService.isRunning = false;
+        isRunning = false;
         if (bluetoothReconnectPlayer != null) {
             bluetoothReconnectPlayer.unregister();
         }
@@ -561,7 +577,7 @@ public class Media3PlaybackService extends MediaLibraryService {
         if (currentPlayable != null) {
             PlaybackPreferences.writeMediaPlaying(currentPlayable);
         }
-        int status = PlaybackService.isRunning ? PlaybackPreferences.PLAYER_STATUS_PLAYING : PlaybackPreferences.PLAYER_STATUS_PAUSED;
+        int status = isRunning ? PlaybackPreferences.PLAYER_STATUS_PLAYING : PlaybackPreferences.PLAYER_STATUS_PAUSED;
         PlaybackPreferences.setCurrentPlayerStatus(status);
         if (status != statusBefore || (currentPlayable != null && currentPlayable.getId() != mediaBefore)) {
             EventBus.getDefault().post(new PlayerStatusEvent());
@@ -686,7 +702,7 @@ public class Media3PlaybackService extends MediaLibraryService {
         player.setMediaItem(confirmItem);
         player.setPlayWhenReady(false);
         player.prepare();
-        PlaybackService.isRunning = false;
+        isRunning = false;
         EventBus.getDefault().post(new StreamingConfirmationEvent());
         EventBus.getDefault().post(new PlayerStatusEvent());
     }

@@ -5,7 +5,7 @@ import android.util.Log;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.StringRes;
 import de.danoeh.antennapod.R;
-import de.danoeh.antennapod.playback.service.PlaybackService;
+import de.danoeh.antennapod.playback.service.Media3PlaybackService;
 import de.danoeh.antennapod.playback.service.PlaybackServiceStarter;
 import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.event.FeedItemEvent;
@@ -52,11 +52,10 @@ public class PlayActionButton extends ItemActionButton {
             return;
         }
         new PlaybackServiceStarter(context, media)
-                .callEvenIfRunning(true)
                 .start();
 
         if (media.getMediaType() == MediaType.VIDEO) {
-            context.startActivity(PlaybackService.getPlayerActivityIntent(context, media));
+            context.startActivity(Media3PlaybackService.getPlayerActivityIntent(context, media));
         }
     }
 }

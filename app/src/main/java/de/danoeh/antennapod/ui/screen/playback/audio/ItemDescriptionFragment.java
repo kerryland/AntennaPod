@@ -13,7 +13,6 @@ import android.view.ViewGroup;
 
 import androidx.fragment.app.Fragment;
 
-import de.danoeh.antennapod.BuildConfig;
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.event.PlayerStatusEvent;
 import de.danoeh.antennapod.playback.service.PlaybackController;
@@ -51,13 +50,8 @@ public class ItemDescriptionFragment extends Fragment {
         View root = inflater.inflate(R.layout.item_description_fragment, container, false);
         webvDescription = root.findViewById(R.id.webview);
         webvDescription.setTimecodeSelectedListener(time -> {
-            if (BuildConfig.USE_MEDIA3_PLAYBACK_SERVICE) {
-                PlaybackController.bindToMedia3Service(getActivity(), controller ->
-                        controller.seekTo(time));
-            } else {
-                PlaybackController.bindToService(getActivity(), playbackService ->
-                        playbackService.seekTo(time));
-            }
+            PlaybackController.bindToMedia3Service(getActivity(), controller ->
+                    controller.seekTo(time));
         });
         webvDescription.setPageFinishedListener(() -> {
             // Restoring the scroll position might not always work
@@ -103,20 +97,17 @@ public class ItemDescriptionFragment extends Fragment {
             return;
         }
         webViewLoader = Maybe.<String>create(emitter -> {
-            Playable media = DBReader.getFeedMedia(PlaybackPreferences.getCurrentlyPlayingFeedMediaId());
-            if (media == null) {
+            FeedMedia feedMedia = DBReader.getFeedMedia(PlaybackPreferences.getCurrentlyPlayingFeedMediaId());
+            if (feedMedia == null) {
                 emitter.onComplete();
                 return;
             }
-            if (media instanceof FeedMedia) {
-                FeedMedia feedMedia = ((FeedMedia) media);
-                if (feedMedia.getItem() == null) {
-                    feedMedia.setItem(DBReader.getFeedItem(feedMedia.getItemId()));
-                }
-                DBReader.loadDescriptionOfFeedItem(feedMedia.getItem());
+            if (feedMedia.getItem() == null) {
+                feedMedia.setItem(DBReader.getFeedItem(feedMedia.getItemId()));
             }
+            DBReader.loadDescriptionOfFeedItem(feedMedia.getItem());
             ShownotesCleaner shownotesCleaner = new ShownotesCleaner(
-                    context, media.getDescription(), media.getDuration());
+                    context, feedMedia.getDescription(), feedMedia.getDuration());
             emitter.onSuccess(shownotesCleaner.processShownotes());
         })
                 .subscribeOn(Schedulers.computation())

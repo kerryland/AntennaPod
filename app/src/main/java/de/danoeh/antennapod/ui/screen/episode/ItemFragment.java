@@ -21,7 +21,6 @@ import com.skydoves.balloon.ArrowOrientation;
 import com.skydoves.balloon.ArrowOrientationRules;
 import com.skydoves.balloon.Balloon;
 import com.skydoves.balloon.BalloonAnimation;
-import de.danoeh.antennapod.BuildConfig;
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.actionbutton.CancelDownloadActionButton;
 import de.danoeh.antennapod.actionbutton.DeleteActionButton;
@@ -35,6 +34,7 @@ import de.danoeh.antennapod.actionbutton.StreamActionButton;
 import de.danoeh.antennapod.actionbutton.VisitWebsiteActionButton;
 import de.danoeh.antennapod.activity.MainActivity;
 import de.danoeh.antennapod.databinding.FeeditemFragmentBinding;
+import de.danoeh.antennapod.playback.service.Media3PlaybackService;
 import de.danoeh.antennapod.ui.common.ClipboardUtils;
 import de.danoeh.antennapod.event.EpisodeDownloadEvent;
 import de.danoeh.antennapod.event.FeedItemEvent;
@@ -46,7 +46,6 @@ import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedMedia;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
 import de.danoeh.antennapod.playback.service.PlaybackController;
-import de.danoeh.antennapod.playback.service.PlaybackService;
 import de.danoeh.antennapod.playback.service.PlaybackStatus;
 import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.preferences.UsageStatistics;
@@ -69,7 +68,6 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.Collections;
 import java.util.Locale;
-import java.util.Objects;
 
 /**
  * Displays information about a FeedItem and actions.
@@ -119,26 +117,13 @@ public class ItemFragment extends Fragment {
         viewBinding.txtvTitle.setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_FULL);
         viewBinding.txtvTitle.setEllipsize(TextUtils.TruncateAt.END);
         viewBinding.webvDescription.setTimecodeSelectedListener(time -> {
-            if (!PlaybackService.isRunning) {
+            if (!Media3PlaybackService.isRunning) {
                 EventBus.getDefault().post(
                         new MessageEvent(getString(R.string.play_this_to_seek_position_message)));
                 return;
             }
-            if (BuildConfig.USE_MEDIA3_PLAYBACK_SERVICE) {
-                PlaybackController.bindToMedia3Service(getActivity(), controller ->
-                        controller.seekTo(time));
-                return;
-            }
-            PlaybackController.bindToService(getActivity(), playbackService -> {
-                if (item.getMedia() != null && playbackService.getPlayable() != null
-                        && Objects.equals(item.getMedia().getIdentifier(),
-                        playbackService.getPlayable().getIdentifier())) {
-                    playbackService.seekTo(time);
-                } else {
-                    EventBus.getDefault().post(
-                            new MessageEvent(getString(R.string.play_this_to_seek_position_message)));
-                }
-            });
+            PlaybackController.bindToMedia3Service(getActivity(), controller ->
+                    controller.seekTo(time));
         });
         registerForContextMenu(viewBinding.webvDescription);
         viewBinding.imgvCover.setOnClickListener(v -> openPodcast());

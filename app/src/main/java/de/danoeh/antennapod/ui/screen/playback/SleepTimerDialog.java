@@ -26,6 +26,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 
 import de.danoeh.antennapod.model.feed.FeedMedia;
+import de.danoeh.antennapod.playback.service.Media3PlaybackService;
 import de.danoeh.antennapod.ui.common.Keyboard;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -36,14 +37,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-import de.danoeh.antennapod.BuildConfig;
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.databinding.TimeDialogBinding;
 import de.danoeh.antennapod.event.playback.SleepTimerUpdatedEvent;
 import de.danoeh.antennapod.playback.service.PlaybackController;
-import de.danoeh.antennapod.playback.service.PlaybackService;
 import de.danoeh.antennapod.playback.service.internal.MediaLibrarySessionCallback;
-import de.danoeh.antennapod.playback.base.PlayerStatus;
 import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.preferences.PlaybackPreferences;
 import de.danoeh.antennapod.storage.preferences.SleepTimerPreferences;
@@ -81,11 +79,7 @@ public class SleepTimerDialog extends BottomSheetDialogFragment {
     @Override
     public void onStart() {
         super.onStart();
-        controller = new PlaybackController(getActivity()) {
-            @Override
-            public void loadMediaInfo() {
-            }
-        };
+        controller = new PlaybackController();
         controller.init();
         EventBus.getDefault().register(this);
 
@@ -233,35 +227,24 @@ public class SleepTimerDialog extends BottomSheetDialogFragment {
             showTimeRangeDialog(getContext(), from, to);
         });
         viewBinding.disableSleeptimerButton.setOnClickListener(v -> {
-            if (BuildConfig.USE_MEDIA3_PLAYBACK_SERVICE) {
-                PlaybackController.bindToMedia3Service(getActivity(), mediaController -> {
-                    mediaController.sendCustomCommand(
-                            MediaLibrarySessionCallback.SESSION_COMMAND_DISABLE_SLEEP_TIMER,
-                            Bundle.EMPTY);
-                });
-            } else if (controller != null) {
-                controller.disableSleepTimer();
-            }
+            PlaybackController.bindToMedia3Service(getActivity(), mediaController -> {
+                mediaController.sendCustomCommand(
+                        MediaLibrarySessionCallback.SESSION_COMMAND_DISABLE_SLEEP_TIMER,
+                        Bundle.EMPTY);
+            });
         });
         viewBinding.setSleeptimerButton.setOnClickListener(v -> {
-            if (!PlaybackService.isRunning
-                    || (!BuildConfig.USE_MEDIA3_PLAYBACK_SERVICE
-                            && controller != null && controller.getStatus() != PlayerStatus.PLAYING)) {
+            if (!Media3PlaybackService.isRunning) {
                 Snackbar.make(viewBinding.getRoot(), R.string.no_media_playing_label, Snackbar.LENGTH_LONG).show();
                 return;
             }
             try {
                 SleepTimerPreferences.setLastTimer("" + getSelectedSleepTime());
-                long time = SleepTimerPreferences.timerMillisOrEpisodes();
-                if (BuildConfig.USE_MEDIA3_PLAYBACK_SERVICE) {
-                    PlaybackController.bindToMedia3Service(getActivity(), mediaController -> {
-                        mediaController.sendCustomCommand(
-                                MediaLibrarySessionCallback.SESSION_COMMAND_SET_SLEEP_TIMER,
-                                Bundle.EMPTY);
-                    });
-                } else if (controller != null) {
-                    controller.setSleepTimer(time);
-                }
+                PlaybackController.bindToMedia3Service(getActivity(), mediaController -> {
+                    mediaController.sendCustomCommand(
+                            MediaLibrarySessionCallback.SESSION_COMMAND_SET_SLEEP_TIMER,
+                            Bundle.EMPTY);
+                });
                 Keyboard.hide(getActivity());
             } catch (NumberFormatException e) {
                 e.printStackTrace();
@@ -407,15 +390,11 @@ public class SleepTimerDialog extends BottomSheetDialogFragment {
     void setupExtendButton(TextView button, String text, int extendValue) {
         button.setText(text);
         button.setOnClickListener(v -> {
-            if (BuildConfig.USE_MEDIA3_PLAYBACK_SERVICE) {
-                PlaybackController.bindToMedia3Service(getActivity(), mediaController -> {
-                    mediaController.sendCustomCommand(
-                            MediaLibrarySessionCallback.SESSION_COMMAND_EXTEND_SLEEP_TIMER,
-                            MediaLibrarySessionCallback.createBundle(extendValue));
-                });
-            } else if (controller != null) {
-                controller.extendSleepTimer(extendValue);
-            }
+            PlaybackController.bindToMedia3Service(getActivity(), mediaController -> {
+                mediaController.sendCustomCommand(
+                        MediaLibrarySessionCallback.SESSION_COMMAND_EXTEND_SLEEP_TIMER,
+                        MediaLibrarySessionCallback.createBundle(extendValue));
+            });
         });
     }
 

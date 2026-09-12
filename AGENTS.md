@@ -31,6 +31,7 @@ Never look in any `strings.xml` file except ui/i18n/src/main/res/values/strings.
 Never consult the original project's github pages.
 Do not duplicate existing code. Refactor it and reuse it.
 Write useful tests for new code.
+Never edit "kerry-notes.md". 
 
 # Coding Style
 

@@ -1,8 +1,6 @@
 package de.danoeh.antennapod.ui.screen.playback;
 
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,7 +16,6 @@ import com.google.android.material.chip.Chip;
 import com.google.android.material.snackbar.Snackbar;
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.event.playback.SpeedChangedEvent;
-import de.danoeh.antennapod.playback.base.BuildConfig;
 import de.danoeh.antennapod.playback.service.PlaybackController;
 import de.danoeh.antennapod.playback.service.internal.MediaLibrarySessionCallback;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
@@ -56,12 +53,7 @@ public class VariableSpeedDialog extends BottomSheetDialogFragment {
     @Override
     public void onStart() {
         super.onStart();
-        controller = new PlaybackController(getActivity()) {
-            @Override
-            public void loadMediaInfo() {
-                VariableSpeedDialog.this.loadMediaInfo();
-            }
-        };
+        controller = new PlaybackController();
         controller.init();
         EventBus.getDefault().register(this);
         loadMediaInfo();
@@ -119,12 +111,8 @@ public class VariableSpeedDialog extends BottomSheetDialogFragment {
         speedSeekBar = root.findViewById(R.id.speed_seek_bar);
         speedSeekBar.setProgressChangedListener(multiplier -> {
             UserPreferences.setPlaybackSpeed(multiplier);
-            if (BuildConfig.USE_MEDIA3_PLAYBACK_SERVICE) {
-                PlaybackController.bindToMedia3Service(getContext(),
-                        controller -> controller.setPlaybackSpeed(multiplier));
-            } else if (controller != null) {
-                controller.setPlaybackSpeed(multiplier);
-            }
+            PlaybackController.bindToMedia3Service(getContext(),
+                    controller -> controller.setPlaybackSpeed(multiplier));
         });
         RecyclerView selectedSpeedsGrid = root.findViewById(R.id.selected_speeds_grid);
         selectedSpeedsGrid.setLayoutManager(new GridLayoutManager(getContext(), 3));
@@ -144,13 +132,9 @@ public class VariableSpeedDialog extends BottomSheetDialogFragment {
         skipSilenceCheckbox.setChecked(UserPreferences.isSkipSilence());
         skipSilenceCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             UserPreferences.setSkipSilence(isChecked);
-            if (BuildConfig.USE_MEDIA3_PLAYBACK_SERVICE) {
-                PlaybackController.bindToMedia3Service(getContext(), mediaController ->
-                        mediaController.sendCustomCommand(MediaLibrarySessionCallback.SESSION_COMMAND_SKIP_SILENCE,
-                                MediaLibrarySessionCallback.createBundle(isChecked)));
-            } else if (controller != null) {
-                controller.setSkipSilence(isChecked);
-            }
+            PlaybackController.bindToMedia3Service(getContext(), mediaController ->
+                    mediaController.sendCustomCommand(MediaLibrarySessionCallback.SESSION_COMMAND_SKIP_SILENCE,
+                            MediaLibrarySessionCallback.createBundle(isChecked)));
         });
         return root;
     }
@@ -191,13 +175,8 @@ public class VariableSpeedDialog extends BottomSheetDialogFragment {
             });
             holder.chip.setOnClickListener(v -> {
                 UserPreferences.setPlaybackSpeed(speed);
-                if (BuildConfig.USE_MEDIA3_PLAYBACK_SERVICE) {
-                    PlaybackController.bindToMedia3Service(getContext(),
-                            controller -> controller.setPlaybackSpeed(speed));
-                } else if (controller != null) {
-                    controller.setPlaybackSpeed(speed);
-                }
-                new Handler(Looper.getMainLooper()).postDelayed(() -> dismiss(), 200);
+                PlaybackController.bindToMedia3Service(getContext(),
+                        controller -> controller.setPlaybackSpeed(speed));
             });
         }
 

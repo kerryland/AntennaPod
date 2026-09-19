@@ -713,6 +713,7 @@
     <string name="automatic_database_export_error">Error during automatic database backup</string>
     <string name="automatic_database_export_folder_inaccessible">Automatic backup folder no longer accessible</string>
     <string name="automatic_database_export_reselect_folder">Please reselect the export folder to continue automatic backups</string>
+    <string name="automatic_database_export_reselect_action">Select folder</string>
     <string name="last_database_backup_label">Last database backup</string>
     <string name="last_database_backup_never">Never</string>
     <string name="database_import_label">Database import</string>

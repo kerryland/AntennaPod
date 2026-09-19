@@ -277,7 +277,7 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
 
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
     public void onEventMainThread(FeedUpdateRunningEvent event) {
-        swipeRefreshLayout.setRefreshing(event.isFeedUpdateRunning);
+        swipeRefreshLayout.setRefreshing(event.isRunning());
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

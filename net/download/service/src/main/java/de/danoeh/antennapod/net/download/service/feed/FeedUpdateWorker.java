@@ -17,7 +17,9 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.greenrobot.eventbus.EventBus;
 
+import de.danoeh.antennapod.event.FeedUpdateRunningEvent;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.model.feed.SortOrder;
@@ -138,6 +140,7 @@ public class FeedUpdateWorker extends Worker {
             notificationManager.cancel(R.id.notification_updating_feeds);
             SynchronizationQueue.getInstance().syncImmediately();
         }
+        EventBus.getDefault().post(new FeedUpdateRunningEvent(FeedUpdateRunningEvent.State.FINISHED));
         return Result.success();
     }
 

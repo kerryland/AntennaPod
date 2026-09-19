@@ -250,7 +250,7 @@ public class SubscriptionFragment extends Fragment
 
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
     public void onEventMainThread(FeedUpdateRunningEvent event) {
-        swipeRefreshLayout.setRefreshing(event.isFeedUpdateRunning);
+        swipeRefreshLayout.setRefreshing(event.isRunning());
     }
 
     @Override

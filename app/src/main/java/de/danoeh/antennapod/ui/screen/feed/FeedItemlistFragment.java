@@ -487,11 +487,11 @@ public class FeedItemlistFragment extends Fragment implements AdapterView.OnItem
 
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
     public void onEventMainThread(FeedUpdateRunningEvent event) {
-        nextPageLoader.setLoadingState(event.isFeedUpdateRunning);
-        if (!event.isFeedUpdateRunning) {
+        nextPageLoader.setLoadingState(event.isRunning());
+        if (!event.isRunning()) {
             nextPageLoader.getRoot().setVisibility(View.GONE);
         }
-        viewBinding.swipeRefresh.setRefreshing(event.isFeedUpdateRunning);
+        viewBinding.swipeRefresh.setRefreshing(event.isRunning());
     }
 
     private void refreshHeaderView() {

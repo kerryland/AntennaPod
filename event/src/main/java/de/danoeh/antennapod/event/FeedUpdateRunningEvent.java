@@ -1,9 +1,17 @@
 package de.danoeh.antennapod.event;
 
 public class FeedUpdateRunningEvent {
-    public final boolean isFeedUpdateRunning;
+    public enum State {
+        RUNNING, CANCELLED, FINISHED
+    }
 
-    public FeedUpdateRunningEvent(boolean isRunning) {
-        this.isFeedUpdateRunning = isRunning;
+    public final State state;
+
+    public FeedUpdateRunningEvent(State state) {
+        this.state = state;
+    }
+
+    public boolean isRunning() {
+        return state == State.RUNNING;
     }
 }

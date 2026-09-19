@@ -115,7 +115,7 @@ public class FeedUpdateManagerImpl extends FeedUpdateManager {
         if (System.currentTimeMillis() - lastManualRefreshTime < REFRESH_COOLDOWN_MS
                 && lastManualRefreshFeedId == feedId) {
             EventBus.getDefault().post(new MessageEvent(context.getString(R.string.please_wait_before_refreshing)));
-            EventBus.getDefault().postSticky(new FeedUpdateRunningEvent(false));
+            EventBus.getDefault().postSticky(new FeedUpdateRunningEvent(FeedUpdateRunningEvent.State.CANCELLED));
             return;
         }
         Log.d(TAG, "Run auto update immediately in background.");
@@ -123,7 +123,7 @@ public class FeedUpdateManagerImpl extends FeedUpdateManager {
             runOnce(context, feed);
         } else if (!NetworkUtils.networkAvailable()) {
             EventBus.getDefault().post(new MessageEvent(context.getString(R.string.download_error_no_connection)));
-            EventBus.getDefault().postSticky(new FeedUpdateRunningEvent(false));
+            EventBus.getDefault().postSticky(new FeedUpdateRunningEvent(FeedUpdateRunningEvent.State.CANCELLED));
         } else if (NetworkUtils.isFeedRefreshAllowed()) {
             runOnce(context, feed);
         } else {
@@ -141,10 +141,10 @@ public class FeedUpdateManagerImpl extends FeedUpdateManager {
                     runOnce(context, feed);
                 })
                 .setOnCancelListener((d) -> {
-                    EventBus.getDefault().postSticky(new FeedUpdateRunningEvent(false));
+                    EventBus.getDefault().postSticky(new FeedUpdateRunningEvent(FeedUpdateRunningEvent.State.CANCELLED));
                 })
                 .setNegativeButton(R.string.no, (dialog, which) -> {
-                    EventBus.getDefault().postSticky(new FeedUpdateRunningEvent(false));
+                    EventBus.getDefault().postSticky(new FeedUpdateRunningEvent(FeedUpdateRunningEvent.State.CANCELLED));
                 });
         if (NetworkUtils.isNetworkRestricted() && NetworkUtils.isVpnOverWifi()) {
             builder.setMessage(R.string.confirm_mobile_feed_refresh_dialog_message_vpn);

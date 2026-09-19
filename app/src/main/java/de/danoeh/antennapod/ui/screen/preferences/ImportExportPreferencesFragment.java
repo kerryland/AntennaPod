@@ -32,7 +32,6 @@ import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.model.feed.SortOrder;
-import de.danoeh.antennapod.storage.importexport.AutomaticDatabaseExportWorker;
 import de.danoeh.antennapod.storage.importexport.DatabaseExporter;
 import de.danoeh.antennapod.storage.importexport.FavoritesWriter;
 import de.danoeh.antennapod.storage.importexport.HtmlWriter;
@@ -188,7 +187,6 @@ public class ImportExportPreferencesFragment extends AnimatedPreferenceFragment 
                         return false;
                     } else {
                         UserPreferences.setAutomaticExportFolder(null);
-                        AutomaticDatabaseExportWorker.enqueueIfNeeded(getContext(), false);
                     }
                     return true;
                 });
@@ -411,7 +409,6 @@ public class ImportExportPreferencesFragment extends AnimatedPreferenceFragment 
         getActivity().getContentResolver().takePersistableUriPermission(uri,
                 Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         UserPreferences.setAutomaticExportFolder(uri.toString());
-        AutomaticDatabaseExportWorker.enqueueIfNeeded(getContext(), true);
         ((SwitchPreferenceCompat) findPreference(PREF_AUTOMATIC_DATABASE_EXPORT)).setChecked(true);
     }
 

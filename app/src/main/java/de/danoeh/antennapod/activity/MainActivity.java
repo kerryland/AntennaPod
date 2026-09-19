@@ -58,7 +58,6 @@ import de.danoeh.antennapod.net.sync.serviceinterface.SynchronizationQueue;
 import de.danoeh.antennapod.playback.cast.CastEnabledActivity;
 import de.danoeh.antennapod.playback.service.PlaybackController;
 import de.danoeh.antennapod.storage.databasemaintenanceservice.DatabaseMaintenanceWorker;
-import de.danoeh.antennapod.storage.importexport.AutomaticDatabaseExportWorker;
 import de.danoeh.antennapod.storage.preferences.PlaybackPreferences;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.TransitionEffect;
@@ -225,7 +224,6 @@ public class MainActivity extends CastEnabledActivity implements NavigationToolb
         bottomSheetBackPressedCallback = new BottomSheetBackPressedCallback(false, sheetBehavior, bottomSheet);
 
         SynchronizationQueue.getInstance().syncIfNotSyncedRecently();
-        AutomaticDatabaseExportWorker.enqueueIfNeeded(this, false);
         DatabaseMaintenanceWorker.enqueueIfNeeded(this);
 
         WorkManager.getInstance(this)
@@ -239,7 +237,8 @@ public class MainActivity extends CastEnabledActivity implements NavigationToolb
                             isRefreshingFeeds = true;
                         }
                     }
-                    EventBus.getDefault().postSticky(new FeedUpdateRunningEvent(isRefreshingFeeds));
+                    EventBus.getDefault().postSticky(new FeedUpdateRunningEvent(isRefreshingFeeds
+                            ? FeedUpdateRunningEvent.State.RUNNING : FeedUpdateRunningEvent.State.CANCELLED));
                 });
         WorkManager.getInstance(this)
                 .getWorkInfosByTagLiveData(DownloadServiceInterface.WORK_TAG)

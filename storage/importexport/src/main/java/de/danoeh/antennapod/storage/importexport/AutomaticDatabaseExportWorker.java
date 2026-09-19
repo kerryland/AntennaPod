@@ -1,6 +1,7 @@
 package de.danoeh.antennapod.storage.importexport;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -8,16 +9,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 import android.widget.Toast;
-import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.documentfile.provider.DocumentFile;
-import androidx.work.ExistingPeriodicWorkPolicy;
-import androidx.work.PeriodicWorkRequest;
-import androidx.work.WorkManager;
-import androidx.work.Worker;
-import androidx.work.WorkerParameters;
+import de.danoeh.antennapod.event.FeedUpdateRunningEvent;
 import de.danoeh.antennapod.event.MessageEvent;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.notifications.NotificationUtils;
@@ -32,46 +30,52 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
-public class AutomaticDatabaseExportWorker extends Worker {
-    private static final String WORK_ID_AUTOMATIC_DATABASE_EXPORT = "de.danoeh.antennapod.AutomaticDbExport";
+public class AutomaticDatabaseExportWorker {
+    private static final AutomaticDatabaseExportWorker INSTANCE = new AutomaticDatabaseExportWorker();
+    private static Context appContext;
+    private static boolean registered;
 
-    public static void enqueueIfNeeded(Context context, boolean replace) {
-        if (UserPreferences.getAutomaticExportFolder() == null) {
-            WorkManager.getInstance(context).cancelUniqueWork(WORK_ID_AUTOMATIC_DATABASE_EXPORT);
-        } else {
-            PeriodicWorkRequest workRequest = new PeriodicWorkRequest.Builder(
-                        AutomaticDatabaseExportWorker.class, 1, TimeUnit.DAYS)
-                    .build();
-            WorkManager.getInstance(context).enqueueUniquePeriodicWork(WORK_ID_AUTOMATIC_DATABASE_EXPORT,
-                    replace ? ExistingPeriodicWorkPolicy.REPLACE : ExistingPeriodicWorkPolicy.KEEP, workRequest);
+    public static void init(Context context) {
+        appContext = context.getApplicationContext();
+        if (!registered) {
+            EventBus.getDefault().register(INSTANCE);
+            registered = true;
         }
     }
 
-    public AutomaticDatabaseExportWorker(@NonNull Context context, @NonNull WorkerParameters params) {
-        super(context, params);
+    private AutomaticDatabaseExportWorker() {
     }
 
-    @Override
-    @NonNull
-    public Result doWork() {
+    @Subscribe(threadMode = ThreadMode.POSTING)
+    public void onFeedUpdateFinished(FeedUpdateRunningEvent event) {
+        if (event.state == FeedUpdateRunningEvent.State.FINISHED) {
+            runIfNeeded(appContext);
+        }
+    }
+
+    public static void runIfNeeded(Context context) {
         String folderUri = UserPreferences.getAutomaticExportFolder();
         if (folderUri == null) {
-            return Result.success();
+            return;
+        }
+        long lastBackup = UserPreferences.getLastBackupTime();
+        if (lastBackup > 0 && System.currentTimeMillis() - lastBackup < TimeUnit.DAYS.toMillis(1)) {
+            return;
         }
         try {
-            export(folderUri);
-            return Result.success();
-        } catch (IOException e) {
-            showErrorNotification(e);
-            return Result.failure();
+            export(context, folderUri);
+        } catch (Exception e) {
+            showErrorNotification(context, e);
         }
     }
 
-    private void export(String folderUri) throws IOException {
-        DocumentFile documentFolder = DocumentFile.fromTreeUri(getApplicationContext(), Uri.parse(folderUri));
+    private static void export(Context context, String folderUri) throws IOException {
+        DocumentFile documentFolder = DocumentFile.fromTreeUri(context, Uri.parse(folderUri));
         if (documentFolder == null || !documentFolder.exists() || !documentFolder.canWrite()) {
-            promptFolderReselection();
+            promptFolderReselection(context);
             return;
         }
         String filename = String.format("AntennaPodBackup-%s.db",
@@ -80,7 +84,7 @@ public class AutomaticDatabaseExportWorker extends Worker {
         if (exportFile == null || !exportFile.canWrite()) {
             throw new IOException("Unable to create export file");
         }
-        DatabaseExporter.exportToDocument(exportFile.getUri(), getApplicationContext());
+        DatabaseExporter.exportToDocument(exportFile.getUri(), context);
         List<DocumentFile> files = new ArrayList<>(Arrays.asList(documentFolder.listFiles()));
         Iterator<DocumentFile> itr = files.iterator();
         while (itr.hasNext()) {
@@ -102,57 +106,71 @@ public class AutomaticDatabaseExportWorker extends Worker {
         }
     }
 
-    private void promptFolderReselection() {
+    private static void promptFolderReselection(Context context) {
         String folderUri = UserPreferences.getAutomaticExportFolder();
         if (folderUri == null) {
             return;
         }
+        String message = context.getString(R.string.automatic_database_export_reselect_folder);
+        if (EventBus.getDefault().hasSubscriberForEvent(MessageEvent.class)) {
+            EventBus.getDefault().post(new MessageEvent(message,
+                    AutomaticDatabaseExportWorker::openAutomaticBackupReselect,
+                    context.getString(R.string.automatic_database_export_reselect_action), true));
+            return;
+        }
+
         Intent intent = new Intent();
-        intent.setClassName(getApplicationContext(),
+        intent.setClassName(context,
                 "de.danoeh.antennapod.ui.screen.preferences.PreferenceActivity");
         intent.putExtra("OpenAutomaticBackup", true);
-        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(),
+        PendingIntent pendingIntent = PendingIntent.getActivity(context,
                 R.id.pending_intent_backup_reselect, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        Notification notification = new NotificationCompat.Builder(getApplicationContext(),
+        Notification notification = new NotificationCompat.Builder(context,
                         NotificationUtils.CHANNEL_ID_USER_ACTION)
-                .setContentTitle(getApplicationContext().getString(
+                .setContentTitle(context.getString(
                         R.string.automatic_database_export_folder_inaccessible))
-                .setContentText(getApplicationContext().getString(
-                        R.string.automatic_database_export_reselect_folder))
+                .setContentText(message)
                 .setContentIntent(pendingIntent)
                 .setSmallIcon(R.drawable.ic_notification_sync_error)
                 .setAutoCancel(true)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .build();
-        NotificationManager nm = (NotificationManager) getApplicationContext()
+        NotificationManager nm = (NotificationManager) context
                 .getSystemService(Context.NOTIFICATION_SERVICE);
-        if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.POST_NOTIFICATIONS)
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
                 == PackageManager.PERMISSION_GRANTED) {
             nm.notify(R.id.notification_id_backup_reselect, notification);
-        } else {
-            Toast.makeText(getApplicationContext(),
-                    getApplicationContext().getString(R.string.automatic_database_export_reselect_folder),
-                    Toast.LENGTH_LONG).show();
         }
     }
 
-    private void showErrorNotification(Exception exception) {
-        final String description = getApplicationContext().getString(R.string.automatic_database_export_error)
+    private static void openAutomaticBackupReselect(Context context) {
+        Intent intent = new Intent();
+        intent.setClassName(context,
+                "de.danoeh.antennapod.ui.screen.preferences.PreferenceActivity");
+        intent.putExtra("OpenAutomaticBackup", true);
+        if (!(context instanceof Activity)) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        }
+        context.startActivity(intent);
+    }
+
+    private static void showErrorNotification(Context context, Exception exception) {
+        final String description = context.getString(R.string.automatic_database_export_error)
                 + " " + exception.getMessage();
         if (EventBus.getDefault().hasSubscriberForEvent(MessageEvent.class)) {
             EventBus.getDefault().post(new MessageEvent(description));
             return;
         }
 
-        Intent intent = getApplicationContext().getPackageManager().getLaunchIntentForPackage(
-                getApplicationContext().getPackageName());
-        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(),
+        Intent intent = context.getPackageManager().getLaunchIntentForPackage(
+                context.getPackageName());
+        PendingIntent pendingIntent = PendingIntent.getActivity(context,
                 R.id.pending_intent_backup_error, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        Notification notification = new NotificationCompat.Builder(getApplicationContext(),
+        Notification notification = new NotificationCompat.Builder(context,
                         NotificationUtils.CHANNEL_ID_SYNC_ERROR)
-                .setContentTitle(getApplicationContext().getString(R.string.automatic_database_export_error))
+                .setContentTitle(context.getString(R.string.automatic_database_export_error))
                 .setContentText(exception.getMessage())
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(description))
                 .setContentIntent(pendingIntent)
@@ -160,13 +178,18 @@ public class AutomaticDatabaseExportWorker extends Worker {
                 .setAutoCancel(true)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .build();
-        NotificationManager nm = (NotificationManager) getApplicationContext()
+        NotificationManager nm = (NotificationManager) context
                 .getSystemService(Context.NOTIFICATION_SERVICE);
-        if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.POST_NOTIFICATIONS)
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
                 == PackageManager.PERMISSION_GRANTED) {
             nm.notify(R.id.notification_id_backup_error, notification);
         } else {
-            Toast.makeText(getApplicationContext(), description, Toast.LENGTH_LONG).show();
+            showToast(context, description);
         }
+    }
+
+    private static void showToast(Context context, String message) {
+        new Handler(Looper.getMainLooper()).post(() ->
+                Toast.makeText(context, message, Toast.LENGTH_LONG).show());
     }
 }

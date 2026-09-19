@@ -117,7 +117,7 @@ public class SyncService extends Worker {
         try {
             while (true) {
                 FeedUpdateRunningEvent event = EventBus.getDefault().getStickyEvent(FeedUpdateRunningEvent.class);
-                if (event == null || !event.isFeedUpdateRunning) {
+                if (event == null || !event.isRunning()) {
                     return;
                 }
                 //noinspection BusyWait

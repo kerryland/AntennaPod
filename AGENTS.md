@@ -32,6 +32,7 @@ Never consult the original project's github pages.
 Do not duplicate existing code. Refactor it and reuse it.
 Write useful tests for new code.
 Never edit "kerry-notes.md". 
+Confirm your assumptions with the user before writing code.
 
 # Coding Style
 

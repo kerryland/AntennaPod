@@ -44,6 +44,12 @@
         android:title="@string/remove_from_queue_label" />
 
     <item
+        android:id="@+id/toggle_permanent_item"
+        android:icon="@drawable/ic_push_pin"
+        android:menuCategory="container"
+        android:title="@string/toggle_permanent_label" />
+
+    <item
         android:id="@+id/remove_item"
         android:icon="@drawable/ic_delete"
         android:menuCategory="container"

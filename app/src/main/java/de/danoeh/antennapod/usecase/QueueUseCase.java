@@ -34,6 +34,16 @@ public class QueueUseCase {
         QueueUseCase.instance = instance;
     }
 
+    public static void togglePermanent(FeedItem item) {
+        assert item.isTagged(FeedItem.TAG_QUEUE);
+        if (item.isTagged(FeedItem.TAG_QUEUE_PERMANENT)) {
+            item.removeTag(FeedItem.TAG_QUEUE_PERMANENT);
+        } else {
+            item.addTag(FeedItem.TAG_QUEUE_PERMANENT);
+        }
+        DBWriter.setFeedItem(item);
+    }
+
     public void moveToPlayNext(Context context, List<FeedItem> items,
                                @Nullable CurrentPositionCallback uiUpdateCallback) {
         Observable.fromCallable(() -> DBReader.getQueue())

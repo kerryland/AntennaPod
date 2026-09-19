@@ -282,6 +282,7 @@
         <item quantity="one">%d episode added to queue.</item>
         <item quantity="other">%d episodes added to queue.</item>
     </plurals>
+    <string name="toggle_permanent_label">Toggle Pin</string>
     <string name="remove_from_queue_label">Remove from queue</string>
     <plurals name="removed_from_queue_message">
         <item quantity="one">%d episode removed from queue.</item>

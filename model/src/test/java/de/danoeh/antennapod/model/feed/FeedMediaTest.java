@@ -53,10 +53,11 @@ public class FeedMediaTest {
     }
 
     /**
-     * Downloading a media from a new item (thus not played) should change the item to not played.
+     * Downloading a media from a new item (in the inbox) should not change the item state.
+     * Downloading must not remove an episode from the inbox.
      */
     @Test
-    public void testDownloadMediaOfNewItem_changedToNotPlayedItem() {
+    public void testDownloadMediaOfNewItem_unchangedItemState() {
         FeedItem item = mock(FeedItem.class);
         when(item.isNew()).thenReturn(true);
         when(item.isPlayed()).thenReturn(false);
@@ -64,9 +65,9 @@ public class FeedMediaTest {
         media.setItem(item);
         media.setDownloaded(true, System.currentTimeMillis());
 
-        verify(item).setPlayed(false);
         verify(item, never()).setNew();
         verify(item, never()).setPlayed(true);
+        verify(item, never()).setPlayed(false);
     }
 
 }

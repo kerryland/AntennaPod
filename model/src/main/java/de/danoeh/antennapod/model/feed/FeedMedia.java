@@ -458,9 +458,6 @@ public class FeedMedia implements Playable {
 
     public void setDownloaded(boolean downloaded, long when) {
         this.downloadDate = downloaded ? when : 0;
-        if (item != null && downloaded && item.isNew()) {
-            item.setPlayed(false);
-        }
     }
 
     public long getDownloadDate() {

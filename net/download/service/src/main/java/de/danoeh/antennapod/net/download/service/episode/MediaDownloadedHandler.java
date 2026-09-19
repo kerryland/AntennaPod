@@ -49,8 +49,6 @@ public class MediaDownloadedHandler implements Runnable {
             Log.e(TAG, "Could not find downloaded media object in database");
             return;
         }
-        // media.setDownloaded modifies played state
-        boolean broadcastUnreadStateUpdate = media.getItem() != null && media.getItem().isNew();
         media.setDownloaded(true, System.currentTimeMillis());
         media.setLocalFileUrl(request.getDestination());
         media.setSize(new File(request.getDestination()).length());
@@ -99,7 +97,7 @@ public class MediaDownloadedHandler implements Runnable {
                 // setFeedItem() signals (via EventBus) that the item has been updated,
                 // so we do it after the enclosing media has been updated above,
                 // to ensure subscribers will get the updated FeedMedia as well
-                DBWriter.setFeedItem(item, broadcastUnreadStateUpdate).get();
+                DBWriter.setFeedItem(item).get();
             }
         } catch (InterruptedException e) {
             Log.e(TAG, "MediaHandlerThread was interrupted");

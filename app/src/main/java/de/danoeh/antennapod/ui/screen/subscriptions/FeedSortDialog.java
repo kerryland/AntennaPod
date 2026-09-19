@@ -31,7 +31,7 @@ public class FeedSortDialog {
             if (selectedIndex != which) {
                 UserPreferences.setFeedOrder(FeedOrder.fromOrdinal(Integer.parseInt(entryValues.get(which))));
                 //Update subscriptions
-                EventBus.getDefault().post(new FeedItemEvent(Collections.emptyList(), true));
+                EventBus.getDefault().post(new FeedItemEvent());
             }
             d.dismiss();
         });

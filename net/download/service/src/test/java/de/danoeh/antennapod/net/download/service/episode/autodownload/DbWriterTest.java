@@ -116,7 +116,7 @@ public class DbWriterTest {
                 "dummy path", "download_url", System.currentTimeMillis(), null, 0, 0);
         item.setMedia(media);
 
-        DBWriter.setFeedItem(item, false).get(TIMEOUT, TimeUnit.SECONDS);
+        DBWriter.setFeedItem(item).get(TIMEOUT, TimeUnit.SECONDS);
 
         media.setPosition(position);
         media.setLastPlayedTimeStatistics(lastPlayedTimeStatistics);

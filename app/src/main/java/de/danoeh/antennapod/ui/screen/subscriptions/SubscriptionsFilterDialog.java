@@ -127,6 +127,6 @@ public class SubscriptionsFilterDialog extends BottomSheetDialogFragment {
     private static void updateFilter(Set<String> filterValues) {
         SubscriptionsFilter subscriptionsFilter = new SubscriptionsFilter(filterValues.toArray(new String[0]));
         UserPreferences.setSubscriptionsFilter(subscriptionsFilter);
-        EventBus.getDefault().post(new FeedItemEvent(Collections.emptyList(), true));
+        EventBus.getDefault().post(new FeedItemEvent());
     }
 }

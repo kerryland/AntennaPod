@@ -57,7 +57,7 @@ public class UserInterfacePreferencesFragment extends AnimatedPreferenceFragment
                 .setOnPreferenceChangeListener(
                         (preference, newValue) -> {
                             UserPreferences.setShowRemainTimeSetting((Boolean) newValue);
-                            EventBus.getDefault().post(new FeedItemEvent(Collections.emptyList(), true));
+                            EventBus.getDefault().post(new FeedItemEvent());
                             EventBus.getDefault().post(new PlayerStatusEvent());
                             return true;
                         });
@@ -87,7 +87,7 @@ public class UserInterfacePreferencesFragment extends AnimatedPreferenceFragment
         findPreference(UserPreferences.PREF_STREAM_OVER_DOWNLOAD)
                 .setOnPreferenceChangeListener((preference, newValue) -> {
                     // Update all visible lists to reflect new streaming action button
-                    EventBus.getDefault().post(new FeedItemEvent(Collections.emptyList(), true));
+                    EventBus.getDefault().post(new FeedItemEvent());
                     // User consciously decided whether to prefer the streaming button, disable suggestion
                     UsageStatistics.doNotAskAgain(UsageStatistics.ACTION_STREAM);
                     return true;

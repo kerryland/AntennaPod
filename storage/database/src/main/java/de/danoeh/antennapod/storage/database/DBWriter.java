@@ -128,7 +128,7 @@ public class DBWriter {
             Log.d(TAG, "Deleting media " + media.getEpisodeTitle());
             deleteFeedMediaSynchronous(context, media);
             EventBus.getDefault().post(new FeedItemEvent(media.getItem() != null
-                    ? Collections.singletonList(media.getItem()) : Collections.emptyList(), false));
+                    ? Collections.singletonList(media.getItem()) : Collections.emptyList()));
             if (UserPreferences.shouldDeleteRemoveFromQueue()) {
                 DBWriter.removeQueueItemSynchronous(media.getItemId());
             }
@@ -266,7 +266,7 @@ public class DBWriter {
         for (FeedItem item : removedFromQueue) {
             EventBus.getDefault().post(QueueEvent.irreversibleRemoved(item));
         }
-        EventBus.getDefault().post(new FeedItemEvent(deleted, false));
+        EventBus.getDefault().post(new FeedItemEvent(deleted));
 
         // we assume we also removed download log entries for the feed or its media files.
         // especially important if download or refresh failed, as the user should not be able
@@ -380,7 +380,7 @@ public class DBWriter {
                     adapter.setQueue(queue);
                     item.addTag(FeedItem.TAG_QUEUE);
                     EventBus.getDefault().post(QueueEvent.added(item, index));
-                    EventBus.getDefault().post(new FeedItemEvent(Collections.singletonList(item), false));
+                    EventBus.getDefault().post(new FeedItemEvent(Collections.singletonList(item)));
                     if (item.isNew()) {
                         DBWriter.markItemsPlayed(FeedItem.UNPLAYED, false, Collections.singletonList(item));
                     }
@@ -444,7 +444,7 @@ public class DBWriter {
                 for (QueueEvent event : events) {
                     EventBus.getDefault().post(event);
                 }
-                EventBus.getDefault().post(new FeedItemEvent(updatedItems, false));
+                EventBus.getDefault().post(new FeedItemEvent(updatedItems));
                 DBWriter.markItemsPlayed(FeedItem.UNPLAYED, false, markAsUnplayed);
             }
             adapter.close();
@@ -544,7 +544,7 @@ public class DBWriter {
             for (QueueEvent event : events) {
                 EventBus.getDefault().post(event);
             }
-            EventBus.getDefault().post(new FeedItemEvent(updatedItems, false));
+            EventBus.getDefault().post(new FeedItemEvent(updatedItems));
         } else {
             Log.w(TAG, "Queue was not modified by call to removeQueueItem");
         }
@@ -567,7 +567,7 @@ public class DBWriter {
             final PodDBAdapter adapter = PodDBAdapter.getInstance().open();
             adapter.addFavoriteItems(items);
             adapter.close();
-            EventBus.getDefault().post(new FeedItemEvent(items, false));
+            EventBus.getDefault().post(new FeedItemEvent(items));
         });
     }
 
@@ -579,7 +579,7 @@ public class DBWriter {
             final PodDBAdapter adapter = PodDBAdapter.getInstance().open();
             adapter.removeFavoriteItems(items);
             adapter.close();
-            EventBus.getDefault().post(new FeedItemEvent(items, false));
+            EventBus.getDefault().post(new FeedItemEvent(items));
         });
     }
 
@@ -715,7 +715,7 @@ public class DBWriter {
             adapter.open();
             adapter.setFeedItemsRead(played, resetMediaPosition, items);
             adapter.close();
-            EventBus.getDefault().post(new FeedItemEvent(items, true));
+            EventBus.getDefault().post(new FeedItemEvent(items));
             if (itemsRemovedFromInbox) {
                 EventBus.getDefault().post(new InboxEvent(InboxEvent.Action.REMOVED));
             }
@@ -733,7 +733,7 @@ public class DBWriter {
             adapter.open();
             adapter.setFeedItems(FeedItem.NEW, FeedItem.UNPLAYED, feedId);
             adapter.close();
-            EventBus.getDefault().post(new FeedItemEvent(Collections.emptyList(), true));
+            EventBus.getDefault().post(new FeedItemEvent());
             EventBus.getDefault().post(new InboxEvent(InboxEvent.Action.REMOVED));
         });
     }
@@ -778,7 +778,7 @@ public class DBWriter {
             adapter.open();
             adapter.storeFeedItemlist(items);
             adapter.close();
-            EventBus.getDefault().post(new FeedItemEvent(items, false));
+            EventBus.getDefault().post(new FeedItemEvent(items));
         });
     }
 
@@ -831,15 +831,14 @@ public class DBWriter {
      * the content of FeedComponent-attributes.
      *
      * @param item The FeedItem object.
-     * @param unreadStatusChanged Whether the unread status of this item or related items has changed.
      */
-    public static Future<?> setFeedItem(final FeedItem item, final boolean unreadStatusChanged) {
+    public static Future<?> setFeedItem(final FeedItem item) {
         return runOnDbThread(() -> {
             PodDBAdapter adapter = PodDBAdapter.getInstance();
             adapter.open();
             adapter.setSingleFeedItem(item);
             adapter.close();
-            EventBus.getDefault().post(new FeedItemEvent(Collections.singletonList(item), unreadStatusChanged));
+            EventBus.getDefault().post(new FeedItemEvent(Collections.singletonList(item)));
         });
     }
 

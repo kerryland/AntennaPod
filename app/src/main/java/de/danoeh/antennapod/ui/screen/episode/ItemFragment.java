@@ -182,7 +182,7 @@ public class ItemFragment extends Fragment {
         positiveButton.setOnClickListener(v1 -> {
             UserPreferences.setStreamOverDownload(offerStreaming);
             // Update all visible lists to reflect new streaming action button
-            EventBus.getDefault().post(new FeedItemEvent(Collections.emptyList(), true));
+            EventBus.getDefault().post(new FeedItemEvent());
             EventBus.getDefault().post(new MessageEvent(getString(R.string.on_demand_config_setting_changed)));
             balloon.dismiss();
         });

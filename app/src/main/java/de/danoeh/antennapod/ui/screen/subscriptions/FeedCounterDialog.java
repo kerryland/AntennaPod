@@ -29,7 +29,7 @@ public class FeedCounterDialog {
                 UserPreferences.setFeedCounterSetting(
                         FeedCounter.fromOrdinal(Integer.parseInt(entryValues.get(which))));
                 //Update subscriptions
-                EventBus.getDefault().post(new FeedItemEvent(Collections.emptyList(), true));
+                EventBus.getDefault().post(new FeedItemEvent());
             }
             d.dismiss();
         });

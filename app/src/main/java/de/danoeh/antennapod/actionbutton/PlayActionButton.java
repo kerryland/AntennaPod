@@ -47,7 +47,7 @@ public class PlayActionButton extends ItemActionButton {
             media.setDownloaded(false, 0);
             media.setLocalFileUrl(null);
             DBWriter.setMediaDownloadInformation(media);
-            EventBus.getDefault().post(new FeedItemEvent(Collections.singletonList(media.getItem()), false));
+            EventBus.getDefault().post(new FeedItemEvent(Collections.singletonList(media.getItem())));
             EventBus.getDefault().post(new MessageEvent(context.getString(R.string.error_file_not_found)));
             return;
         }

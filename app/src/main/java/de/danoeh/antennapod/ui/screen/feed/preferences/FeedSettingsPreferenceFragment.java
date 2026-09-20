@@ -31,7 +31,6 @@ import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.databinding.PlaybackSpeedFeedSettingDialogBinding;
 import de.danoeh.antennapod.event.MessageEvent;
 import de.danoeh.antennapod.event.settings.SkipIntroEndingChangedEvent;
-import de.danoeh.antennapod.event.settings.SpeedPresetChangedEvent;
 import de.danoeh.antennapod.event.settings.VolumeAdaptionChangedEvent;
 import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.model.feed.FeedFilter;
@@ -502,10 +501,6 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
                     DBWriter.setFeedPreferences(feedPreferences);
 
                     changeCurrentPlaybackSpeed();
-
-                    // TODO: Nothing uses this...
-                    EventBus.getDefault().post(new SpeedPresetChangedEvent(feedPreferences.getFeedPlaybackSpeed(),
-                            feed.getId(), feedPreferences.getFeedSkipSilence()));
                 })
                 .setNegativeButton(R.string.cancel_label, null)
                 .show();

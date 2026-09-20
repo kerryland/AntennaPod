@@ -1,5 +1,7 @@
 package de.danoeh.antennapod.ui.screen.feed.preferences;
 
+import static de.danoeh.antennapod.storage.preferences.PlaybackPreferences.NO_MEDIA_PLAYING;
+
 import android.Manifest;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
@@ -36,9 +38,11 @@ import de.danoeh.antennapod.model.feed.FeedFilter;
 import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.model.feed.VolumeAdaptionSetting;
 import de.danoeh.antennapod.net.download.serviceinterface.FeedUpdateManager;
+import de.danoeh.antennapod.playback.service.PlaybackController;
 import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.storage.database.FeedDatabaseWriter;
+import de.danoeh.antennapod.storage.preferences.PlaybackPreferences;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.preferences.screen.synchronization.AuthenticationDialog;
 import de.danoeh.antennapod.ui.screen.feed.FeedPriorityDialog;
@@ -53,6 +57,7 @@ import org.greenrobot.eventbus.EventBus;
 
 import java.util.Collections;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -474,6 +479,8 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
         boolean isGlobal = speed == FeedPreferences.SPEED_USE_GLOBAL;
         viewBinding.useGlobalCheckbox.setChecked(isGlobal);
         viewBinding.seekBar.updateSpeed(isGlobal ? 1 : speed);
+        viewBinding.currentSpeedLabel.setText(String.format(Locale.getDefault(), "%.2fx",
+                isGlobal ? UserPreferences.getPlaybackSpeed() : speed));
         viewBinding.skipSilenceFeed.setChecked(!isGlobal
                 && skipSilence == FeedPreferences.SkipSilence.AGGRESSIVE);
         new MaterialAlertDialogBuilder(getContext())
@@ -493,11 +500,42 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
                     }
                     feedPreferences.setFeedSkipSilence(newSkipSilence);
                     DBWriter.setFeedPreferences(feedPreferences);
+
+                    changeCurrentPlaybackSpeed();
+
+                    // TODO: Nothing uses this...
                     EventBus.getDefault().post(new SpeedPresetChangedEvent(feedPreferences.getFeedPlaybackSpeed(),
                             feed.getId(), feedPreferences.getFeedSkipSilence()));
                 })
                 .setNegativeButton(R.string.cancel_label, null)
                 .show();
         return true;
+    }
+
+    private void changeCurrentPlaybackSpeed() {
+        long mediaId = PlaybackPreferences.getCurrentlyPlayingFeedMediaId();
+        if (mediaId == NO_MEDIA_PLAYING) {
+            return;
+        }
+
+        disposable = Maybe.fromCallable(() -> DBReader.getFeedMedia(mediaId))
+                .subscribeOn(Schedulers.io())
+                .subscribe(currentlyPlaying -> {
+                    if (currentlyPlaying == null) {
+                        return;
+                    }
+
+                    Feed currentFeed = currentlyPlaying.getItem().getFeed();
+                    if (Objects.equals(currentFeed, feed)) {
+                        float speed = feedPreferences.getFeedPlaybackSpeed();
+                        if (speed == FeedPreferences.SPEED_USE_GLOBAL) {
+                            speed = UserPreferences.getPlaybackSpeed();
+                        }
+
+                        final float effectiveSpeed = speed;
+                        PlaybackController.bindToMedia3Service(getContext(),
+                                controller -> controller.setPlaybackSpeed(effectiveSpeed));
+                    }
+                }, error -> Log.e(TAG, Log.getStackTraceString(error)));
     }
 }

@@ -51,6 +51,7 @@ import de.danoeh.antennapod.event.MessageEvent;
 import de.danoeh.antennapod.event.StreamingConfirmationEvent;
 import de.danoeh.antennapod.model.download.DownloadStatus;
 import de.danoeh.antennapod.net.download.service.feed.FeedUpdateManagerImpl;
+import de.danoeh.antennapod.net.download.service.feed.remote.VpnLauncherHelper;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
 import de.danoeh.antennapod.net.download.serviceinterface.FeedUpdateManager;
 import de.danoeh.antennapod.net.common.NetworkUtils;
@@ -619,6 +620,7 @@ public class MainActivity extends CastEnabledActivity implements NavigationToolb
     protected void onResume() {
         super.onResume();
         handleNavIntent();
+        VpnLauncherHelper.repromptToDisconnectIfNeeded(this);
 
         if (Build.VERSION.SDK_INT >= 31 && ContextCompat.checkSelfPermission(this,
                 Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {

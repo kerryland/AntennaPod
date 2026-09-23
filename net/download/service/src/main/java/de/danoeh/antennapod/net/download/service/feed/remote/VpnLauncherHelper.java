@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.provider.Settings;
+import android.util.Log;
 
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
 import de.danoeh.antennapod.ui.appstartintent.MainActivityStarter;
@@ -59,7 +60,15 @@ public class VpnLauncherHelper {
      * Intended to be called when the app is brought back to the foreground.
      */
     public static void repromptToDisconnectIfNeeded(Context context) {
-        if (System.currentTimeMillis() > nexttDisconnectPromptTime && disconnectPending && VpnMonitor.getInstance(context).isVpnConnected()
+        Log.d(TAG, "isVpnConnected " + VpnMonitor.getInstance(context).isVpnConnected());
+        if (!VpnMonitor.getInstance(context).isVpnConnected()) {
+            disconnectPending = false;
+            return;
+        }
+        Log.d(TAG, "disconnectPending " + disconnectPending);
+        Log.d(TAG, "getNumberOfActiveDownloads " + DownloadServiceInterface.get().getNumberOfActiveDownloads(context));
+
+        if (disconnectPending && System.currentTimeMillis() > nexttDisconnectPromptTime
                 && DownloadServiceInterface.get().getNumberOfActiveDownloads(context) == 0) {
             nexttDisconnectPromptTime = System.currentTimeMillis() + 120000; // prompt again in 2 minutes
             launchVpnAndReturnOnDisconnect(context, 0);

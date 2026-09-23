@@ -95,7 +95,6 @@ public class BulkDownloader {
         }
 
         if (downloadList.size() > DOWNLOAD_WARN_LEVEL) {
-            // make sure the user really wants to clear the queue
             ConfirmationDialog conDialog = new ConfirmationDialog(context,
                     R.string.download_all_label,
                     context.getString(R.string.download_all_confirmation_msg, downloadList.size())) {

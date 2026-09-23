@@ -41,6 +41,11 @@ import okhttp3.ResponseBody;
 public class HttpDownloader extends Downloader {
     private static final String TAG = "HttpDownloader";
     private static final int BUFFER_SIZE = 8 * 1024;
+    private static final long DOWNLOAD_STALL_TIMEOUT_MS = 60 * 1000;
+    private static final long WATCHDOG_POLL_INTERVAL_MS = 1000;
+
+    private volatile long lastProgressTime;
+    private volatile InputStream activeStream;
 
     public HttpDownloader(@NonNull DownloadRequest request) {
         super(request);
@@ -126,6 +131,7 @@ public class HttpDownloader extends Downloader {
             }
 
             connection = new BufferedInputStream(responseBody.byteStream());
+            activeStream = connection;
 
             String contentRangeHeader = (fileExists) ? response.header("Content-Range") : null;
             if (fileExists && response.code() == HttpURLConnection.HTTP_PARTIAL
@@ -164,15 +170,20 @@ public class HttpDownloader extends Downloader {
             }
 
             Log.d(TAG, "Starting download");
+            lastProgressTime = System.currentTimeMillis();
+            Thread watchdog = startDownloadWatchdog(DOWNLOAD_STALL_TIMEOUT_MS);
             try {
                 while (!cancelled && (count = connection.read(buffer)) != -1) {
                     out.write(buffer, 0, count);
                     request.setSoFar(request.getSoFar() + count);
+                    lastProgressTime = System.currentTimeMillis();
                     int progressPercent = (int) (100.0 * request.getSoFar() / request.getSize());
                     request.setProgressPercent(progressPercent);
                 }
             } catch (IOException e) {
                 Log.e(TAG, Log.getStackTraceString(e));
+            } finally {
+                watchdog.interrupt();
             }
             if (cancelled) {
                 onCancelled();
@@ -227,6 +238,28 @@ public class HttpDownloader extends Downloader {
             IOUtils.closeQuietly(connection);
             IOUtils.closeQuietly(responseBody);
         }
+    }
+
+    private Thread startDownloadWatchdog(long timeout) {
+        Thread watchdog = new Thread(() -> {
+            try {
+                while (!cancelled) {
+                    Thread.sleep(WATCHDOG_POLL_INTERVAL_MS);
+                    if (System.currentTimeMillis() - lastProgressTime > timeout) {
+                        Log.d(TAG, "No download progress for " + timeout
+                                + "ms, cancelling download");
+                        cancelled = true;
+                        IOUtils.closeQuietly(activeStream);
+                        return;
+                    }
+                }
+            } catch (InterruptedException e) {
+                // Watchdog stopped
+            }
+        });
+        watchdog.setDaemon(true);
+        watchdog.start();
+        return watchdog;
     }
 
     private Response newCall(Request.Builder httpReq) throws IOException {

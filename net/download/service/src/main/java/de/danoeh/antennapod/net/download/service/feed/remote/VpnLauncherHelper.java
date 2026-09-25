@@ -22,17 +22,13 @@ public class VpnLauncherHelper {
      * when a VPN connection occurs.
      */
     public static void launchVpnAndReturnOnConnect(Context context, long timeoutMillis) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            // 1. Launch System VPN Settings
-            context.startActivity(vpnSettingsIntent());
+        context.startActivity(vpnSettingsIntent());
 
-            // 2. Monitor for VPN connection
-            VpnMonitor.getInstance(context).onVpnConnect(timeoutMillis, success -> {
-                if (success) {
-                    bringAppToFront(context);
-                }
-            });
-        }
+        VpnMonitor.getInstance(context).onVpnConnect(timeoutMillis, success -> {
+            if (success) {
+                bringAppToFront(context);
+            }
+        });
     }
 
     /**
@@ -40,17 +36,15 @@ public class VpnLauncherHelper {
      * when a VPN disconnect occurs.
      */
     public static void launchVpnAndReturnOnDisconnect(Context context, long timeoutMillis) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            context.startActivity(vpnSettingsIntent());
-            disconnectPending = true;
+        context.startActivity(vpnSettingsIntent());
+        disconnectPending = true;
 
-            VpnMonitor.getInstance(context).onVpnDisconnect(timeoutMillis, success -> {
-                if (success) {
-                    disconnectPending = false;
-                    bringAppToFront(context);
-                }
-            });
-        }
+        VpnMonitor.getInstance(context).onVpnDisconnect(timeoutMillis, success -> {
+            if (success) {
+                disconnectPending = false;
+                bringAppToFront(context);
+            }
+        });
     }
 
 
@@ -62,7 +56,6 @@ public class VpnLauncherHelper {
     public static void repromptToDisconnectIfNeeded(Context context) {
         Log.d(TAG, "isVpnConnected " + VpnMonitor.getInstance(context).isVpnConnected());
         if (!VpnMonitor.getInstance(context).isVpnConnected()) {
-            disconnectPending = false;
             return;
         }
         Log.d(TAG, "disconnectPending " + disconnectPending);

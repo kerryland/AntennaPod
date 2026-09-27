@@ -47,7 +47,7 @@ public class DestinationSelector {
                     : SortOrder.DATE_NEW_OLD;
 
             List<FeedItem> feedItems = DBReader.getFeedItemList(feed,
-                    new FeedItemFilter(FeedItemFilter.UNPLAYED, FeedItemFilter.NEW),
+                    new FeedItemFilter(new FeedItemFilter(FeedItemFilter.UNPLAYED)),
                     sortOrder, 0, Integer.MAX_VALUE
             );
 
@@ -67,37 +67,50 @@ public class DestinationSelector {
                 }
             }
 
+            Log.d(TAG, "Feed " + feed.getTitle() + " has " + feedItems.size() + " items. MaxEpisodes=" + maxEpisodes );
+
             for (FeedItem feedItem : feedItems) {
                 if (feedItem.isTagged(FeedItem.TAG_QUEUE_PERMANENT)) {
                     continue;
                 }
 
-                boolean isRemoved = feedItem.isRemoved();
                 boolean isInQueue = currentQueue.contains(feedItem);
+
+                if (feedIsOldestFirst && feedItem.isRemoved() && !isInQueue) {
+                    continue;
+                }
 
                 if (addCount < maxEpisodes) {
                     addCount++;
 
-                    if (isRemoved || isInQueue) {
+                    if (!feedIsOldestFirst && feedItem.isRemoved()) {
+                        continue;
+                    }
+
+                    if (isInQueue) {
+                        Log.d(TAG, feedItem.getTitle() + " isInQueue");
                         continue;
                     }
 
                     if (episodeDestination == FeedPreferences.NewEpisodesAction.ADD_TO_INBOX) {
-                        if (!feedItem.isNew()) {
-                            feedItem.setNew();
-                            feedItem.setAddedToInboxOrQueue(new Date());
-                            inboxStateChanges.add(feedItem);
-                        }
+                        Log.d(TAG, "Adding to inbox: " + feedItem.getTitle() + " isNew=" + feedItem.isNew());
+                        feedItem.setNew();
+                        feedItem.setAddedToInboxOrQueue(new Date());
+                        inboxStateChanges.add(feedItem);
+
                     } else if (episodeDestination == FeedPreferences.NewEpisodesAction.ADD_TO_QUEUE) {
                         feedItem.setAddedToInboxOrQueue(new Date());
+                        Log.d(TAG, "Adding to queue: " + feedItem.getTitle());
                         queueAdditions.add(feedItem);
                     }
                 } else { // Limit exceeded
                     if (isInQueue) {
                         queueRemovals.add(feedItem);
+                        Log.d(TAG, "Removed from queue: " + feedItem.getTitle());
                     }
 
                     if (feedItem.isNew()) {
+                        Log.d(TAG, "Removed from inbox: " + feedItem.getTitle());
                         feedItem.setPlayed(false);
                         inboxStateChanges.add(feedItem);
                     }

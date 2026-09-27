@@ -376,7 +376,7 @@ public class DestinationSelectorTest {
         feedItems.add(makeTestFeedItem(22, FeedItemLocation.UNPLAYED, queueItems));
         feedItems.add(makeTestFeedItem(23, FeedItemLocation.UNPLAYED, queueItems));
 
-        getFeedItem(feedItems, 20).setRemoved(true);
+        getFeedItem(feedItems, 18).setRemoved(true);
         getFeedItem(feedItems, 22).setRemoved(true);
 
         Feed feed = prepareTestData(FeedPreferences.NewEpisodesAction.ADD_TO_INBOX,
@@ -389,10 +389,52 @@ public class DestinationSelectorTest {
 
         DBWriter.waitForDatabase(); // Make sure the database is updated
 
-        // Then removed items (20, 22) count toward maxEpisodes=2, so only episode 18 is added
+        // Then removed items (18, 22) should be ignored, so episodes 20 and 21 are added
         List<FeedItem> inbox = DBReader.getFeedItemList(feed, new FeedItemFilter(FeedItemFilter.NEW), SortOrder.DATE_OLD_NEW, 0, Integer.MAX_VALUE);
+        assertEquals(2, inbox.size());
+        assertEquals("EPISODE 20", inbox.get(0).getTitle());
+        assertEquals("EPISODE 21", inbox.get(1).getTitle());
+    }
+
+    @Test
+    // Make sure we remove items from the inbox if MAX_EPISODES is exceeded
+    // (e.g. it has been reduced in feed preferences)
+    public void testInboxUnpopulated_Oldest_First() {
+        List<FeedItem> feedItems = new ArrayList<>();
+        List<FeedItem> queueItems = new ArrayList<>();
+
+        // Given we have 6 items eligible for the inbox/queue
+        feedItems.add(makeTestFeedItem(17, FeedItemLocation.QUEUE_UNPLAYED, queueItems));
+        feedItems.add(makeTestFeedItem(18, FeedItemLocation.UNPLAYED, queueItems));
+        feedItems.add(makeTestFeedItem(19, FeedItemLocation.PLAYED, queueItems));
+        feedItems.add(makeTestFeedItem(20, FeedItemLocation.UNPLAYED, queueItems));
+        feedItems.add(makeTestFeedItem(21, FeedItemLocation.UNPLAYED, queueItems));
+        feedItems.add(makeTestFeedItem(22, FeedItemLocation.UNPLAYED, queueItems));
+        feedItems.add(makeTestFeedItem(23, FeedItemLocation.UNPLAYED, queueItems));
+
+        Feed feed = prepareTestData(FeedPreferences.NewEpisodesAction.ADD_TO_INBOX,
+                FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST,
+                5, feedItems, queueItems);
+
+        // and we populate the inbox with "max 5" episodes
+        FeedDatabaseWriter.updateFeed(context, feed, false);
+        DestinationSelector.populateInboxOrQueue(context, Collections.singletonList(feed));
+        DBWriter.waitForDatabase(); // Make sure the database is updated
+
+        List<FeedItem> inbox = DBReader.getFeedItemList(feed, new FeedItemFilter(FeedItemFilter.NEW), SortOrder.DATE_OLD_NEW, 0, Integer.MAX_VALUE);
+        assertEquals(4, inbox.size());
+        assertEquals(1, DBReader.getQueue().size());
+
+        // When we change to 2 max episodes
+        feed.getPreferences().setMaxEpisodes(2);
+        FeedDatabaseWriter.updateFeed(context, feed, false);
+        DestinationSelector.populateInboxOrQueue(context, Collections.singletonList(feed));
+        inbox = DBReader.getFeedItemList(feed, new FeedItemFilter(FeedItemFilter.NEW), SortOrder.DATE_OLD_NEW, 0, Integer.MAX_VALUE);
+
+        // Then we should now have 1 item in the inbox and 1 in the queue
         assertEquals(1, inbox.size());
         assertEquals("EPISODE 18", inbox.get(0).getTitle());
+        assertEquals(1, DBReader.getQueue().size());
     }
 
     @Test

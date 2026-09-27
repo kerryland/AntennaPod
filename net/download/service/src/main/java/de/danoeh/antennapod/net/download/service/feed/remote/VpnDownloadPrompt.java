@@ -15,14 +15,18 @@ import androidx.core.content.ContextCompat;
 import org.greenrobot.eventbus.EventBus;
 
 import de.danoeh.antennapod.event.MessageEvent;
+import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.net.download.service.R;
 import de.danoeh.antennapod.ui.notifications.NotificationUtils;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 public class VpnDownloadPrompt {
     private static final String TAG = "VpnDownloadPrompt";
-    private static final long COOLDOWN_MS = 15 * 60 * 1000;
     private static final long VPN_WAIT_TIMEOUT_MS = 60000;
-    private static long lastPrompt = 0;
+    private static final Set<Long> promptedEpisodeIds = new HashSet<>();
     private static boolean resumeArmed = false;
 
     private VpnDownloadPrompt() {
@@ -32,18 +36,24 @@ public class VpnDownloadPrompt {
      * Informs the user that downloads are waiting for a VPN connection and makes sure the
      * automatic download resumes as soon as a VPN is available.
      * Shows a snackbar when the app is in the foreground and a system notification otherwise.
-     * Repeated prompts are throttled.
+     * The user is only prompted again when a genuinely new undownloaded episode is added to the
+     * inbox or queue; the same set of episodes is never re-prompted.
      *
+     * @param items    the undownloaded episodes that are waiting for the VPN
      * @param callback code to execute once a VPN connection is available
      */
-    public static void notifyVpnRequired(Context context, Runnable callback) {
-        long now = System.currentTimeMillis();
-        if (now - lastPrompt < COOLDOWN_MS) {
-            return;
+    public static void notifyVpnRequired(Context context, List<FeedItem> items, Runnable callback) {
+        Set<Long> episodeIds = new HashSet<>();
+        for (FeedItem item : items) {
+            episodeIds.add(item.getId());
         }
-        lastPrompt = now;
+        boolean hasNewEpisodes = recordPrompt(episodeIds);
 
         awaitVpnConnection(context, callback);
+
+        if (!hasNewEpisodes) {
+            return;
+        }
 
         String message = context.getString(R.string.vpn_required_download_message);
         if (EventBus.getDefault().hasSubscriberForEvent(MessageEvent.class)) {
@@ -74,6 +84,22 @@ public class VpnDownloadPrompt {
 
     private static void connectVpnAndReturnToApp(Context context) {
         VpnLauncherHelper.launchVpnAndReturnOnConnect(context, VPN_WAIT_TIMEOUT_MS);
+    }
+
+    /**
+     * Records that the given episodes have been prompted for and reports whether any of them
+     * were not prompted for before (i.e. a genuinely new undownloaded episode).
+     */
+    static boolean recordPrompt(Set<Long> episodeIds) {
+        boolean hasNewEpisodes = !promptedEpisodeIds.containsAll(episodeIds);
+        if (hasNewEpisodes) {
+            promptedEpisodeIds.addAll(episodeIds);
+        }
+        return hasNewEpisodes;
+    }
+
+    static void reset() {
+        promptedEpisodeIds.clear();
     }
 
     /**

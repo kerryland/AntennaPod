@@ -115,7 +115,8 @@ public class AutomaticDownloadAlgorithm {
                 List<FeedItem> itemsToDownload = candidates.subList(0, toIndex);
                 if (!itemsToDownload.isEmpty()) {
                     if (UserPreferences.isVpnDownload() && !VpnMonitor.getInstance(context).isVpnConnected()) {
-                        VpnDownloadPrompt.notifyVpnRequired(context, () -> autoDownloadUndownloadedItems(context));
+                        VpnDownloadPrompt.notifyVpnRequired(context, candidates,
+                                () -> autoDownloadUndownloadedItems(context));
                         return;
                     }
                     Log.d(TAG, "Enqueueing " + itemsToDownload.size() + " items for download");

@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.model.feed.Feed;
+import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.parser.feed.util.DateUtils;
 import de.danoeh.antennapod.ui.CoverLoader;
 import de.danoeh.antennapod.actionbutton.ItemActionButton;
@@ -70,6 +71,7 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
     private final Activity activity;
     private final int defaultColor;
     private FeedItem item;
+    private boolean showTemporaryQueueIndicator = false;
 
     public EpisodeItemViewHolder(Activity activity, ViewGroup parent) {
         super(LayoutInflater.from(activity).inflate(R.layout.feeditemlist_item, parent, false));
@@ -119,7 +121,17 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
         isFavorite.setVisibility(item.isTagged(FeedItem.TAG_FAVORITE) ? View.VISIBLE : View.GONE);
         isInQueue.setVisibility(item.isTagged(FeedItem.TAG_QUEUE) ? View.VISIBLE : View.GONE);
         isNoAutoDownload.setVisibility(View.GONE);
-        isPermanent.setVisibility(item.isTagged(FeedItem.TAG_QUEUE_PERMANENT) ? View.VISIBLE : View.GONE);
+        if (item.isTagged(FeedItem.TAG_QUEUE_PERMANENT)) {
+            isPermanent.setImageResource(R.drawable.ic_push_pin);
+            isPermanent.setContentDescription(activity.getString(R.string.is_permanent_label));
+            isPermanent.setVisibility(View.VISIBLE);
+        } else if (showTemporaryQueueIndicator && isSubjectToAutoRemoval(item)) {
+            isPermanent.setImageResource(R.drawable.ic_schedule);
+            isPermanent.setContentDescription(activity.getString(R.string.may_be_removed_label));
+            isPermanent.setVisibility(View.VISIBLE);
+        } else {
+            isPermanent.setVisibility(View.GONE);
+        }
 
         container.setAlpha(item.isPlayed() ? 0.5f : 1.0f);
         highlightIfRecent(pubDate, feedTitle);
@@ -243,6 +255,16 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
                     .withCoverView(cover)
                     .load();
         }
+    }
+
+    public void setShowTemporaryQueueIndicator(boolean showTemporaryQueueIndicator) {
+        this.showTemporaryQueueIndicator = showTemporaryQueueIndicator;
+    }
+
+    private boolean isSubjectToAutoRemoval(FeedItem item) {
+        FeedPreferences preferences = item.getFeed().getPreferences();
+        return preferences != null
+                && preferences.getPlaybackOrder() == FeedPreferences.PlaybackOrderSetting.NEWEST_FIRST;
     }
 
     private void highlightIfRecent(TextView... textViews) {

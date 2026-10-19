@@ -847,6 +847,7 @@
     <string name="is_favorite_label">Marked as favorite</string>
     <string name="is_permanent_label">Permanent</string>
     <string name="is_inbox_label">In the inbox</string>
+    <string name="may_be_removed_label">May be removed automatically</string>
     <string name="not_auto_downloaded_label">Will not be downloaded automatically</string>
     <string name="is_played">Played</string>
     <string name="load_next_page_label">Load next page</string>

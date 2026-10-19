@@ -41,6 +41,7 @@ public class EpisodeItemListAdapter extends SelectableAdapter<EpisodeItemViewHol
     int longPressedPosition = 0; // used to init actionMode
     private int dummyViews = 0;
     private boolean showNoAutoDownloadIndicator = false;
+    private boolean showTemporaryQueueIndicator = false;
     private MenuItem.OnMenuItemClickListener contextMenuClickListener;
 
     public EpisodeItemListAdapter(FragmentActivity mainActivity) {
@@ -88,6 +89,7 @@ public class EpisodeItemListAdapter extends SelectableAdapter<EpisodeItemViewHol
         beforeBindViewHolder(holder, pos);
 
         FeedItem item = episodes.get(pos);
+        holder.setShowTemporaryQueueIndicator(showTemporaryQueueIndicator);
         holder.bind(item);
 
         holder.itemView.setOnClickListener(v -> {
@@ -144,6 +146,14 @@ public class EpisodeItemListAdapter extends SelectableAdapter<EpisodeItemViewHol
      */
     protected void setShowNoAutoDownloadIndicator(boolean show) {
         this.showNoAutoDownloadIndicator = show;
+    }
+
+    /**
+     * Enables the indicator that an episode may be removed from the queue automatically
+     * because its feed is configured to play the newest episodes first.
+     */
+    protected void setShowTemporaryQueueIndicator(boolean show) {
+        this.showTemporaryQueueIndicator = show;
     }
 
     private void updateNoAutoDownloadIndicator(EpisodeItemViewHolder holder, int pos) {

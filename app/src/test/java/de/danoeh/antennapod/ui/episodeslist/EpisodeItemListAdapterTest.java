@@ -2,7 +2,9 @@ package de.danoeh.antennapod.ui.episodeslist;
 
 import static org.junit.Assert.assertEquals;
 
+import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import androidx.fragment.app.FragmentActivity;
@@ -19,6 +21,11 @@ import java.util.List;
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.model.feed.FeedItem;
+import de.danoeh.antennapod.model.feed.FeedMedia;
+import de.danoeh.antennapod.model.feed.FeedPreferences;
+import de.danoeh.antennapod.model.feed.VolumeAdaptionSetting;
+import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
+import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterfaceStub;
 
 @RunWith(RobolectricTestRunner.class)
 public class EpisodeItemListAdapterTest {
@@ -26,6 +33,7 @@ public class EpisodeItemListAdapterTest {
     private ViewGroup parent;
     private EpisodeItemListAdapter adapter;
     private List<FeedItem> testData;
+    private Feed f;
 
 
     @Before
@@ -40,12 +48,16 @@ public class EpisodeItemListAdapterTest {
         parent = new LinearLayout(activity);
 
         // Prepare test data
-        Feed f = new Feed(1, null, "Test Feed", "", "","","","","","","","","","",0,false, null,"",null,false, 0);
+        f = new Feed(1, null, "Test Feed", "", "","","","","","","","","","",0,false, null,"",null,false, 0);
         FeedItem f1 = new FeedItem(1, "Episode Zero", "", "", null, 0, f);
         FeedItem f2 = new FeedItem(2, "Episode One", "", "", null, 0, f);
         FeedItem f3 = new FeedItem(3, "Episode Two", "", "", null, 0, f);
         FeedItem f4 = new FeedItem(4, "Episode Three", "", "", null, 0, f);
         testData = Arrays.asList(f1, f2, f3, f4);
+        DownloadServiceInterface.setImpl(new DownloadServiceInterfaceStub());
+        for (FeedItem item : testData) {
+            item.setMedia(new FeedMedia(item, "http://example.com/episode.mp3", 1000, "audio/mpeg"));
+        }
     }
 
     @Test
@@ -127,5 +139,67 @@ public class EpisodeItemListAdapterTest {
         assertEquals(4, adapter.getSelectedCount());
         assertEquals(4, adapter.getSelectedItems().size());
         assertEquals(4, adapter.getSelectedFeedItemsInOrder().size());
+    }
+
+    @Test
+    public void onBindViewHolder_newestFirstFeed_indicatorEnabled_showsClockIcon() {
+        setPlaybackOrder(FeedPreferences.PlaybackOrderSetting.NEWEST_FIRST);
+        adapter.setShowTemporaryQueueIndicator(true);
+        adapter.updateItems(testData);
+
+        ImageView isPermanent = getIsPermanentView(0);
+        assertEquals(View.VISIBLE, isPermanent.getVisibility());
+        assertEquals("May be removed automatically", isPermanent.getContentDescription());
+    }
+
+    @Test
+    public void onBindViewHolder_oldestFirstFeed_indicatorEnabled_showsNoIcon() {
+        setPlaybackOrder(FeedPreferences.PlaybackOrderSetting.OLDEST_FIRST);
+        adapter.setShowTemporaryQueueIndicator(true);
+        adapter.updateItems(testData);
+
+        assertEquals(View.GONE, getIsPermanentView(0).getVisibility());
+    }
+
+    @Test
+    public void onBindViewHolder_pinnedItem_showsPinInsteadOfClockIcon() {
+        setPlaybackOrder(FeedPreferences.PlaybackOrderSetting.NEWEST_FIRST);
+        adapter.setShowTemporaryQueueIndicator(true);
+        testData.get(0).addTag(FeedItem.TAG_QUEUE_PERMANENT);
+        adapter.updateItems(testData);
+
+        ImageView isPermanent = getIsPermanentView(0);
+        assertEquals(View.VISIBLE, isPermanent.getVisibility());
+        assertEquals("Permanent", isPermanent.getContentDescription());
+    }
+
+    @Test
+    public void onBindViewHolder_newestFirstFeed_indicatorDisabled_showsNoIcon() {
+        setPlaybackOrder(FeedPreferences.PlaybackOrderSetting.NEWEST_FIRST);
+        adapter.updateItems(testData);
+
+        assertEquals(View.GONE, getIsPermanentView(0).getVisibility());
+    }
+
+    @Test
+    public void onBindViewHolder_noFeedPreferences_showsNoIcon() {
+        adapter.setShowTemporaryQueueIndicator(true);
+        adapter.updateItems(testData);
+
+        assertEquals(View.GONE, getIsPermanentView(0).getVisibility());
+    }
+
+    private void setPlaybackOrder(FeedPreferences.PlaybackOrderSetting playbackOrder) {
+        FeedPreferences preferences = new FeedPreferences(f.getId(), FeedPreferences.AutoDownloadSetting.GLOBAL,
+                FeedPreferences.AutoDeleteAction.GLOBAL, VolumeAdaptionSetting.OFF,
+                FeedPreferences.NewEpisodesAction.GLOBAL, "", "");
+        preferences.setPlaybackOrder(playbackOrder);
+        f.setPreferences(preferences);
+    }
+
+    private ImageView getIsPermanentView(int position) {
+        EpisodeItemViewHolder holder = adapter.onCreateViewHolder(parent, 0);
+        adapter.onBindViewHolder(holder, position);
+        return holder.itemView.findViewById(R.id.isPermanent);
     }
 }

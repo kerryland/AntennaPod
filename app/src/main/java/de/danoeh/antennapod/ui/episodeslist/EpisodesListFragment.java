@@ -189,6 +189,7 @@ public abstract class EpisodesListFragment extends Fragment
             }
         };
         listAdapter.setShowNoAutoDownloadIndicator(showNoAutoDownloadIndicator());
+        listAdapter.setShowTemporaryQueueIndicator(showTemporaryQueueIndicator());
         listAdapter.setContextMenuClickListener(EpisodesListFragment.this::onContextItemSelected);
         listAdapter.setOnSelectModeListener(this);
         swipeActions.setSelectedItemsProvider(listAdapter::getSelectedItems);
@@ -456,6 +457,15 @@ public abstract class EpisodesListFragment extends Fragment
      * will not be downloaded automatically.
      */
     protected boolean showNoAutoDownloadIndicator() {
+        return false;
+    }
+
+    /**
+     * Whether the episode rows in this list should show an indicator when an episode
+     * may be removed from the queue automatically because its feed is configured to
+     * play the newest episodes first.
+     */
+    protected boolean showTemporaryQueueIndicator() {
         return false;
     }
 

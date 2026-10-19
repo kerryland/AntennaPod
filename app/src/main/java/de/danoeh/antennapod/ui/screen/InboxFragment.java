@@ -70,6 +70,11 @@ public class InboxFragment extends EpisodesListFragment {
         return true;
     }
 
+    @Override
+    protected boolean showTemporaryQueueIndicator() {
+        return true;
+    }
+
     @NonNull
     @Override
     protected List<FeedItem> loadMoreData(int page) {

@@ -16,6 +16,7 @@ import com.google.android.material.navigation.NavigationBarView;
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.event.FeedItemEvent;
 import de.danoeh.antennapod.event.FeedListUpdateEvent;
+import de.danoeh.antennapod.event.InboxEvent;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
@@ -167,6 +168,11 @@ public class BottomNavigation {
         if (event.unreadStatusChanged) {
             updateBottomNavigationBadgeIfNeeded();
         }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onInboxChanged(InboxEvent event) {
+        updateBottomNavigationBadgeIfNeeded();
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

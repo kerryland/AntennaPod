@@ -196,11 +196,16 @@ public class EpisodeMultiSelectActionHandler {
         BulkDownloader.getInstance(activity).downloadAll(activity, items);
         // download the check episodes in the same order as they are currently displayed
         int downloaded = 0;
+        List<FeedItem> toQueue = new ArrayList<>();
         for (FeedItem episode : items) {
             if (episode.hasMedia() && !episode.isDownloaded()) {
                 downloaded++;
+                if (!episode.isTagged(FeedItem.TAG_QUEUE)) {
+                    toQueue.add(episode);
+                }
             }
         }
+        DBWriter.addQueueItem(activity, toQueue.toArray(new FeedItem[0]));
         showMessage(R.plurals.downloading_episodes_message, downloaded);
     }
 

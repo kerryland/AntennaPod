@@ -15,6 +15,7 @@ import de.danoeh.antennapod.net.download.service.feed.remote.VpnMonitor;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedMedia;
+import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.storage.preferences.UsageStatistics;
 import de.danoeh.antennapod.net.common.NetworkUtils;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
@@ -57,6 +58,8 @@ public class DownloadActionButton extends ItemActionButton {
         if (media == null || shouldNotDownload(media)) {
             return;
         }
+
+        DBWriter.addQueueItem(context, item);
 
         UsageStatistics.logAction(UsageStatistics.ACTION_DOWNLOAD);
 

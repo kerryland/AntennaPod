@@ -54,7 +54,6 @@ import de.danoeh.antennapod.playback.base.MediaItemAdapter;
 import de.danoeh.antennapod.playback.base.PlayerStatus;
 import de.danoeh.antennapod.playback.base.RewindAfterPauseUtils;
 import de.danoeh.antennapod.playback.cast.CastPlayerWrapper;
-import de.danoeh.antennapod.playback.service.internal.BluetoothReconnectPlayer;
 import de.danoeh.antennapod.playback.service.internal.ExoPlayerUtils;
 import de.danoeh.antennapod.playback.service.internal.MediaLibrarySessionCallback;
 import de.danoeh.antennapod.playback.service.internal.PlayableUtils;
@@ -97,7 +96,6 @@ public class Media3PlaybackService extends MediaLibraryService {
     private Player player;
     private MediaLibrarySession mediaSession;
     private FeedMedia currentPlayable;
-    private BluetoothReconnectPlayer bluetoothReconnectPlayer;
     private String pendingStreamMediaId;
     private boolean allowStreamingThisTime = false;
     private Disposable mediaLoaderDisposable;
@@ -134,9 +132,6 @@ public class Media3PlaybackService extends MediaLibraryService {
                 initLoudnessEnhancer(audioSessionId);
             }
         });
-        bluetoothReconnectPlayer = new BluetoothReconnectPlayer(this);
-        bluetoothReconnectPlayer.register();
-
         initLoudnessEnhancer(exoPlayer.getAudioSessionId());
         Player maybeCastPlayer = CastPlayerWrapper.wrap(exoPlayer, this);
         player = new ForwardingPlayer(maybeCastPlayer) {
@@ -431,9 +426,6 @@ public class Media3PlaybackService extends MediaLibraryService {
     public void onDestroy() {
         isReleased = true;
         isRunning = false;
-        if (bluetoothReconnectPlayer != null) {
-            bluetoothReconnectPlayer.unregister();
-        }
         cancelPositionObserver();
         if (sleepTimer != null) {
             sleepTimer.stop();

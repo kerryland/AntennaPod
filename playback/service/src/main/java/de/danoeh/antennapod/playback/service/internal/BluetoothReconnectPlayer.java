@@ -36,10 +36,11 @@ import de.danoeh.antennapod.storage.preferences.UserPreferences;
  * ACL connect/disconnect events even when the application has been closed. Because a static
  * receiver is instantiated by the system without a constructor context, all of the logic
  * operates on the {@link Context} passed into {@link #onReceive(Context, Intent)}.
- * When the playback service is running, an {@link AudioDeviceCallback} is additionally
- * registered (via {@link #register()}/{@link #unregister()}) to react to the exact moment a
- * Bluetooth device is added/removed from the audio routing, and to support LE-audio device
- * types that do not reliably emit ACL broadcasts.
+ * An {@link AudioDeviceCallback} is registered at application startup (via {@link #register()})
+ * for the rest of the process lifetime to react to the exact moment a Bluetooth device is
+ * added/removed from the audio routing, and to support LE-audio device types that do not
+ * reliably emit ACL broadcasts. Keeping it registered beyond the playback service means
+ * backgrounded apps without a service still detect Bluetooth audio changes.
  */
 public class BluetoothReconnectPlayer extends BroadcastReceiver {
     private static final String TAG = "BtReconnectPlayer";
@@ -83,6 +84,7 @@ public class BluetoothReconnectPlayer extends BroadcastReceiver {
 
     private Context context;
     private AudioManager audioManager;
+    private boolean registered = false;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final Set<String> knownBluetoothDevices = new HashSet<>();
 
@@ -160,6 +162,7 @@ public class BluetoothReconnectPlayer extends BroadcastReceiver {
             return;
         }
         Log.d(TAG, "Received " + intent.getAction());
+        primeKnownBluetoothDevices();
 
         if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(intent.getAction())) {
             if (UserPreferences.isUnpauseOnBluetoothReconnect()) {
@@ -428,18 +431,31 @@ public class BluetoothReconnectPlayer extends BroadcastReceiver {
         }
     }
 
-    /**
-     * Registers the AudioDeviceCallback and the audio-becoming-noisy receiver. The
-     * BroadcastReceiver for ACL events itself is registered in the manifest, so it does not
-     * need to be registered dynamically.
-     */
-    public void register() {
-        Log.d(TAG, "register: capturing currently-connected Bluetooth devices");
+    private void primeKnownBluetoothDevices() {
         AudioDeviceInfo[] devices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
         for (AudioDeviceInfo device : devices) {
             if (isBluetoothAudioDevice(device)) {
                 knownBluetoothDevices.add(deviceKey(device));
             }
+        }
+    }
+
+    /**
+     * Registers the AudioDeviceCallback and the audio-becoming-noisy receiver. The
+     * BroadcastReceiver for ACL events itself is registered in the manifest, so it does not
+     * need to be registered dynamically. Registration is kept for the process lifetime so
+     * backgrounded apps still detect Bluetooth audio changes; later calls are no-ops.
+     */
+    public void register() {
+        if (registered) {
+            return;
+        }
+        registered = true;
+        Log.d(TAG, "register: capturing currently-connected Bluetooth devices");
+        try {
+            primeKnownBluetoothDevices();
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to capture connected Bluetooth devices", e);
         }
         Log.d(TAG, "register: registering AudioDeviceCallback");
         try {
@@ -453,20 +469,6 @@ public class BluetoothReconnectPlayer extends BroadcastReceiver {
             context.registerReceiver(audioBecomingNoisy, noisyFilter);
         } catch (Exception e) {
             Log.e(TAG, "Failed to register audio-becoming-noisy receiver", e);
-        }
-    }
-
-    public void unregister() {
-        Log.d(TAG, "unregister: unregistering AudioDeviceCallback");
-        try {
-            audioManager.unregisterAudioDeviceCallback(audioDeviceCallback);
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to unregister audio device callback", e);
-        }
-        try {
-            context.unregisterReceiver(audioBecomingNoisy);
-        } catch (IllegalArgumentException ignored) {
-            Log.e(TAG, "Ignored failed to unregister audio-becoming-noisy receiver");
         }
     }
 }

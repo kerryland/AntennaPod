@@ -8,9 +8,12 @@ import com.google.android.material.color.DynamicColors;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.EventBusException;
 
+import de.danoeh.antennapod.playback.service.internal.BluetoothReconnectPlayer;
+
 /** Main application class. */
 public class PodcastApp extends Application {
     private static final String TAG = "PodcastApp";
+    private BluetoothReconnectPlayer bluetoothReconnectPlayer;
 
     @Override
     public void onCreate() {
@@ -32,5 +35,7 @@ public class PodcastApp extends Application {
         DynamicColors.applyToActivitiesIfAvailable(this);
         ClientConfigurator.initialize(this);
         PreferenceUpgrader.checkUpgrades(this);
+        bluetoothReconnectPlayer = new BluetoothReconnectPlayer(this);
+        bluetoothReconnectPlayer.register();
     }
 }

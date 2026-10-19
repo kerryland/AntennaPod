@@ -42,6 +42,7 @@ public class EpisodeItemListAdapter extends SelectableAdapter<EpisodeItemViewHol
     private int dummyViews = 0;
     private boolean showNoAutoDownloadIndicator = false;
     private boolean showTemporaryQueueIndicator = false;
+    private boolean showInInboxIndicator = true;
     private MenuItem.OnMenuItemClickListener contextMenuClickListener;
 
     public EpisodeItemListAdapter(FragmentActivity mainActivity) {
@@ -90,6 +91,7 @@ public class EpisodeItemListAdapter extends SelectableAdapter<EpisodeItemViewHol
 
         FeedItem item = episodes.get(pos);
         holder.setShowTemporaryQueueIndicator(showTemporaryQueueIndicator);
+        holder.setShowInInboxIndicator(showInInboxIndicator);
         holder.bind(item);
 
         holder.itemView.setOnClickListener(v -> {
@@ -154,6 +156,13 @@ public class EpisodeItemListAdapter extends SelectableAdapter<EpisodeItemViewHol
      */
     protected void setShowTemporaryQueueIndicator(boolean show) {
         this.showTemporaryQueueIndicator = show;
+    }
+
+    /**
+     * Enables the indicator that an episode is in the inbox.
+     */
+    protected void setShowInInboxIndicator(boolean show) {
+        this.showInInboxIndicator = show;
     }
 
     private void updateNoAutoDownloadIndicator(EpisodeItemViewHolder holder, int pos) {

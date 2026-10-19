@@ -75,6 +75,11 @@ public class InboxFragment extends EpisodesListFragment {
         return true;
     }
 
+    @Override
+    protected boolean showInInboxIndicator() {
+        return false;
+    }
+
     @NonNull
     @Override
     protected List<FeedItem> loadMoreData(int page) {

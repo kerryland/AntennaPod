@@ -190,6 +190,7 @@ public abstract class EpisodesListFragment extends Fragment
         };
         listAdapter.setShowNoAutoDownloadIndicator(showNoAutoDownloadIndicator());
         listAdapter.setShowTemporaryQueueIndicator(showTemporaryQueueIndicator());
+        listAdapter.setShowInInboxIndicator(showInInboxIndicator());
         listAdapter.setContextMenuClickListener(EpisodesListFragment.this::onContextItemSelected);
         listAdapter.setOnSelectModeListener(this);
         swipeActions.setSelectedItemsProvider(listAdapter::getSelectedItems);
@@ -467,6 +468,14 @@ public abstract class EpisodesListFragment extends Fragment
      */
     protected boolean showTemporaryQueueIndicator() {
         return false;
+    }
+
+    /**
+     * Whether the episode rows in this list should show the indicator when an episode
+     * is in the inbox (i.e. not yet played).
+     */
+    protected boolean showInInboxIndicator() {
+        return true;
     }
 
     protected void updateToolbar() {

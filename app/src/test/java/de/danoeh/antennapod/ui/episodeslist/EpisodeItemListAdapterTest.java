@@ -189,6 +189,23 @@ public class EpisodeItemListAdapterTest {
         assertEquals(View.GONE, getIsPermanentView(0).getVisibility());
     }
 
+    @Test
+    public void onBindViewHolder_newItem_showsInInboxIcon() {
+        testData.get(0).setNew();
+        adapter.updateItems(testData);
+
+        assertEquals(View.VISIBLE, getInboxView(0).getVisibility());
+    }
+
+    @Test
+    public void onBindViewHolder_inboxList_hidesInInboxIcon() {
+        testData.get(0).setNew();
+        adapter.setShowInInboxIndicator(false);
+        adapter.updateItems(testData);
+
+        assertEquals(View.GONE, getInboxView(0).getVisibility());
+    }
+
     private void setPlaybackOrder(FeedPreferences.PlaybackOrderSetting playbackOrder) {
         FeedPreferences preferences = new FeedPreferences(f.getId(), FeedPreferences.AutoDownloadSetting.GLOBAL,
                 FeedPreferences.AutoDeleteAction.GLOBAL, VolumeAdaptionSetting.OFF,
@@ -201,5 +218,11 @@ public class EpisodeItemListAdapterTest {
         EpisodeItemViewHolder holder = adapter.onCreateViewHolder(parent, 0);
         adapter.onBindViewHolder(holder, position);
         return holder.itemView.findViewById(R.id.isPermanent);
+    }
+
+    private ImageView getInboxView(int position) {
+        EpisodeItemViewHolder holder = adapter.onCreateViewHolder(parent, 0);
+        adapter.onBindViewHolder(holder, position);
+        return holder.itemView.findViewById(R.id.statusInbox);
     }
 }

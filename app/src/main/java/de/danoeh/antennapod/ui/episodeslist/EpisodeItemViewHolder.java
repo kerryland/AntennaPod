@@ -72,6 +72,7 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
     private final int defaultColor;
     private FeedItem item;
     private boolean showTemporaryQueueIndicator = false;
+    private boolean showInInboxIndicator = true;
 
     public EpisodeItemViewHolder(Activity activity, ViewGroup parent) {
         super(LayoutInflater.from(activity).inflate(R.layout.feeditemlist_item, parent, false));
@@ -117,7 +118,7 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
         }
         pubDate.setText(DateFormatter.formatAbbrev(activity, item.getPubDate()));
         pubDate.setContentDescription(DateFormatter.formatForAccessibility(item.getPubDate()));
-        isInbox.setVisibility(item.isNew() ? View.VISIBLE : View.GONE);
+        isInbox.setVisibility(showInInboxIndicator && item.isNew() ? View.VISIBLE : View.GONE);
         isFavorite.setVisibility(item.isTagged(FeedItem.TAG_FAVORITE) ? View.VISIBLE : View.GONE);
         isInQueue.setVisibility(item.isTagged(FeedItem.TAG_QUEUE) ? View.VISIBLE : View.GONE);
         isNoAutoDownload.setVisibility(View.GONE);
@@ -259,6 +260,10 @@ public class EpisodeItemViewHolder extends RecyclerView.ViewHolder {
 
     public void setShowTemporaryQueueIndicator(boolean showTemporaryQueueIndicator) {
         this.showTemporaryQueueIndicator = showTemporaryQueueIndicator;
+    }
+
+    public void setShowInInboxIndicator(boolean showInInboxIndicator) {
+        this.showInInboxIndicator = showInInboxIndicator;
     }
 
     private boolean isSubjectToAutoRemoval(FeedItem item) {

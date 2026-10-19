@@ -28,6 +28,7 @@ import de.danoeh.antennapod.net.download.service.feed.local.LocalFeedUpdater;
 import de.danoeh.antennapod.net.download.service.feed.remote.DefaultDownloaderFactory;
 import de.danoeh.antennapod.net.download.service.feed.remote.Downloader;
 import de.danoeh.antennapod.net.download.service.feed.remote.FeedParserTask;
+import de.danoeh.antennapod.net.download.service.feed.remote.VpnDownloadPrompt;
 import de.danoeh.antennapod.net.download.serviceinterface.AutoDownloadManager;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadRequestCreator;
 import de.danoeh.antennapod.net.sync.serviceinterface.SynchronizationQueue;
@@ -68,6 +69,7 @@ public class FeedUpdateWorker extends Worker {
     @NonNull
     public Result doWork() {
         Log.d(TAG, "Starting feed update worker.");
+        VpnDownloadPrompt.onRefreshStarted();
         newEpisodesNotification.loadCountersBeforeRefresh();
 
         List<Feed> toUpdateExternally = new ArrayList<>();

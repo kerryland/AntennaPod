@@ -11,6 +11,8 @@ import de.danoeh.antennapod.ui.appstartintent.MainActivityStarter;
 
 public class VpnLauncherHelper {
 
+    private static final long DISCONNECT_REPROMPT_THROTTLE_MS = 120000;
+
     private static boolean disconnectPending = false;
 
     private static long nexttDisconnectPromptTime = 0;
@@ -37,6 +39,7 @@ public class VpnLauncherHelper {
      */
     public static void launchVpnAndReturnOnDisconnect(Context context, long timeoutMillis) {
         context.startActivity(vpnSettingsIntent());
+        nexttDisconnectPromptTime = System.currentTimeMillis() + DISCONNECT_REPROMPT_THROTTLE_MS;
         disconnectPending = true;
 
         VpnMonitor.getInstance(context).onVpnDisconnect(timeoutMillis, success -> {
@@ -63,7 +66,6 @@ public class VpnLauncherHelper {
 
         if (disconnectPending && System.currentTimeMillis() > nexttDisconnectPromptTime
                 && DownloadServiceInterface.get().getNumberOfActiveDownloads(context) == 0) {
-            nexttDisconnectPromptTime = System.currentTimeMillis() + 120000; // prompt again in 2 minutes
             launchVpnAndReturnOnDisconnect(context, 0);
         }
     }

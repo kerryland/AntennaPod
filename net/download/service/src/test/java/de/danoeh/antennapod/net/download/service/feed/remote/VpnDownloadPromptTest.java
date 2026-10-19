@@ -56,4 +56,50 @@ public class VpnDownloadPromptTest {
         subset.add(1L);
         assertFalse(VpnDownloadPrompt.recordPrompt(subset));
     }
+
+    @Test
+    public void testNoPromptTwiceWithinSameRefreshCycle() {
+        Set<Long> first = new HashSet<>();
+        first.add(1L);
+        assertTrue(VpnDownloadPrompt.shouldShowPrompt(first));
+
+        Set<Long> withNewEpisode = new HashSet<>(first);
+        withNewEpisode.add(2L);
+        assertFalse(VpnDownloadPrompt.shouldShowPrompt(withNewEpisode));
+    }
+
+    @Test
+    public void testPromptAllowedAgainInNextRefreshCycle() {
+        Set<Long> first = new HashSet<>();
+        first.add(1L);
+        assertTrue(VpnDownloadPrompt.shouldShowPrompt(first));
+
+        VpnDownloadPrompt.onRefreshStarted();
+
+        Set<Long> withNewEpisode = new HashSet<>(first);
+        withNewEpisode.add(2L);
+        assertTrue(VpnDownloadPrompt.shouldShowPrompt(withNewEpisode));
+    }
+
+    @Test
+    public void testSameEpisodesNotPromptedAgainInNextRefreshCycle() {
+        Set<Long> first = new HashSet<>();
+        first.add(1L);
+        assertTrue(VpnDownloadPrompt.shouldShowPrompt(first));
+
+        VpnDownloadPrompt.onRefreshStarted();
+
+        assertFalse(VpnDownloadPrompt.shouldShowPrompt(new HashSet<>(first)));
+    }
+
+    @Test
+    public void testResetClearsCycleState() {
+        Set<Long> episodeIds = new HashSet<>();
+        episodeIds.add(1L);
+        assertTrue(VpnDownloadPrompt.shouldShowPrompt(episodeIds));
+
+        VpnDownloadPrompt.reset();
+
+        assertTrue(VpnDownloadPrompt.shouldShowPrompt(new HashSet<>(episodeIds)));
+    }
 }

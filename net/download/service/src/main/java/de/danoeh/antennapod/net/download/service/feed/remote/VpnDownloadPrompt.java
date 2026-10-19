@@ -27,6 +27,7 @@ public class VpnDownloadPrompt {
     private static final String TAG = "VpnDownloadPrompt";
     private static final long VPN_WAIT_TIMEOUT_MS = 60000;
     private static final Set<Long> promptedEpisodeIds = new HashSet<>();
+    private static boolean promptShownThisCycle = false;
     private static boolean resumeArmed = false;
 
     private VpnDownloadPrompt() {
@@ -38,6 +39,8 @@ public class VpnDownloadPrompt {
      * Shows a snackbar when the app is in the foreground and a system notification otherwise.
      * The user is only prompted again when a genuinely new undownloaded episode is added to the
      * inbox or queue; the same set of episodes is never re-prompted.
+     * At most one prompt is shown per feed refresh cycle, so episodes that become download
+     * candidates later in the same cycle do not trigger another prompt.
      *
      * @param items    the undownloaded episodes that are waiting for the VPN
      * @param callback code to execute once a VPN connection is available
@@ -47,11 +50,11 @@ public class VpnDownloadPrompt {
         for (FeedItem item : items) {
             episodeIds.add(item.getId());
         }
-        boolean hasNewEpisodes = recordPrompt(episodeIds);
+        boolean showPrompt = shouldShowPrompt(episodeIds);
 
         awaitVpnConnection(context, callback);
 
-        if (!hasNewEpisodes) {
+        if (!showPrompt) {
             return;
         }
 
@@ -98,8 +101,30 @@ public class VpnDownloadPrompt {
         return hasNewEpisodes;
     }
 
+    /**
+     * Decides whether the VPN prompt should be shown: only when a genuinely new undownloaded
+     * episode was detected and the prompt has not yet been shown in this refresh cycle.
+     */
+    static boolean shouldShowPrompt(Set<Long> episodeIds) {
+        boolean hasNewEpisodes = recordPrompt(episodeIds);
+        if (!hasNewEpisodes || promptShownThisCycle) {
+            return false;
+        }
+        promptShownThisCycle = true;
+        return true;
+    }
+
+    /**
+     * Called at the start of a new feed refresh cycle. Re-arms the prompt so that it can be
+     * shown once more if further new episodes appear in a later cycle.
+     */
+    public static void onRefreshStarted() {
+        promptShownThisCycle = false;
+    }
+
     static void reset() {
         promptedEpisodeIds.clear();
+        promptShownThisCycle = false;
     }
 
     /**

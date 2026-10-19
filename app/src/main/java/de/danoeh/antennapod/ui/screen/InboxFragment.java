@@ -3,6 +3,7 @@ package de.danoeh.antennapod.ui.screen;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -26,9 +27,15 @@ import de.danoeh.antennapod.event.FeedListUpdateEvent;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.episodeslist.EpisodesListFragment;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.greenrobot.eventbus.EventBus;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Like 'EpisodesFragment' except that it only shows new episodes and
@@ -122,7 +129,7 @@ public class InboxFragment extends EpisodesListFragment {
             }
             return true;
         } else if (item.getItemId() == R.id.download_all) {
-            BulkDownloader.getInstance(getContext()).downloadAll(getContext(), episodes);
+            downloadInboxAndQueue();
             return true;
 
         } else if (item.getItemId() == R.id.inbox_sort) {
@@ -135,6 +142,27 @@ public class InboxFragment extends EpisodesListFragment {
     private void removeAllFromInbox() {
         DBWriter.removeAllNewFlags();
         EventBus.getDefault().post(new MessageEvent(getString(R.string.removed_all_inbox_msg)));
+    }
+
+    private void downloadInboxAndQueue() {
+        final List<FeedItem> inboxItems = new ArrayList<>(episodes);
+        Observable.fromCallable(() -> {
+            List<FeedItem> combined = new ArrayList<>(inboxItems);
+            Set<Long> knownIds = new HashSet<>();
+            for (FeedItem episode : inboxItems) {
+                knownIds.add(episode.getId());
+            }
+            for (FeedItem episode : DBReader.getQueue()) {
+                if (knownIds.add(episode.getId())) {
+                    combined.add(episode);
+                }
+            }
+            return combined;
+        })
+        .subscribeOn(Schedulers.computation())
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribe(items -> BulkDownloader.getInstance(getContext()).downloadAll(getContext(), items),
+                error -> Log.e(TAG, Log.getStackTraceString(error)));
     }
 
     private void showRemoveAllDialog() {

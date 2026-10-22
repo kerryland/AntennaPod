@@ -102,6 +102,20 @@ public class FeedFilter implements Serializable {
         return false;
     }
 
+    /**
+     * @param item The episode to check.
+     * @return true if the episode's title contains any of the exclude terms.
+     */
+    public boolean isExcluded(FeedItem item) {
+        String title = item.getTitle() == null ? "" : item.getTitle().toLowerCase(Locale.getDefault());
+        for (String term : getExcludeFilter()) {
+            if (title.contains(term.trim().toLowerCase(Locale.getDefault()))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public String getIncludeFilterRaw() {
         return includeFilter;
     }

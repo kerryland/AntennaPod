@@ -76,6 +76,17 @@ public class DestinationSelector {
 
                 boolean isInQueue = currentQueue.contains(feedItem);
 
+                // Episodes that match the feed's exclude filter are kept out of
+                // the inbox and out of the queue.
+                if (feed.getPreferences().getFilter().isExcluded(feedItem)) {
+                    if (feedItem.isNew()) {
+                        Log.d(TAG, "Removed from inbox (filter): " + feedItem.getTitle());
+                        feedItem.setPlayed(false);
+                        inboxStateChanges.add(feedItem);
+                    }
+                    continue;
+                }
+
                 if (feedIsOldestFirst && feedItem.isRemoved() && !isInQueue) {
                     continue;
                 }

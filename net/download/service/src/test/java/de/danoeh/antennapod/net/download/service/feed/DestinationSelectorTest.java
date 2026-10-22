@@ -438,6 +438,92 @@ public class DestinationSelectorTest {
     }
 
     @Test
+    // Episodes matching the feed's exclude filter should not be added to the inbox
+    public void testExcludedEpisodesNotAddedToInbox() {
+        List<FeedItem> feedItems = new ArrayList<>();
+        List<FeedItem> queueItems = new ArrayList<>();
+
+        feedItems.add(makeTestFeedItem(17, FeedItemLocation.UNPLAYED, queueItems));
+        FeedItem bookclub = makeTestFeedItem(18, FeedItemLocation.UNPLAYED, queueItems);
+        bookclub.setTitle("DLC Bookclub - Blah");
+        feedItems.add(bookclub);
+
+        Feed feed = prepareTestData(FeedPreferences.NewEpisodesAction.ADD_TO_INBOX,
+                FeedPreferences.PlaybackOrderSetting.NEWEST_FIRST,
+                3, feedItems, queueItems);
+        feed.getPreferences().setFilter(new FeedFilter("", "bookclub"));
+
+        FeedDatabaseWriter.updateFeed(context, feed, false);
+        DestinationSelector.populateInboxOrQueue(context, Collections.singletonList(feed));
+        DBWriter.waitForDatabase(); // Make sure the database is updated
+
+        List<FeedItem> inbox = DBReader.getFeedItemList(feed,
+                new FeedItemFilter(FeedItemFilter.NEW), SortOrder.DATE_NEW_OLD, 0, Integer.MAX_VALUE);
+        assertEquals(1, inbox.size());
+        assertEquals("EPISODE 17", inbox.get(0).getTitle());
+        assertFalse(inbox.get(0).getTitle().toLowerCase().contains("bookclub"));
+    }
+
+    @Test
+    // Episodes matching the feed's exclude filter should not be added to the queue
+    public void testExcludedEpisodesNotAddedToQueue() {
+        List<FeedItem> feedItems = new ArrayList<>();
+        List<FeedItem> queueItems = new ArrayList<>();
+
+        feedItems.add(makeTestFeedItem(17, FeedItemLocation.UNPLAYED, queueItems));
+        FeedItem bookclub = makeTestFeedItem(18, FeedItemLocation.UNPLAYED, queueItems);
+        bookclub.setTitle("DLC Bookclub - Blah");
+        feedItems.add(bookclub);
+
+        Feed feed = prepareTestData(FeedPreferences.NewEpisodesAction.ADD_TO_QUEUE,
+                FeedPreferences.PlaybackOrderSetting.NEWEST_FIRST,
+                3, feedItems, queueItems);
+        feed.getPreferences().setFilter(new FeedFilter("", "bookclub"));
+
+        FeedDatabaseWriter.updateFeed(context, feed, false);
+        DestinationSelector.populateInboxOrQueue(context, Collections.singletonList(feed));
+        DBWriter.waitForDatabase(); // Make sure the database is updated
+
+        List<FeedItem> queue = DBReader.getQueue();
+        assertEquals(1, queue.size());
+        assertEquals("EPISODE 17", queue.get(0).getTitle());
+        assertFalse(queue.get(0).getTitle().toLowerCase().contains("bookclub"));
+    }
+
+    @Test
+    // Episodes already in the inbox that match the feed's exclude filter should be removed
+    public void testExcludedEpisodesRemovedFromInbox() {
+        List<FeedItem> feedItems = new ArrayList<>();
+        List<FeedItem> queueItems = new ArrayList<>();
+
+        FeedItem bookclub = makeTestFeedItem(18, FeedItemLocation.INBOX, queueItems);
+        bookclub.setTitle("DLC Bookclub - Blah");
+        feedItems.add(bookclub);
+
+        Feed feed = prepareTestData(FeedPreferences.NewEpisodesAction.ADD_TO_INBOX,
+                FeedPreferences.PlaybackOrderSetting.NEWEST_FIRST,
+                3, feedItems, queueItems);
+
+        FeedDatabaseWriter.updateFeed(context, feed, false);
+        DestinationSelector.populateInboxOrQueue(context, Collections.singletonList(feed));
+        DBWriter.waitForDatabase(); // Make sure the database is updated
+
+        List<FeedItem> inboxBefore = DBReader.getFeedItemList(feed,
+                new FeedItemFilter(FeedItemFilter.NEW), SortOrder.DATE_NEW_OLD, 0, Integer.MAX_VALUE);
+        assertEquals(1, inboxBefore.size());
+
+        // now apply an exclude filter and re-populate
+        feed = DBReader.getFeed(feed.getId(), false, 0, Integer.MAX_VALUE);
+        feed.getPreferences().setFilter(new FeedFilter("", "bookclub"));
+        DestinationSelector.populateInboxOrQueue(context, Collections.singletonList(feed));
+        DBWriter.waitForDatabase(); // Make sure the database is updated
+
+        List<FeedItem> inboxAfter = DBReader.getFeedItemList(feed,
+                new FeedItemFilter(FeedItemFilter.NEW), SortOrder.DATE_NEW_OLD, 0, Integer.MAX_VALUE);
+        assertEquals(0, inboxAfter.size());
+    }
+
+    @Test
     // Make sure "NEWEST_FIRST" feed items that are 'removed' via 'remove from inbox' still count toward maxEpisodes
     public void testInboxPopulated_Newest_First_Removed_Counts_Toward_MaxEpisodes() {
         List<FeedItem> feedItems = new ArrayList<>();

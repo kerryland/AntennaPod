@@ -38,6 +38,7 @@ Can now browse Apple's podcast directory to find new podcasts.
 - New episodes are easier to spot (dates are highlighted).
 - Episode list now shows the podcast name too (and removed file size).
 - Preferences stored in the database for easier migration to new devices.
+- Feed Filter is no longer restricted to automatic downloads. Filtered episodes no longer even appear in the inbox.
 
 ## Building AntennaPod
 

@@ -126,6 +126,31 @@ public class FeedFilterTest {
     }
 
     @Test
+    public void testIsExcluded() {
+        FeedFilter filter = new FeedFilter("", "bookclub");
+        FeedItem excluded = new FeedItem();
+        excluded.setTitle("DLC Bookclub - Blah");
+        FeedItem included = new FeedItem();
+        included.setTitle("Episode 42");
+
+        assertTrue(filter.isExcluded(excluded));
+        assertFalse(filter.isExcluded(included));
+        assertFalse(new FeedFilter().isExcluded(excluded));
+    }
+
+    @Test
+    public void testIsExcludedMatchesAnyTerm() {
+        FeedFilter filter = new FeedFilter("", "bookclub \"two words\"");
+        FeedItem excluded = new FeedItem();
+        excluded.setTitle("Two Words episode");
+        FeedItem included = new FeedItem();
+        included.setTitle("Episode 42");
+
+        assertTrue(filter.isExcluded(excluded));
+        assertFalse(filter.isExcluded(included));
+    }
+
+    @Test
     public void testMinimalDurationFilter() {
         FeedItem download = new FeedItem();
         download.setTitle("Hello friend!");

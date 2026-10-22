@@ -36,6 +36,7 @@ import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.model.feed.FeedFilter;
 import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.model.feed.VolumeAdaptionSetting;
+import de.danoeh.antennapod.net.download.service.feed.DestinationSelector;
 import de.danoeh.antennapod.net.download.serviceinterface.FeedUpdateManager;
 import de.danoeh.antennapod.playback.service.PlaybackController;
 import de.danoeh.antennapod.storage.database.DBReader;
@@ -195,6 +196,13 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
                 protected void onConfirmed(FeedFilter filter) {
                     feedPreferences.setFilter(filter);
                     DBWriter.setFeedPreferences(feedPreferences);
+                    Context context = getContext();
+                    if (context != null) {
+                        // Re-evaluate inbox/queue membership so changed filters apply immediately
+                        new Thread(() -> DestinationSelector.populateInboxOrQueue(context,
+                                        Collections.singletonList(feed)),
+                                "ReevaluateInboxQueue").start();
+                    }
                 }
             }.show();
             return false;

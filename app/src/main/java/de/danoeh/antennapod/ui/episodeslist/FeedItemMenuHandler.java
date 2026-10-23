@@ -69,6 +69,7 @@ public class FeedItemMenuHandler {
         }
         boolean canSkip = false;
         boolean canRemoveFromQueue = false;
+        boolean canTogglePermanent = false;
         boolean canAddToQueue = false;
         boolean canAddToQueuePlayNext = false;
         boolean canVisitWebsite = false;
@@ -91,6 +92,7 @@ public class FeedItemMenuHandler {
                     && DownloadServiceInterface.get().isDownloadingEpisode(item.getMedia().getDownloadUrl());
             canSkip |= hasMedia && PlaybackStatus.isPlaying(item.getMedia());
             canRemoveFromQueue |= item.isTagged(FeedItem.TAG_QUEUE);
+            canTogglePermanent |= item.isTagged(FeedItem.TAG_QUEUE) || item.isNew();
             canAddToQueue |= hasMedia && !item.isTagged(FeedItem.TAG_QUEUE);
             canAddToQueuePlayNext |= canAddToQueue;
             canVisitWebsite |= !item.getFeed().isLocalFeed() && ShareUtils.hasLinkToShare(item);
@@ -125,7 +127,7 @@ public class FeedItemMenuHandler {
 
         setItemVisibility(menu, R.id.skip_episode_item, canSkip);
         setItemVisibility(menu, R.id.remove_from_queue_item, canRemoveFromQueue);
-        setItemVisibility(menu, R.id.toggle_permanent_item, !canAddToQueue);
+        setItemVisibility(menu, R.id.toggle_permanent_item, canTogglePermanent);
         setItemVisibility(menu, R.id.add_to_queue_item, canAddToQueue);
         setItemVisibility(menu, R.id.add_to_queue_play_next_item, canAddToQueuePlayNext);
         setItemVisibility(menu, R.id.visit_website_item, canVisitWebsite);
@@ -248,7 +250,7 @@ public class FeedItemMenuHandler {
                     .handleAction(Collections.singletonList(selectedItem));
 
         } else if (menuItemId == R.id.toggle_permanent_item) {
-            QueueUseCase.togglePermanent(selectedItem);
+            QueueUseCase.togglePermanent(context, selectedItem);
 
         } else if (menuItemId == R.id.add_to_queue_item || menuItemId == R.id.add_to_queue_play_next_item) {
             EpisodeMultiSelectActionHandler menuHandler =

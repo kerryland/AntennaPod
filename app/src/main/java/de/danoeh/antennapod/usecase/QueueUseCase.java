@@ -34,8 +34,13 @@ public class QueueUseCase {
         QueueUseCase.instance = instance;
     }
 
-    public static void togglePermanent(FeedItem item) {
-        assert item.isTagged(FeedItem.TAG_QUEUE);
+    public static void togglePermanent(Context context, FeedItem item) {
+        if (!item.isTagged(FeedItem.TAG_QUEUE)) {
+            // Not in the queue (e.g. from the inbox): move it to the queue as
+            // "permanent", at the user's preferred enqueue position.
+            DBWriter.addQueueItem(context, true, item);
+            return;
+        }
         if (item.isTagged(FeedItem.TAG_QUEUE_PERMANENT)) {
             item.removeTag(FeedItem.TAG_QUEUE_PERMANENT);
         } else {

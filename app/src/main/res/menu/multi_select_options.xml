@@ -144,6 +144,14 @@
         android:showAsAction="never"
         app:showAsAction="never" />
 
+    <item
+        android:id="@+id/toggle_permanent_item"
+        android:icon="@drawable/ic_push_pin"
+        android:title="@string/toggle_permanent_label"
+        android:visible="false"
+        android:showAsAction="never"
+        app:showAsAction="never" />
+
     <!-- Feed actions -->
     <item
         android:id="@+id/edit_tags"

@@ -62,7 +62,8 @@ public class EpisodeMultiSelectActionHandler {
                 || actionId == R.id.share_item
                 || actionId == R.id.move_to_top_item
                 || actionId == R.id.move_to_bottom_item
-                || actionId == R.id.move_to_play_next_item;
+                || actionId == R.id.move_to_play_next_item
+                || actionId == R.id.toggle_permanent_item;
     }
 
     private void skipIfPlaying(List<FeedItem> items, Runnable callback) {
@@ -105,6 +106,9 @@ public class EpisodeMultiSelectActionHandler {
         } else if (actionId == R.id.move_to_play_next_item) {
             moveToPlayNext(items);
 
+        } else if (actionId == R.id.toggle_permanent_item) {
+            togglePermanentChecked(items);
+
         } else {
             Log.e(TAG, "Unrecognized speed dial action item. Do nothing. id=" + actionId);
         }
@@ -112,6 +116,12 @@ public class EpisodeMultiSelectActionHandler {
 
     private void moveToPlayNext(List<FeedItem> items) {
         QueueUseCase.getInstance().moveToPlayNext(activity, items, null);
+    }
+
+    private void togglePermanentChecked(List<FeedItem> items) {
+        for (FeedItem episode : items) {
+            QueueUseCase.togglePermanent(activity, episode);
+        }
     }
 
     private void queueChecked(List<FeedItem> items, boolean permanent, boolean playNext) {
